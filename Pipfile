@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+mistune = "*"
+pipenv = "*"
+pytest = "*"
+lxml = "*"
+"beautifulsoup4" = "*"
+requests = "*"
+tortilla = "*"
+pytest-mock = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
