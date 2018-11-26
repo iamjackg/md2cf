@@ -1,4 +1,3 @@
-import pytest
 from md2cf.confluence_renderer import ConfluenceTag, ConfluenceRenderer
 
 
