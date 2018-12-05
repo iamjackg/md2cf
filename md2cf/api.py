@@ -30,6 +30,20 @@ class MinimalConfluence:
             raise ValueError("At least one of title or page_id must not be None")
 
     def create_page(self, space, title, body, parent_id=None, update_message=None):
+        """
+        Create a new page in a space
+
+        Args:
+            space (str): the Confluence space for the page
+            title (str): the title for the page
+            body (str): the body of the page, in Confluence Storage Format
+            parent_id (str or int): the ID of the parent page
+            update_message (str): optional. A message that will appear in Confluence's history
+
+        Returns:
+            The response from the API
+
+        """
         page_structure = {
             'title': title,
             'type': 'page',
