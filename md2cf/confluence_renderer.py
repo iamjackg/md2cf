@@ -21,7 +21,7 @@ class ConfluenceTag(object):
 
         content = '<{}{}>{}{}</{}>'.format(
             namespaced_name,
-            ' {}'.format(' '.join(['{}="{}"'.format(name, value) for name, value in namespaced_attribs.items()])) if namespaced_attribs else '',
+            ' {}'.format(' '.join(['{}="{}"'.format(name, value) for name, value in sorted(namespaced_attribs.items())])) if namespaced_attribs else '',
             ''.join([child.render() for child in self.children]),
             '<![CDATA[{}]]>'.format(self.text) if self.cdata else self.text,
             namespaced_name

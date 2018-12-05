@@ -60,7 +60,7 @@ def test_tag_render_with_attribute():
 def test_tag_render_with_multiple_attributes():
     test_tag_type = 'structured-macro'
     test_tag_attrib = {'name': 'code', 'foo': 'bar'}
-    test_tag_markup = '<ac:structured-macro ac:name="code" ac:foo="bar"></ac:structured-macro>\n'
+    test_tag_markup = '<ac:structured-macro ac:foo="bar" ac:name="code"></ac:structured-macro>\n'
 
     tag = ConfluenceTag(test_tag_type, attrib=test_tag_attrib)
     output = tag.render()

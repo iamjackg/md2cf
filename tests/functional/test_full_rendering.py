@@ -14,10 +14,10 @@ def script_loc(request):
 
 
 def test_full_document(script_loc):
-    with open(script_loc.join('test.md')) as test_file:
+    with open(str(script_loc.join('test.md'))) as test_file:
         markdown_data = test_file.read()
 
-    with open(script_loc.join('result.xml')) as result_file:
+    with open(str(script_loc.join('result.xml'))) as result_file:
         result_data = result_file.read()
 
     renderer = ConfluenceRenderer(use_xhtml=True)
