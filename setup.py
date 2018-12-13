@@ -1,5 +1,8 @@
 from setuptools import setup
 
+with open('README.md') as f:
+    long_description = f.read()
+
 setup(
     name='md2cf',
     version='0.1.0',
@@ -9,6 +12,8 @@ setup(
     author='Jack Gaino',
     author_email='md2cf@jackgaino.com',
     description='Convert Markdown documents to Confluence',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
