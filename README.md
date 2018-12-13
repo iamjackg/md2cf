@@ -21,7 +21,9 @@ format, and optionally upload them to a Confluence Server instance.
 
 ## Installation
 
-TBD
+```
+pip install md2cf
+```
 
 ## Basic Usage
 
