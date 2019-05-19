@@ -67,9 +67,9 @@ def upsert_page(confluence, space, title, body, parent, message):
                 raise KeyError("The parent page could not be found")
             parent_id = parent_page.id
 
-        confluence.create_page(space=space, title=title, body=body, parent_id=parent_id, message=message)
+        confluence.create_page(space=space, title=title, body=body, parent_id=parent_id, update_message=message)
     else:
-        confluence.update_page(page=existing_page, body=body, message=message)
+        confluence.update_page(page=existing_page, body=body, update_message=message)
 
 
 def main():
