@@ -46,7 +46,10 @@ def page_data_from_file_name(file_name):
     confluence_content = confluence_mistune(markdown_data)
 
     soup = bs4.BeautifulSoup(html_content, features='lxml')
-    page_title = soup.h1.text or file_name
+    try:
+        page_title = soup.h1.text
+    except AttributeError:
+        page_title = os.path.splitext(os.path.basename(file_name))[0]
 
     page_data = {
         'title': page_title,
