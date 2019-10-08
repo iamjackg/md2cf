@@ -26,7 +26,7 @@ setup(
         'lxml',
         'beautifulsoup4',
     ],
-    python_requires='>=3',
+    python_requires='>=3.5',
     entry_points={
         'console_scripts': [
             'md2cf=md2cf.__main__:main'
