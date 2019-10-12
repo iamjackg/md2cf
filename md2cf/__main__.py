@@ -25,6 +25,7 @@ def get_parser():
     parser.add_argument('-s', '--space', required=True, help='the key for the Confluence space the page will be published to')
     parser.add_argument('-a', '--parent', help='the parent page under which the new page will be uploaded')
     parser.add_argument('-m', '--message', help='the update message for the change')
+    parser.add_argument('-i', '--page-id', help='the ID of the page to be updated')
     parser.add_argument('file_list', help='the markdown file(s) to upload to Confluence', nargs='*', default=[sys.stdin])
     return parser
 

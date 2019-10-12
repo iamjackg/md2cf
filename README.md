@@ -94,4 +94,4 @@ parent's page ID as the `--parent` parameter.
 You can also optionally specify an **update message** to describe the
 change you just made by using the `--message` parameter.
 
-If you want to update a page by page ID, use the `--page_id` option. This allows you to update the page's title, or to update a page with a title that is hard to use as a parameter.
+If you want to update a page by page ID, use the `--page-id` option. This allows you to update the page's title, or to update a page with a title that is hard to use as a parameter.
