@@ -59,8 +59,8 @@ def page_data_from_file_name(file_name):
     return page_data
 
 
-def upsert_page(confluence, space, title, body, parent, message):
-    existing_page = confluence.get_page(title=title, space_key=space)
+def upsert_page(confluence, space, title, body, parent, message, page_id=None):
+    existing_page = confluence.get_page(title=title, space_key=space, page_id=page_id)
 
     if existing_page is None:
         parent_id = None
@@ -81,7 +81,7 @@ def main():
 
     for required_parameter in ['host', 'username']:
         if getattr(args, required_parameter) is None:
-            print_missing_parameter('host')
+            print_missing_parameter(required_parameter)
             exit(1)
 
     if args.password is None:
@@ -98,7 +98,8 @@ def main():
             title=page_data['title'],
             body=page_data['body'],
             parent=args.parent,
-            message=args.message
+            message=args.message,
+            page_id=args.page_id
         )
 
 
