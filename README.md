@@ -94,4 +94,4 @@ parent's page ID as the `--parent` parameter.
 You can also optionally specify an **update message** to describe the
 change you just made by using the `--message` parameter.
 
-Addationally adding the `--page_id` should allow one to directly pick which page is updated. Thus allowing the overriding of an existing page while maintaing the page's id for both sharing and linkinng purposes.
+If you want to update a page by page ID, use the `--page_id` option. This allows you to update the page's title, or to update a page with a title that is hard to use as a parameter.
