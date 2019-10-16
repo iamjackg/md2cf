@@ -79,7 +79,6 @@ def upsert_page(confluence, space, title, body, parent, message, page_id=None):
 
 def main():
     args = get_parser().parse_args()
-    print(args)
 
     for required_parameter in ['host', 'username']:
         if getattr(args, required_parameter) is None:
