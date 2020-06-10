@@ -4,7 +4,6 @@ import os
 import sys
 
 import mistune
-import bs4
 
 from md2cf import api
 from md2cf.confluence_renderer import ConfluenceRenderer
@@ -79,10 +78,9 @@ def page_data_from_file_name(file_name):
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune(markdown_data)
 
-    soup = bs4.BeautifulSoup(html_content, features="lxml")
-    try:
-        page_title = soup.h1.text
-    except AttributeError:
+    if renderer.title is not None:
+        page_title = renderer.title
+    else:
         page_title = os.path.splitext(os.path.basename(file_name))[0]
 
     page_data = {"title": page_title, "body": confluence_content}

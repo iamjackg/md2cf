@@ -123,3 +123,43 @@ def test_renderer_block_code_with_language():
     renderer = ConfluenceRenderer()
 
     assert renderer.block_code(test_code, lang=test_language) == test_markup
+
+
+def test_renderer_header_sets_title():
+    test_header = "this is a header"
+    renderer = ConfluenceRenderer()
+
+    renderer.header(test_header, 0)
+
+    assert renderer.title == test_header
+
+
+def test_renderer_header_lower_level_does_not_set_title():
+    test_header = "this is a header"
+    renderer = ConfluenceRenderer()
+
+    renderer.header(test_header, 1)
+
+    assert renderer.title is None
+
+
+def test_renderer_header_later_level_sets_title():
+    test_lower_header = "this is a lower header"
+    test_header = "this is a header"
+    renderer = ConfluenceRenderer()
+
+    renderer.header(test_lower_header, 1)
+    renderer.header(test_header, 0)
+
+    assert renderer.title is test_header
+
+
+def test_renderer_header_only_sets_first_title():
+    test_header = "this is a header"
+    test_second_header = "this is another header"
+    renderer = ConfluenceRenderer()
+
+    renderer.header(test_header, 0)
+    renderer.header(test_second_header, 0)
+
+    assert renderer.title is test_header

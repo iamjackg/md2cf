@@ -48,6 +48,25 @@ class ConfluenceTag(object):
 
 
 class ConfluenceRenderer(mistune.Renderer):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.attachments = list()
+        self.title = None
+
+    def reinit(self):
+        self.attachments = list()
+        self.title = None
+
+    def placeholder(self):
+        self.reinit()
+        return super(ConfluenceRenderer, self).placeholder()
+
+    def header(self, text, level, raw=None):
+        if self.title is None and level == 0:
+            self.title = text
+
+        return super(ConfluenceRenderer, self).header(text, level, raw=raw)
+
     def structured_macro(self, name):
         return ConfluenceTag("structured-macro", attrib={"name": name})
 
