@@ -22,18 +22,21 @@ def test_upsert_page(mocker):
         title=title,
         body=body,
         parent=parent,
-        message=message
+        message=message,
     )
 
-    confluence.get_page.assert_has_calls([
-        mocker.call(title=title, space_key=space, page_id=None),
-        mocker.call(title=parent, space_key=space)
-    ], any_order=False)
+    confluence.get_page.assert_has_calls(
+        [
+            mocker.call(title=title, space_key=space, page_id=None),
+            mocker.call(title=parent, space_key=space),
+        ],
+        any_order=False,
+    )
 
     confluence.create_page.assert_called_once_with(
         space=space,
         title=title,
         body=body,
         parent_id=mocker.sentinel.parent_page_id,
-        update_message=message
+        update_message=message,
     )
