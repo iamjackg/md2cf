@@ -1,4 +1,6 @@
 import mistune
+import urllib.parse as urlparse
+from pathlib import Path
 
 
 class ConfluenceTag(object):
@@ -95,7 +97,14 @@ class ConfluenceRenderer(mistune.Renderer):
             attributes["title"] = title
 
         root_element = ConfluenceTag(name="image", attrib=attributes)
-        url_tag = ConfluenceTag("url", attrib={"value": src}, namespace="ri")
+        parsed_source = urlparse.urlparse(src)
+        if not parsed_source.netloc:
+            # Local file, requires upload
+            basename = Path(src).name
+            url_tag = ConfluenceTag("attachment", attrib={"filename": basename}, namespace="ri")
+            self.attachments.append(src)
+        else:
+            url_tag = ConfluenceTag("url", attrib={"value": src}, namespace="ri")
         root_element.append(url_tag)
 
         return root_element.render()
