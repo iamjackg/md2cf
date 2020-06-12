@@ -75,3 +75,12 @@ class MinimalConfluence:
             update_structure["version"]["message"] = update_message
 
         return self.api.content.put(page.id, json=update_structure)
+
+    def upload_attachment(self, page, fp):
+        return self.api.content(page.id).child.post(
+            "attachment",
+            format=(None, "json"),
+            headers={"X-Atlassian-Token": "nocheck"},
+            params={"allowDuplicated": "true"},
+            files={"file": fp},
+        )
