@@ -60,7 +60,7 @@ class ConfluenceRenderer(mistune.Renderer):
         self.title = None
 
     def header(self, text, level, raw=None):
-        if self.title is None and level == 0:
+        if self.title is None and level == 1:
             self.title = text
 
         return super(ConfluenceRenderer, self).header(text, level, raw=raw)
