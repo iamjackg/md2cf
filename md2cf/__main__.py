@@ -4,6 +4,7 @@ import os
 import sys
 
 import mistune
+from requests import HTTPError
 
 from md2cf import api
 from md2cf.confluence_renderer import ConfluenceRenderer
@@ -72,8 +73,6 @@ def page_data_from_file_name(file_name):
         markdown_data = file_handle.read()
 
     renderer = ConfluenceRenderer(use_xhtml=True)
-    html_mistune = mistune.Markdown()
-    html_content = html_mistune(markdown_data)
 
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune(markdown_data)
@@ -83,12 +82,21 @@ def page_data_from_file_name(file_name):
     else:
         page_title = os.path.splitext(os.path.basename(file_name))[0]
 
-    page_data = {"title": page_title, "body": confluence_content}
+    page_data = {
+        "title": page_title,
+        "body": confluence_content,
+        "attachments": renderer.attachments,
+    }
 
     return page_data
 
 
-def upsert_page(confluence, space, title, body, parent, message, page_id=None):
+def upsert_page(
+    confluence, space, title, body, parent, message, page_id=None, attachments=None
+):
+    if attachments is None:
+        attachments = list()
+
     existing_page = confluence.get_page(title=title, space_key=space, page_id=page_id)
 
     if existing_page is None:
@@ -99,7 +107,7 @@ def upsert_page(confluence, space, title, body, parent, message, page_id=None):
                 raise KeyError("The parent page could not be found")
             parent_id = parent_page.id
 
-        confluence.create_page(
+        existing_page = confluence.create_page(
             space=space,
             title=title,
             body=body,
@@ -108,6 +116,11 @@ def upsert_page(confluence, space, title, body, parent, message, page_id=None):
         )
     else:
         confluence.update_page(page=existing_page, body=body, update_message=message)
+
+    if attachments:
+        for attachment in attachments:
+            with open(attachment, "rb") as fp:
+                confluence.upload_attachment(page=existing_page, fp=fp)
 
 
 def main():
@@ -126,17 +139,31 @@ def main():
         host=args.host, username=args.username, password=args.password
     )
 
+    if args.title and len(args.file_list) > 1:
+        sys.stderr.write('The title cannot be specified on the command line if uploading more than one file')
+        exit(1)
+
+    something_went_wrong = False
     for file_name in args.file_list:
         page_data = page_data_from_file_name(file_name)
-        upsert_page(
-            confluence=confluence,
-            space=args.space,
-            title=args.title or page_data["title"],
-            body=page_data["body"],
-            parent=args.parent,
-            message=args.message,
-            page_id=args.page_id,
-        )
+        print(page_data)
+        try:
+            upsert_page(
+                confluence=confluence,
+                space=args.space,
+                title=args.title or page_data["title"],
+                body=page_data["body"],
+                parent=args.parent,
+                message=args.message,
+                page_id=args.page_id,
+                attachments=page_data["attachments"],
+            )
+        except HTTPError as e:
+            sys.stderr.write('{} - {}\n'.format(str(e), e.response.content))
+            something_went_wrong = True
+
+    if something_went_wrong:
+        exit(1)
 
 
 if __name__ == "__main__":
