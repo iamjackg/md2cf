@@ -167,8 +167,10 @@ def test_renderer_header_only_sets_first_title():
 
 def test_renderer_image_external():
     test_image_src = "http://example.com/image.jpg"
-    test_image_markup = '<ac:image ac:alt=""><ri:url ri:value="{}"></ri:url>\n' \
-                        '</ac:image>\n'.format(test_image_src)
+    test_image_markup = (
+        '<ac:image ac:alt=""><ri:url ri:value="{}"></ri:url>\n'
+        "</ac:image>\n".format(test_image_src)
+    )
 
     renderer = ConfluenceRenderer()
 
@@ -180,19 +182,26 @@ def test_renderer_image_external_alt_and_title():
     test_image_src = "http://example.com/image.jpg"
     test_image_alt = "alt text"
     test_image_title = "title"
-    test_image_markup = '<ac:image ac:alt="{}" ac:title="{}"><ri:url ri:value="{}"></ri:url>\n' \
-                        '</ac:image>\n'.format(test_image_alt, test_image_title, test_image_src)
+    test_image_markup = (
+        '<ac:image ac:alt="{}" ac:title="{}"><ri:url ri:value="{}"></ri:url>\n'
+        "</ac:image>\n".format(test_image_alt, test_image_title, test_image_src)
+    )
 
     renderer = ConfluenceRenderer()
 
-    assert renderer.image(test_image_src, test_image_title, test_image_alt) == test_image_markup
+    assert (
+        renderer.image(test_image_src, test_image_title, test_image_alt)
+        == test_image_markup
+    )
 
 
 def test_renderer_image_internal_absolute():
     test_image_file = "image.jpg"
     test_image_src = "/home/test/images/" + test_image_file
-    test_image_markup = '<ac:image ac:alt=""><ri:attachment ri:filename="{}"></ri:attachment>\n' \
-                        '</ac:image>\n'.format(test_image_file)
+    test_image_markup = (
+        '<ac:image ac:alt=""><ri:attachment ri:filename="{}"></ri:attachment>\n'
+        "</ac:image>\n".format(test_image_file)
+    )
 
     renderer = ConfluenceRenderer()
 
@@ -203,8 +212,10 @@ def test_renderer_image_internal_absolute():
 def test_renderer_image_internal_relative():
     test_image_file = "image.jpg"
     test_image_src = "test/images/" + test_image_file
-    test_image_markup = '<ac:image ac:alt=""><ri:attachment ri:filename="{}"></ri:attachment>\n' \
-                        '</ac:image>\n'.format(test_image_file)
+    test_image_markup = (
+        '<ac:image ac:alt=""><ri:attachment ri:filename="{}"></ri:attachment>\n'
+        "</ac:image>\n".format(test_image_file)
+    )
 
     renderer = ConfluenceRenderer()
 
