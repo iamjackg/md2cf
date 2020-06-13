@@ -2,12 +2,12 @@ import argparse
 import getpass
 import os
 import sys
+from pathlib import Path
 
-import mistune
 from requests import HTTPError
 
 from md2cf import api
-from md2cf.confluence_renderer import ConfluenceRenderer
+from md2cf.document import get_page_data_from_file_path
 
 
 def get_parser():
@@ -54,9 +54,9 @@ def get_parser():
     parser.add_argument("-i", "--page-id", help="the ID of the page to be updated")
     parser.add_argument(
         "file_list",
+        type=Path,
         help="the markdown file(s) to upload to Confluence",
         nargs="*",
-        default=[sys.stdin],
     )
     return parser
 
@@ -66,29 +66,6 @@ def print_missing_parameter(parameter_name):
         "Missing required parameter: {}\n"
         "Use {} --help to get help.".format(parameter_name, sys.argv[0])
     )
-
-
-def page_data_from_file_name(file_name):
-    with open(file_name) as file_handle:
-        markdown_data = file_handle.read()
-
-    renderer = ConfluenceRenderer(use_xhtml=True)
-
-    confluence_mistune = mistune.Markdown(renderer=renderer)
-    confluence_content = confluence_mistune(markdown_data)
-
-    if renderer.title is not None:
-        page_title = renderer.title
-    else:
-        page_title = os.path.splitext(os.path.basename(file_name))[0]
-
-    page_data = {
-        "title": page_title,
-        "body": confluence_content,
-        "attachments": renderer.attachments,
-    }
-
-    return page_data
 
 
 def upsert_page(
@@ -140,12 +117,14 @@ def main():
     )
 
     if args.title and len(args.file_list) > 1:
-        sys.stderr.write('The title cannot be specified on the command line if uploading more than one file')
+        sys.stderr.write(
+            "The title cannot be specified on the command line if uploading more than one file"
+        )
         exit(1)
 
     something_went_wrong = False
     for file_name in args.file_list:
-        page_data = page_data_from_file_name(file_name)
+        page_data = get_page_data_from_file_path(file_name)
         print(page_data)
         try:
             upsert_page(
@@ -159,7 +138,7 @@ def main():
                 attachments=page_data["attachments"],
             )
         except HTTPError as e:
-            sys.stderr.write('{} - {}\n'.format(str(e), e.response.content))
+            sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
             something_went_wrong = True
 
     if something_went_wrong:

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - Add support for image attachments
 - Remove dependency on BeautifulSoup by finding the title during rendering
+- Can now specify the title in the YAML front matter
 
 ## 0.2.2 - 2019-10-22
 - Bump depdendencies

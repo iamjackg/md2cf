@@ -21,7 +21,7 @@ format, and optionally upload them to a Confluence Server instance.
 
 ## Installation
 
-```
+```bash
 pip install md2cf
 ```
 
@@ -32,7 +32,7 @@ pip install md2cf
 Use the `ConfluenceRenderer` class to generate Confluence Storage Format
 output from a markdown document.
 
-``` sourceCode python
+```python
 import mistune
 from md2cf.confluence_renderer import ConfluenceRenderer
 
@@ -46,7 +46,7 @@ confluence_body = confluence_mistune(markdown_data)
 md2cf embeds a teeny-tiny implementation of the Confluence Server REST
 API that allows you to create, read, and update pages.
 
-``` sourceCode python
+```python
 from md2cf.api import MinimalConfluence
 
 confluence = MinimalConfluence(host='http://example.com/rest/api', username='foo', password='bar')
@@ -54,7 +54,7 @@ confluence = MinimalConfluence(host='http://example.com/rest/api', username='foo
 confluence.create_page(space='TEST', title='Test page', body='<p>Nothing</p>', message='Created page')
 
 page = confluence.get_page(title='Test page', space_key='TEST')
-confluence.update_page(page=page, body='New content', message='Changed page contents')
+confluence.update_page(page=page, body='New content', update_message='Changed page contents')
 ```
 
 ### Upload script
@@ -70,10 +70,11 @@ following five parameters:
   - The **file(s)** to be uploaded -- or standard input if the list is
     missing
 
-Example basic
-    usage:
+Example basic usage:
 
-    md2cf --host 'https://confluence.example.com/rest/api' --username foo --password bar --space TEST document.md
+```bash
+md2cf --host 'https://confluence.example.com/rest/api' --username foo --password bar --space TEST document.md
+```
 
 Note that entering the password as a parameter on the command line is
 generally a bad idea. If you're running the script interactively, you
@@ -84,8 +85,18 @@ using this as part of a pipeline, you can also supply the hostname,
 username, and password as **environment variables**: `CONFLUENCE_HOST`,
 `CONFLUENCE_USERNAME`, and `CONFLUENCE_PASSWORD`.
 
-The **title** of the page will be the first top-level header found in
-the document (i.e. the first `#` header), or the filename if there are
+The **title** of the page can come from a few sources, in order of priority from highest to lowest:
+* the `--title` command line parameter
+* a `title` entry in your document's front matter, i.e. a YAML block delimited by `---` lines at the top of the file
+  ```yaml
+  ---
+  title: This is a title
+  ---
+  # Rest of the document here
+  ``` 
+* the first top-level header found in
+the document (i.e. the first `#` header)
+* the filename if there are
 no top-level headers.
 
 If you want to upload the page under **a specific parent**, supply the
@@ -94,4 +105,4 @@ parent's page ID as the `--parent` parameter.
 You can also optionally specify an **update message** to describe the
 change you just made by using the `--message` parameter.
 
-If you want to update a page by page ID, use the `--page-id` option. This allows you to update the page's title, or to update a page with a title that is hard to use as a parameter.
+If you want to update a page by page ID, use the `--page-id` option. This allows you to change the page's title, or to update a page with a title that is annoying to use as a parameter.

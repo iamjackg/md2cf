@@ -23,6 +23,7 @@ setup(
     install_requires=[
         'mistune',
         'tortilla',
+        'PyYAML'
     ],
     python_requires='>=3.5',
     entry_points={
