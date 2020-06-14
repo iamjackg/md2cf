@@ -21,7 +21,7 @@ def test_upsert_page(mocker):
         space=space,
         title=title,
         body=body,
-        parent=parent,
+        parent_title=parent,
         message=message,
     )
 

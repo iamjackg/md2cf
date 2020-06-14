@@ -7,7 +7,7 @@ from pathlib import Path
 from requests import HTTPError
 
 from md2cf import api
-from md2cf.document import get_page_data_from_file_path
+import md2cf.document
 
 
 def get_parser():
@@ -40,11 +40,19 @@ def get_parser():
         required=True,
         help="the key for the Confluence space the page will be published to",
     )
-    parser.add_argument(
+
+    parent_group = parser.add_mutually_exclusive_group()
+    parent_group.add_argument(
         "-a",
-        "--parent",
-        help="the parent page under which the new page will be uploaded",
+        "--parent-title",
+        help="the title of the parent page under which the new page will be uploaded",
     )
+    parent_group.add_argument(
+        "-A",
+        "--parent-id",
+        help="the ID of the parent page under which the new page will be uploaded",
+    )
+
     parser.add_argument(
         "-t",
         "--title",
@@ -69,7 +77,15 @@ def print_missing_parameter(parameter_name):
 
 
 def upsert_page(
-    confluence, space, title, body, parent, message, page_id=None, attachments=None
+    confluence,
+    space,
+    title,
+    body,
+    message,
+    page_id=None,
+    parent_id=None,
+    parent_title=None,
+    attachments=None,
 ):
     if attachments is None:
         attachments = list()
@@ -77,12 +93,12 @@ def upsert_page(
     existing_page = confluence.get_page(title=title, space_key=space, page_id=page_id)
 
     if existing_page is None:
-        parent_id = None
-        if parent is not None:
-            parent_page = confluence.get_page(title=parent, space_key=space)
-            if parent_page is None:
-                raise KeyError("The parent page could not be found")
-            parent_id = parent_page.id
+        if parent_id is None:
+            if parent_title is not None:
+                parent_page = confluence.get_page(title=parent_title, space_key=space)
+                if parent_page is None:
+                    raise KeyError("The parent page could not be found")
+                parent_id = parent_page.id
 
         existing_page = confluence.create_page(
             space=space,
@@ -118,27 +134,49 @@ def main():
 
     if args.title and len(args.file_list) > 1:
         sys.stderr.write(
-            "The title cannot be specified on the command line if uploading more than one file"
+            "The title cannot be specified on the command line if uploading more than one file\n"
         )
         exit(1)
 
+    pages_to_upload = list()
+    if not args.file_list:
+        pages_to_upload.append(md2cf.document.get_page_data_from_lines(sys.stdin.readlines()))
+
+        if not pages_to_upload[0]["title"] and not args.title:
+            sys.stderr.write(
+                "You must specify a title or have a title in the document if uploading from standard input\n"
+            )
+            exit(1)
+
+        if args.title:
+            pages_to_upload[0]["title"] = args.title
+    else:
+        for file_name in args.file_list:
+            pages_to_upload.append(md2cf.document.get_page_data_from_file_path(file_name))
+
+        if len(pages_to_upload) == 1:
+            if args.title:
+                pages_to_upload[0]["title"] = args.title
+
     something_went_wrong = False
-    for file_name in args.file_list:
-        page_data = get_page_data_from_file_path(file_name)
-        print(page_data)
+    for page_data in pages_to_upload:
         try:
             upsert_page(
                 confluence=confluence,
                 space=args.space,
-                title=args.title or page_data["title"],
+                title=page_data["title"],
                 body=page_data["body"],
-                parent=args.parent,
+                parent_title=args.parent_title,
+                parent_id=args.parent_id,
                 message=args.message,
                 page_id=args.page_id,
                 attachments=page_data["attachments"],
             )
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
+            something_went_wrong = True
+        except Exception as e:
+            sys.stderr.write("ERROR: {}\n".format(str(e)))
             something_went_wrong = True
 
     if something_went_wrong:

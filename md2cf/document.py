@@ -16,7 +16,7 @@ def get_page_data_from_file_path(file_path):
 
     page_data = get_page_data_from_lines(markdown_lines)
 
-    if "title" not in page_data:
+    if not page_data["title"]:
         page_data["title"] = file_path.stem
 
     return page_data
