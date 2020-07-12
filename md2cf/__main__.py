@@ -3,11 +3,13 @@ import getpass
 import os
 import sys
 from pathlib import Path
+from typing import List, Optional
 
 from requests import HTTPError
 
 from md2cf import api
 import md2cf.document
+from md2cf.document import Page
 
 
 def get_parser():
@@ -69,7 +71,7 @@ def get_parser():
     return parser
 
 
-def print_missing_parameter(parameter_name):
+def print_missing_parameter(parameter_name: str):
     sys.stderr.write(
         "Missing required parameter: {}\n"
         "Use {} --help to get help.".format(parameter_name, sys.argv[0])
@@ -77,42 +79,38 @@ def print_missing_parameter(parameter_name):
 
 
 def upsert_page(
-    confluence,
-    space,
-    title,
-    body,
-    message,
-    page_id=None,
-    parent_id=None,
-    parent_title=None,
-    attachments=None,
+    confluence: api.MinimalConfluence,
+    message: str,
+    page: md2cf.document.Page
 ):
-    if attachments is None:
-        attachments = list()
-
-    existing_page = confluence.get_page(title=title, space_key=space, page_id=page_id)
+    existing_page = confluence.get_page(title=page.title, space_key=page.space, page_id=page.page_id)
 
     if existing_page is None:
-        if parent_id is None:
-            if parent_title is not None:
-                parent_page = confluence.get_page(title=parent_title, space_key=space)
+        if page.parent_id is None:
+            if page.parent_title is not None:
+                parent_page = confluence.get_page(title=page.parent_title, space_key=page.space)
                 if parent_page is None:
                     raise KeyError("The parent page could not be found")
-                parent_id = parent_page.id
+                page.parent_id = parent_page.id
 
         existing_page = confluence.create_page(
-            space=space,
-            title=title,
-            body=body,
-            parent_id=parent_id,
+            space=page.space,
+            title=page.title,
+            body=page.body,
+            parent_id=page.parent_id,
             update_message=message,
         )
     else:
-        confluence.update_page(page=existing_page, body=body, update_message=message)
+        confluence.update_page(page=existing_page, body=page.body, update_message=message)
 
-    if attachments:
-        for attachment in attachments:
-            with open(attachment, "rb") as fp:
+    if page.attachments:
+        for attachment in page.attachments:
+            if page.file_path is not None:
+                attachment_path = page.file_path.joinpath(attachment)
+            else:
+                attachment_path = attachment
+
+            with attachment_path.open("rb") as fp:
                 confluence.upload_attachment(page=existing_page, fp=fp)
 
 
@@ -132,15 +130,17 @@ def main():
         host=args.host, username=args.username, password=args.password
     )
 
-    if args.title and len(args.file_list) > 1:
+    if args.title and (len(args.file_list) > 1 or any(map(os.path.isdir, args.file_list))):
         sys.stderr.write(
-            "The title cannot be specified on the command line if uploading more than one file\n"
+            "The title cannot be specified on the command line if uploading more than one file or whole directories\n"
         )
         exit(1)
 
-    pages_to_upload = list()
+    pages_to_upload: List[Page] = list()
     if not args.file_list:
-        pages_to_upload.append(md2cf.document.get_page_data_from_lines(sys.stdin.readlines()))
+        pages_to_upload.append(
+            md2cf.document.get_page_data_from_lines(sys.stdin.readlines())
+        )
 
         if not pages_to_upload[0]["title"] and not args.title:
             sys.stderr.write(
@@ -152,25 +152,26 @@ def main():
             pages_to_upload[0]["title"] = args.title
     else:
         for file_name in args.file_list:
-            pages_to_upload.append(md2cf.document.get_page_data_from_file_path(file_name))
+            pages_to_upload.append(
+                md2cf.document.get_page_data_from_file_path(file_name)
+            )
 
         if len(pages_to_upload) == 1:
             if args.title:
                 pages_to_upload[0]["title"] = args.title
 
     something_went_wrong = False
-    for page_data in pages_to_upload:
+
+    for page in pages_to_upload:
+        page.space = args.space
+        page.parent_title = args.parent_title
+        page.parent_id = args.parent_id
+        page.page_id = args.page_id
         try:
             upsert_page(
                 confluence=confluence,
-                space=args.space,
-                title=page_data["title"],
-                body=page_data["body"],
-                parent_title=args.parent_title,
-                parent_id=args.parent_id,
                 message=args.message,
-                page_id=args.page_id,
-                attachments=page_data["attachments"],
+                page=page
             )
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))

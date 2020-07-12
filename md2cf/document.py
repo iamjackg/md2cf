@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from typing import Optional, List, Dict, Any
 
 import mistune
 import yaml
@@ -7,66 +9,90 @@ from yaml.parser import ParserError
 from md2cf.confluence_renderer import ConfluenceRenderer
 
 
-def get_page_data_from_file_path(file_path):
+class Page(object):
+    def __init__(
+        self,
+        title: Optional[str],
+        body: str,
+        attachments: Optional[List[Path]] = None,
+        file_path: Optional[Path] = None,
+        page_id: str = None,
+        parent_id: str = None,
+        parent_title: str = None,
+        space: str = None,
+    ):
+        self.title = title
+        self.body = body
+        self.file_path = file_path
+        self.attachments = attachments
+        if self.attachments is None:
+            self.attachments = list()
+        self.page_id = page_id
+        self.parent_id = parent_id
+        self.parent_title = parent_title
+        self.space = space
+
+
+def get_page_data_from_file_path(file_path: Path) -> Page:
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
 
     with open(file_path) as file_handle:
         markdown_lines = file_handle.readlines()
 
-    page_data = get_page_data_from_lines(markdown_lines)
+    page = get_page_data_from_lines(markdown_lines)
 
-    if not page_data["title"]:
-        page_data["title"] = file_path.stem
+    if not page.title:
+        page.title = file_path.stem
 
-    return page_data
+    page.file_path = file_path
 
-
-def get_page_data_from_lines(markdown_lines):
-    metadata = get_document_metadata(markdown_lines)
-    if "metadata_end_line" in metadata:
-        markdown_lines = markdown_lines[metadata['metadata_end_line']:]
-
-    page_data = parse_page(markdown_lines)
-
-    if "title" in metadata:
-        page_data["title"] = metadata["title"]
-    return page_data
+    return page
 
 
-def parse_page(markdown_lines):
+def get_page_data_from_lines(markdown_lines: List[str]) -> Page:
+    frontmatter = get_document_frontmatter(markdown_lines)
+    if "frontmatter_end_line" in frontmatter:
+        markdown_lines = markdown_lines[frontmatter["frontmatter_end_line"] :]
+
+    page = parse_page(markdown_lines)
+
+    if "title" in frontmatter:
+        page.title = frontmatter["title"]
+    return page
+
+
+def parse_page(markdown_lines: List[str]) -> Page:
     renderer = ConfluenceRenderer(use_xhtml=True)
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune("".join(markdown_lines))
 
-    page_data = {
-        "title": renderer.title,
-        "body": confluence_content,
-        "attachments": renderer.attachments,
-    }
+    page = Page(
+        title=renderer.title, body=confluence_content, attachments=renderer.attachments
+    )
 
-    return page_data
+    return page
 
 
-def get_document_metadata(markdown_lines):
-    metadata_yaml = ""
-    metadata_end_line = 0
+def get_document_frontmatter(markdown_lines: List[str]) -> Dict[str, Any]:
+    frontmatter_yaml = ""
+    frontmatter_end_line = 0
     if markdown_lines and markdown_lines[0] == "---\n":
         for index, line in enumerate(markdown_lines[1:]):
             if line == "---\n":
-                metadata_end_line = index + 2
+                frontmatter_end_line = index + 2
                 break
             else:
-                metadata_yaml += line
-    metadata = None
-    if metadata_yaml and metadata_end_line:
+                frontmatter_yaml += line
+    frontmatter = None
+    if frontmatter_yaml and frontmatter_end_line:
         try:
-            metadata = yaml.safe_load(metadata_yaml)
+            frontmatter = yaml.safe_load(frontmatter_yaml)
         except ParserError:
             pass
-    if isinstance(metadata, dict):
-        metadata["metadata_end_line"] = metadata_end_line
+    if isinstance(frontmatter, dict):
+        frontmatter["frontmatter_end_line"] = frontmatter_end_line
     else:
-        metadata = {}
+        frontmatter = {}
 
-    return metadata
+    return frontmatter
