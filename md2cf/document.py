@@ -33,6 +33,31 @@ class Page(object):
         self.space = space
 
 
+def get_pages_from_directory(file_path: Path) -> List[Page]:
+    pages = list()
+    full_path = file_path.resolve()
+    parent_page_title = None
+    path_to_amount_of_md_files = dict()
+    for current_path, directories, file_names in os.walk(file_path):
+        current_path = Path(current_path)
+        markdown_files = [Path(current_path, file_name) for file_name in file_names if file_name.endswith('.md')]
+        path_to_amount_of_md_files[current_path] = len(markdown_files)
+
+        if not markdown_files:
+            continue
+
+        if current_path != full_path:
+            pages.append(Page(title=current_path.name, body=''))
+            parent_page_title = current_path.name
+
+        for markdown_file in markdown_files:
+            processed_page = get_page_data_from_file_path(markdown_file)
+            processed_page.parent_title = parent_page_title
+            pages.append(processed_page)
+
+    return pages
+
+
 def get_page_data_from_file_path(file_path: Path) -> Page:
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
