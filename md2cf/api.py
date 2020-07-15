@@ -63,13 +63,18 @@ class MinimalConfluence:
 
         return self.api.content.post(json=page_structure)
 
-    def update_page(self, page, body, update_message=None):
+    def update_page(self, page, body, parent_id=None, update_message=None):
         update_structure = {
             "version": {"number": page.version.number + 1,},
             "title": page.title,
             "type": "page",
             "body": {"storage": {"value": body, "representation": "storage"}},
         }
+
+        if parent_id is not None:
+            if type(parent_id) is str:
+                parent_id = int(parent_id)
+            update_structure["ancestors"] = [{"id": parent_id}]
 
         if update_message is not None:
             update_structure["version"]["message"] = update_message
