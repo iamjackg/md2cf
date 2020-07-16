@@ -44,6 +44,8 @@ Example basic usage:
 md2cf --host 'https://confluence.example.com/rest/api' --username foo --password bar --space TEST document.md
 ```
 
+You can specify multiple files and/or entire folders. If you specify a folder, it will be travelled recursively and all files ending in `.md` will be uploaded. The structure of the folder will be recreated using empty pages to represent subdirectories. 
+
 Note that entering the password as a parameter on the command line is
 generally a bad idea. If you're running the script interactively, you
 can omit the `--password` parameter and the script will prompt for it.
@@ -68,6 +70,8 @@ The **title** of the page can come from a few sources, in order of priority from
 * the filename if there are no top-level headers.
 
 Note that if you're reading from standard input, you must either specify the title through the command line or have a title in the content as a header or in the front matter.
+
+If you're uploading entire folders, you might want to add a prefix to each page title in order to avoid collisions. You can do this using the `--prefix` parameter.
 
 ### Parent page
 

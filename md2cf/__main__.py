@@ -63,15 +63,15 @@ def get_parser():
     parser.add_argument("-m", "--message", help="the update message for the change")
     parser.add_argument("-i", "--page-id", help="the ID of the page to be updated")
     parser.add_argument(
-        "file_list",
-        type=Path,
-        help="the markdown file(s) to upload to Confluence",
-        nargs="*",
-    )
-    parser.add_argument(
         "--prefix",
         help="a string to prefix to every page title to ensure uniqueness",
         type=str,
+    )
+    parser.add_argument(
+        "file_list",
+        type=Path,
+        help="the markdown files or directories to upload to Confluence. Empty for stdin",
+        nargs="*",
     )
     return parser
 
