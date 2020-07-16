@@ -155,7 +155,7 @@ def main():
         exit(1)
 
     pages_to_upload: List[Page] = list()
-    if not args.file_list:
+    if not args.file_list:  # Uploading from standard input
         pages_to_upload.append(
             md2cf.document.get_page_data_from_lines(sys.stdin.readlines())
         )
@@ -173,9 +173,12 @@ def main():
             if file_name.is_dir():
                 pages_to_upload += md2cf.document.get_pages_from_directory(file_name)
             else:
-                pages_to_upload.append(
-                    md2cf.document.get_page_data_from_file_path(file_name)
-                )
+                try:
+                    pages_to_upload.append(
+                        md2cf.document.get_page_data_from_file_path(file_name)
+                    )
+                except FileNotFoundError:
+                    sys.stderr.write(f"File {file_name} does not exist\n")
 
         if len(pages_to_upload) == 1:
             if args.title:
@@ -185,17 +188,20 @@ def main():
 
     for page in pages_to_upload:
         page.space = args.space
+        page.page_id = args.page_id
 
-        if page.parent_title is None:
+        if page.parent_title is None:  # This only happens for top level pages
+            # If the argument is not supplied this leaves the parent_title as None, which is fine
             page.parent_title = args.parent_title
         else:
             if args.prefix:
                 page.parent_title = f"{args.prefix} - {page.parent_title}"
 
         if page.parent_title is None:
-            page.parent_id = page.parent_id or args.parent_id
+            page.parent_id = (
+                page.parent_id or args.parent_id
+            )  # This can still end up being None. It's fine.
 
-        page.page_id = args.page_id
         if args.prefix:
             page.title = f"{args.prefix} - {page.title}"
 

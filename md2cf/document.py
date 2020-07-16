@@ -49,6 +49,7 @@ def get_pages_from_directory(file_path: Path) -> List[Page]:
         if current_path != full_path:
             pages.append(Page(title=current_path.name, body=''))
             parent_page_title = current_path.name
+            pages.append(Page(title=parent_page_title, body=''))
 
         for markdown_file in markdown_files:
             processed_page = get_page_data_from_file_path(markdown_file)
