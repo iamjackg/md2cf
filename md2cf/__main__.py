@@ -1,7 +1,9 @@
 import argparse
 import getpass
 import os
+import pprint
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import List
 
@@ -68,6 +70,21 @@ def get_parser():
         type=str,
     )
     parser.add_argument(
+        "--collapse",
+        action="store_true",
+        help="if a folder contains a single document, collapse it so the folder doesn't appear",
+    )
+    parser.add_argument(
+        "--skip-empty",
+        action="store_true",
+        help="if a folder doesn't contain documents, skip it",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print information on all the pages instead of uploading to Confluence",
+    )
+    parser.add_argument(
         "file_list",
         type=Path,
         help="the markdown files or directories to upload to Confluence. Empty for stdin",
@@ -81,6 +98,11 @@ def print_missing_parameter(parameter_name: str):
         "Missing required parameter: {}\n"
         "Use {} --help to get help.".format(parameter_name, sys.argv[0])
     )
+
+
+def print_page_details(page: Page):
+    page.body = page.body[:40] + ("..." if page.body else "")
+    pprint.pprint(page.__dict__)
 
 
 def upsert_page(
@@ -171,7 +193,9 @@ def main():
     else:
         for file_name in args.file_list:
             if file_name.is_dir():
-                pages_to_upload += md2cf.document.get_pages_from_directory(file_name)
+                pages_to_upload += md2cf.document.get_pages_from_directory(
+                    file_name, collapse_single_pages=args.collapse, skip_empty=args.skip_empty
+                )
             else:
                 try:
                     pages_to_upload.append(
@@ -185,6 +209,14 @@ def main():
                 pages_to_upload[0].title = args.title
 
     something_went_wrong = False
+
+    page_title_counts = Counter([page.title for page in pages_to_upload])
+    colliding_titles = [title for title, count in page_title_counts.most_common() if count > 1]
+    if colliding_titles:
+        sys.stderr.write('Some documents have the same title. Update them or use --force-unique:\n')
+        for title in colliding_titles:
+            sys.stderr.write(f'{title}\n')
+        exit(1)
 
     for page in pages_to_upload:
         page.space = args.space
@@ -206,7 +238,10 @@ def main():
             page.title = f"{args.prefix} - {page.title}"
 
         try:
-            upsert_page(confluence=confluence, message=args.message, page=page)
+            if args.dry_run:
+                print_page_details(page)
+            else:
+                upsert_page(confluence=confluence, message=args.message, page=page)
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
             something_went_wrong = True

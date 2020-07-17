@@ -33,30 +33,75 @@ class Page(object):
         self.space = space
 
 
-def get_pages_from_directory(file_path: Path) -> List[Page]:
-    pages = list()
-    full_path = file_path.resolve()
+def find_non_empty_parent_title(
+    current_dir: Path, folder_data: Dict[Path, Dict[str, Any]]
+) -> str:
+    for parent in current_dir.parents:
+        if folder_data[parent]["n_files"]:
+            return folder_data[parent]["title"]
+
+
+def get_pages_from_directory(
+    file_path: Path, collapse_single_pages: bool = False, skip_empty: bool = False
+) -> List[Page]:
+    processed_pages = list()
+    base_path = file_path.resolve()
     parent_page_title = None
-    path_to_amount_of_md_files = dict()
+    folder_data = dict()
     for current_path, directories, file_names in os.walk(file_path):
         current_path = Path(current_path)
-        markdown_files = [Path(current_path, file_name) for file_name in file_names if file_name.endswith('.md')]
-        path_to_amount_of_md_files[current_path] = len(markdown_files)
 
-        if not markdown_files:
+        markdown_files = [
+            Path(current_path, file_name)
+            for file_name in file_names
+            if file_name.endswith(".md")
+        ]
+
+        folder_data[current_path] = {
+            "n_files": len(markdown_files),
+            "title": current_path.name if current_path != base_path else None,
+        }
+
+        if not markdown_files and not directories:
             continue
 
-        if current_path != full_path:
-            pages.append(Page(title=current_path.name, body=''))
-            parent_page_title = current_path.name
-            pages.append(Page(title=parent_page_title, body=''))
+        if not markdown_files and skip_empty:
+            continue
+
+        if current_path != base_path:
+            # TODO: add support for .pages file to read folder title
+            # TODO: add support for collapsing multiple empty folders
+            if skip_empty:
+                folder_parent_title = find_non_empty_parent_title(
+                    current_path, folder_data
+                )
+            else:
+                folder_parent_title = folder_data[current_path.parent]["title"]
+
+            if len(markdown_files) == 1 and collapse_single_pages:
+                parent_page_title = folder_parent_title
+            else:
+                parent_page_title = folder_data[current_path]["title"]
+                processed_pages.append(
+                    Page(
+                        title=folder_data[current_path]["title"],
+                        parent_title=folder_parent_title,
+                        body="",
+                    )
+                )
 
         for markdown_file in markdown_files:
             processed_page = get_page_data_from_file_path(markdown_file)
             processed_page.parent_title = parent_page_title
-            pages.append(processed_page)
+            processed_pages.append(processed_page)
 
-    return pages
+            # This replaces the title for the current folder with the title for the
+            # document we just parsed, so things below this folder will be correctly
+            # parented to the collapsed document.
+            if len(markdown_files) == 1 and collapse_single_pages:
+                folder_data[current_path]["title"] = processed_page.title
+
+    return processed_pages
 
 
 def get_page_data_from_file_path(file_path: Path) -> Page:
