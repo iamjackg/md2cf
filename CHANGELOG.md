@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - Add support for image attachments
 - Add support for recursive upload of directories
+- Skip empty directories
+- Collapse empty directories
+- Collapse single-document folders
 - Remove dependency on BeautifulSoup by finding the title during rendering
 - Can now specify the title in the YAML front matter
 - Can now specify a prefix to add to the title of each page

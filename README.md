@@ -27,6 +27,14 @@ pip install md2cf
 
 ## Upload script
 
+```text
+usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] -s SPACE
+             [-a PARENT_TITLE | -A PARENT_ID] [-t TITLE] [-m MESSAGE]
+             [-i PAGE_ID] [--prefix PREFIX] [--collapse-single-pages]
+             [--collapse-empty | --skip-empty] [--dry-run]
+             [file_list [file_list ...]]
+```
+
 In order to upload a document, you'll need to supply at least the
 following five parameters:
 
@@ -35,7 +43,7 @@ following five parameters:
   - The **username** to use for logging into the instance
   - The corresponding **password**
   - The **space** in which to publish the page
-  - The **file(s)** to be uploaded -- or standard input if the list is
+  - The **files or directories** to be uploaded -- or standard input if the list is
     missing
 
 Example basic usage:
@@ -44,16 +52,16 @@ Example basic usage:
 md2cf --host 'https://confluence.example.com/rest/api' --username foo --password bar --space TEST document.md
 ```
 
-You can specify multiple files and/or entire folders. If you specify a folder, it will be travelled recursively and all files ending in `.md` will be uploaded. The structure of the folder will be recreated using empty pages to represent subdirectories. 
-
 Note that entering the password as a parameter on the command line is
 generally a bad idea. If you're running the script interactively, you
 can omit the `--password` parameter and the script will prompt for it.
 
-In addition, for the security conscious out there or those who plan on
+For the security conscious out there or those who plan on
 using this as part of a pipeline, you can also supply the hostname,
 username, and password as **environment variables**: `CONFLUENCE_HOST`,
 `CONFLUENCE_USERNAME`, and `CONFLUENCE_PASSWORD`.
+
+You can specify multiple files and/or entire folders. If you specify a folder, it will be traversed recursively and all files ending in `.md` will be uploaded. See [Uploading folders](#uploading-folders) for more information.
 
 ### Page title
 
@@ -87,6 +95,76 @@ change you just made by using the `--message` parameter.
 Uploading a page with the same title twice will update the existing one.
 
 If you want to update a page by page ID, use the `--page-id` option. This allows you to change the page's title, or to update a page with a title that is annoying to use as a parameter.
+
+### Uploading folders
+
+`md2cf` can upload entire folders for you. This can be useful if you want to mirror some in-repo documentation to Confluence.
+
+When uploading entire folders, `md2cf` will recursively traverse all subdirectories and upload any `.md` file it encounters. Folders will be represented by empty pages in the final upload, since Confluence can only nest pages under other pages. You can modify this behaviour through three command line parameters.
+
+#### Collapse single pages
+
+You can collapse directories that only contain one document by passing the `--collapse-single-pages` parameter. This means that a folder layout like this:
+
+```text
+document.md
+folder1/
+  documentA.md
+  documentB.md
+folder2/
+  other-document.md
+```
+
+will be uploaded to Confluence like this:
+
+```text
+document
+folder1/
+  documentA
+  documentB
+other-document
+```
+
+#### Dealing with empty folders
+
+You can also modify the behaviour for empty folders. If you specify `--skip-empty`, this tree layout:
+
+```text
+document.md
+folder1/
+  folder2/
+    folder3/
+      other-document.md
+folderA/
+  interesting-document.md
+    folderB/
+      folderC/
+        lonely-document.md
+```
+
+will be uploaded as:
+
+```text
+document
+folder3/
+  other-document
+folderA/
+  interesting-document
+  folderC/
+    lonely-document
+```
+
+Alternatively, you can specify `--collapse-empty` to merge empty folders together with the following result:
+
+```text
+document
+folder1/folder2/folder3/
+  other-document
+folderA/
+  interesting-document
+  folderB/folderC/
+    lonely-document
+```
 
 ## Library usage
 

@@ -33,16 +33,16 @@ class Page(object):
         self.space = space
 
 
-def find_non_empty_parent_title(
+def find_non_empty_parent_path(
     current_dir: Path, folder_data: Dict[Path, Dict[str, Any]]
-) -> str:
+) -> Path:
     for parent in current_dir.parents:
         if folder_data[parent]["n_files"]:
-            return folder_data[parent]["title"]
+            return parent
 
 
 def get_pages_from_directory(
-    file_path: Path, collapse_single_pages: bool = False, skip_empty: bool = False
+    file_path: Path, collapse_single_pages: bool = False, skip_empty: bool = False, collapse_empty: bool = False,
 ) -> List[Page]:
     processed_pages = list()
     base_path = file_path.resolve()
@@ -65,22 +65,25 @@ def get_pages_from_directory(
         if not markdown_files and not directories:
             continue
 
-        if not markdown_files and skip_empty:
+        if not markdown_files and (skip_empty or collapse_empty):
             continue
 
         if current_path != base_path:
             # TODO: add support for .pages file to read folder title
-            # TODO: add support for collapsing multiple empty folders
-            if skip_empty:
-                folder_parent_title = find_non_empty_parent_title(
+            if skip_empty or collapse_empty:
+                folder_parent_path = find_non_empty_parent_path(
                     current_path, folder_data
                 )
             else:
-                folder_parent_title = folder_data[current_path.parent]["title"]
+                folder_parent_path = current_path.parent
+
+            folder_parent_title = folder_data[folder_parent_path]["title"]
 
             if len(markdown_files) == 1 and collapse_single_pages:
                 parent_page_title = folder_parent_title
             else:
+                if collapse_empty:
+                    folder_data[current_path]["title"] = current_path.relative_to(folder_parent_path)
                 parent_page_title = folder_data[current_path]["title"]
                 processed_pages.append(
                     Page(

@@ -16,69 +16,82 @@ from md2cf.document import Page
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    login_group = parser.add_argument_group("login arguments")
+    login_group.add_argument(
         "-o",
         "--host",
-        help="full URL of the Confluence instance."
+        help="full URL of the Confluence instance. "
         "Can also be specified as CONFLUENCE_HOST environment variable",
         default=os.getenv("CONFLUENCE_HOST"),
     )
-    parser.add_argument(
+    login_group.add_argument(
         "-u",
         "--username",
-        help="the username for logging into Confluence. "
+        help="username for logging into Confluence. "
         "Can also be specified as CONFLUENCE_USERNAME environment variable",
         default=os.getenv("CONFLUENCE_USERNAME"),
     )
-    parser.add_argument(
+    login_group.add_argument(
         "-p",
         "--password",
-        help="the password for logging into Confluence. "
+        help="password for logging into Confluence. "
         "Can also be specified as CONFLUENCE_PASSWORD environment variable. "
         "If not specified, it will be asked for interactively",
         default=os.getenv("CONFLUENCE_PASSWORD"),
     )
+
+    required_group = parser.add_argument_group("required arguments")
     parser.add_argument(
         "-s",
         "--space",
         required=True,
-        help="the key for the Confluence space the page will be published to",
+        help="key for the Confluence space the page will be published to",
     )
 
-    parent_group = parser.add_mutually_exclusive_group()
+    page_group = parser.add_argument_group("page information arguments")
+    parent_group = page_group.add_mutually_exclusive_group()
     parent_group.add_argument(
         "-a",
         "--parent-title",
-        help="the title of the parent page under which the new page will be uploaded",
+        help="title of the parent page under which the new page will be uploaded",
     )
     parent_group.add_argument(
         "-A",
         "--parent-id",
-        help="the ID of the parent page under which the new page will be uploaded",
+        help="ID of the parent page under which the new page will be uploaded",
     )
 
-    parser.add_argument(
+    page_group.add_argument(
         "-t",
         "--title",
-        help="a title for the page. Defaults to first top level header in document, or filename",
+        help="a title for the page. Determined from the document if missing",
     )
-    parser.add_argument("-m", "--message", help="the update message for the change")
-    parser.add_argument("-i", "--page-id", help="the ID of the page to be updated")
-    parser.add_argument(
+    page_group.add_argument("-m", "--message", help="update message for the change")
+    page_group.add_argument("-i", "--page-id", help="ID of the page to be updated")
+    page_group.add_argument(
         "--prefix",
         help="a string to prefix to every page title to ensure uniqueness",
         type=str,
     )
-    parser.add_argument(
-        "--collapse",
+
+    dir_group = parser.add_argument_group("directory arguments")
+    dir_group.add_argument(
+        "--collapse-single-pages",
         action="store_true",
         help="if a folder contains a single document, collapse it so the folder doesn't appear",
     )
-    parser.add_argument(
+    empty_group = dir_group.add_mutually_exclusive_group()
+    empty_group.add_argument(
+        "--collapse-empty",
+        action="store_true",
+        help="collapse multiple empty folders into one",
+    )
+    empty_group.add_argument(
         "--skip-empty",
         action="store_true",
         help="if a folder doesn't contain documents, skip it",
     )
+
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -87,7 +100,7 @@ def get_parser():
     parser.add_argument(
         "file_list",
         type=Path,
-        help="the markdown files or directories to upload to Confluence. Empty for stdin",
+        help="markdown files or directories to upload to Confluence. Empty for stdin",
         nargs="*",
     )
     return parser
@@ -194,7 +207,10 @@ def main():
         for file_name in args.file_list:
             if file_name.is_dir():
                 pages_to_upload += md2cf.document.get_pages_from_directory(
-                    file_name, collapse_single_pages=args.collapse, skip_empty=args.skip_empty
+                    file_name,
+                    collapse_single_pages=args.collapse_single_pages,
+                    skip_empty=args.skip_empty,
+                    collapse_empty=args.collapse_empty,
                 )
             else:
                 try:
@@ -211,11 +227,15 @@ def main():
     something_went_wrong = False
 
     page_title_counts = Counter([page.title for page in pages_to_upload])
-    colliding_titles = [title for title, count in page_title_counts.most_common() if count > 1]
+    colliding_titles = [
+        title for title, count in page_title_counts.most_common() if count > 1
+    ]
     if colliding_titles:
-        sys.stderr.write('Some documents have the same title. Update them or use --force-unique:\n')
+        sys.stderr.write(
+            "Some documents have the same title. Update them or use --force-unique:\n"
+        )
         for title in colliding_titles:
-            sys.stderr.write(f'{title}\n')
+            sys.stderr.write(f"{title}\n")
         exit(1)
 
     for page in pages_to_upload:
