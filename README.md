@@ -63,6 +63,8 @@ username, and password as **environment variables**: `CONFLUENCE_HOST`,
 
 You can specify multiple files and/or entire folders. If you specify a folder, it will be traversed recursively and all files ending in `.md` will be uploaded. See [Uploading folders](#uploading-folders) for more information.
 
+If you just want to get a preview of what `md2cf` would try to upload, the `--dry-run` option will print a list of page data but leave Confluence untouched.
+
 ### Page title
 
 The **title** of the page can come from a few sources, in order of priority from highest to lowest:
