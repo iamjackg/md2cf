@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Skip empty directories
 - Collapse empty directories
 - Collapse single-document folders
+- Support folder title customization
 - Remove dependency on BeautifulSoup by finding the title during rendering
-- Can now specify the title in the YAML front matter
+- Can now specify text top preface to each uploaded page
+- Can now specify a page title in the YAML front matter
 - Can now specify a prefix to add to the title of each page
 - Existing pages can be moved to a different parent
 - Add dry run option

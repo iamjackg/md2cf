@@ -42,7 +42,12 @@ def find_non_empty_parent_path(
 
 
 def get_pages_from_directory(
-    file_path: Path, collapse_single_pages: bool = False, skip_empty: bool = False, collapse_empty: bool = False,
+    file_path: Path,
+    collapse_single_pages: bool = False,
+    skip_empty: bool = False,
+    collapse_empty: bool = False,
+    beautify_folders: bool = False,
+    use_pages_file: bool = False,
 ) -> List[Page]:
     processed_pages = list()
     base_path = file_path.resolve()
@@ -83,11 +88,27 @@ def get_pages_from_directory(
                 parent_page_title = folder_parent_title
             else:
                 if collapse_empty:
-                    folder_data[current_path]["title"] = current_path.relative_to(folder_parent_path)
+                    folder_data[current_path]["title"] = current_path.relative_to(
+                        folder_parent_path
+                    )
+                if beautify_folders:
+                    folder_data[current_path]["title"] = (
+                        folder_data[current_path]["title"]
+                        .replace("-", " ")
+                        .replace("_", " ")
+                        .capitalize()
+                    )
+                elif use_pages_file and ".pages" in file_names:
+                    with open(current_path.joinpath(".pages")) as pages_fp:
+                        pages_file_contents = yaml.safe_load(pages_fp)
+                    if "title" in pages_file_contents:
+                        folder_data[current_path]["title"] = pages_file_contents[
+                            "title"
+                        ]
                 parent_page_title = folder_data[current_path]["title"]
                 processed_pages.append(
                     Page(
-                        title=folder_data[current_path]["title"],
+                        title=parent_page_title,
                         parent_title=folder_parent_title,
                         body="",
                     )

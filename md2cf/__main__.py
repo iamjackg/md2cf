@@ -76,7 +76,7 @@ def get_parser():
     preface_group = page_group.add_mutually_exclusive_group()
     preface_group.add_argument(
         "--preface-markdown",
-        nargs='?',
+        nargs="?",
         type=str,
         default=None,
         const="**Contents are auto-generated, do not edit.**",
@@ -94,6 +94,17 @@ def get_parser():
         "--collapse-single-pages",
         action="store_true",
         help="if a folder contains a single document, collapse it so the folder doesn't appear",
+    )
+    dir_title_group = dir_group.add_mutually_exclusive_group()
+    dir_title_group.add_argument(
+        "--beautify-folders",
+        action="store_true",
+        help="replace hyphens and underscore in folder names with spaces, and capitalize the first letter",
+    )
+    dir_title_group.add_argument(
+        "--use-pages-file",
+        action="store_true",
+        help='use the "title" entry in YAML files called .pages in each directory to change the folder name',
     )
     empty_group = dir_group.add_mutually_exclusive_group()
     empty_group.add_argument(
@@ -226,6 +237,8 @@ def main():
                     collapse_single_pages=args.collapse_single_pages,
                     skip_empty=args.skip_empty,
                     collapse_empty=args.collapse_empty,
+                    beautify_folders=args.beautify_folders,
+                    use_pages_file=args.use_pages_file,
                 )
             else:
                 try:
@@ -253,11 +266,13 @@ def main():
             sys.stderr.write(f"{title}\n")
         exit(1)
 
-    preface_markup = ''
+    preface_markup = ""
     if args.preface_markdown:
         preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
     elif args.preface_file:
-        preface_markup = md2cf.document.get_page_data_from_file_path(args.preface_file).body
+        preface_markup = md2cf.document.get_page_data_from_file_path(
+            args.preface_file
+        ).body
 
     for page in pages_to_upload:
         page.space = args.space

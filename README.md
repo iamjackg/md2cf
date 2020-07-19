@@ -4,7 +4,7 @@
 
 [![image](https://img.shields.io/travis/iamjackg/md2cf/develop.svg?label=develop)](https://travis-ci.org/iamjackg/md2cf)
 
-A library to convert documents written in Markdown to Confluence Storage
+A tool and library to convert documents written in Markdown to Confluence Storage
 format, and optionally upload them to a Confluence Server instance.
 
 ## Features
@@ -117,6 +117,19 @@ If you want to update a page by page ID, use the `--page-id` option. This allows
 `md2cf` can upload entire folders for you. This can be useful if you want to mirror some in-repo documentation to Confluence.
 
 When uploading entire folders, `md2cf` will recursively traverse all subdirectories and upload any `.md` file it encounters. Folders will be represented by empty pages in the final upload, since Confluence can only nest pages under other pages. You can modify this behaviour through three command line parameters.
+
+#### Customizing folder names
+
+Folder names like `interesting-subsection` or `dir1` are not particularly nice. If you pass the `--beautify-folders` option,
+all spaces and hyphens in folder names will be replaced with spaces and the first letter will be capitalized, producing
+`Interesting subsection` and `Dir1`.
+
+Alternatively, you can create a YAML file called `.pages` with the following format in every folder you wish to rename.
+If you pass the `--use-pages-file`, the folder will be given that title.
+
+```yaml
+title: "This is a fantastic title!"
+```
 
 #### Collapse single pages
 
