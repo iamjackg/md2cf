@@ -30,7 +30,10 @@ pip install md2cf
 ```text
 usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] -s SPACE
              [-a PARENT_TITLE | -A PARENT_ID] [-t TITLE] [-m MESSAGE]
-             [-i PAGE_ID] [--prefix PREFIX] [--collapse-single-pages]
+             [-i PAGE_ID] [--prefix PREFIX]
+             [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
+             PREFACE_FILE] [--collapse-single-pages]
+             [--beautify-folders | --use-pages-file]
              [--collapse-empty | --skip-empty] [--dry-run]
              [file_list [file_list ...]]
 ```
