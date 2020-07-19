@@ -25,7 +25,7 @@ setup(
         'tortilla',
         'PyYAML'
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     entry_points={
         'console_scripts': [
             'md2cf=md2cf.__main__:main'
