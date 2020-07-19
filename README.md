@@ -83,6 +83,20 @@ Note that if you're reading from standard input, you must either specify the tit
 
 If you're uploading entire folders, you might want to add a prefix to each page title in order to avoid collisions. You can do this using the `--prefix` parameter.
 
+### Adding a preface
+
+The `--preface-markdown` and `--preface-file` commands allow you to add some text at the top of each page. This is useful
+if you're mirroring documentation to Confluence and want people to know that it's going to be overwritten in an automated
+fashion.
+
+The first option allows you to specify markdown text right on the command line, and defaults to a paragraph saying
+
+**Contents are auto-generated, do not edit.**
+
+The second option takes a path to a markdown file and will prepend its contents to every page. Note that this is parsed
+separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page
+contents such as title or front matter detection. 
+
 ### Parent page
 
 If you want to upload the page under **a specific parent**, you can supply the parent's page ID as the `--parent-id` parameter, or its title through the `--parent-title` parameter. Note 

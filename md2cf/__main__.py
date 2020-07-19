@@ -73,6 +73,21 @@ def get_parser():
         help="a string to prefix to every page title to ensure uniqueness",
         type=str,
     )
+    preface_group = page_group.add_mutually_exclusive_group()
+    preface_group.add_argument(
+        "--preface-markdown",
+        nargs='?',
+        type=str,
+        default=None,
+        const="**Contents are auto-generated, do not edit.**",
+        help="markdown content to prepend to each page. "
+        'Defaults to "**Contents are auto-generated, do not edit.**" if no markdown is specified',
+    )
+    preface_group.add_argument(
+        "--preface-file",
+        type=Path,
+        help="path to a markdown file to be prepended to every page",
+    )
 
     dir_group = parser.add_argument_group("directory arguments")
     dir_group.add_argument(
@@ -238,6 +253,12 @@ def main():
             sys.stderr.write(f"{title}\n")
         exit(1)
 
+    preface_markup = ''
+    if args.preface_markdown:
+        preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
+    elif args.preface_file:
+        preface_markup = md2cf.document.get_page_data_from_file_path(args.preface_file).body
+
     for page in pages_to_upload:
         page.space = args.space
         page.page_id = args.page_id
@@ -256,6 +277,9 @@ def main():
 
         if args.prefix:
             page.title = f"{args.prefix} - {page.title}"
+
+        if preface_markup:
+            page.body = preface_markup + page.body
 
         try:
             if args.dry_run:
