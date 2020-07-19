@@ -23,8 +23,7 @@ setup(
     install_requires=[
         'mistune',
         'tortilla',
-        'lxml',
-        'beautifulsoup4',
+        'PyYAML'
     ],
     python_requires='>=3.5',
     entry_points={
