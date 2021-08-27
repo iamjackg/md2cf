@@ -21,9 +21,9 @@ setup(
     ],
     keywords='markdown confluence',
     install_requires=[
-        'mistune',
-        'tortilla',
-        'PyYAML'
+        'mistune==0.8.4',
+        'tortilla==0.5.0',
+        'PyYAML==5.3.1'
     ],
     python_requires='>=3.6',
     entry_points={
