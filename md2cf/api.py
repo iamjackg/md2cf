@@ -82,7 +82,7 @@ class MinimalConfluence:
         return self.api.content.put(page.id, json=update_structure)
 
     def upload_attachment(self, page, fp):
-        return self.api.content(page.id).child.post(
+        return self.api.content(page.id).child.put(
             "attachment",
             format=(None, "json"),
             headers={"X-Atlassian-Token": "nocheck"},
