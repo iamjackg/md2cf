@@ -260,10 +260,14 @@ def main():
     ]
     if colliding_titles:
         sys.stderr.write(
-            "Some documents have the same title. Update them or use --force-unique:\n"
+            "Some documents have the same title, but all Confluence pages in the same space must have different titles.\n"
+            "These are the documents (and path, if available) with identical titles:\n"
         )
         for title in colliding_titles:
-            sys.stderr.write(f"{title}\n")
+            for filename in [
+                page.file_path for page in pages_to_upload if page.title == title
+            ]:
+                sys.stderr.write(f"{title}\t{filename}\n")
         exit(1)
 
     preface_markup = ""
