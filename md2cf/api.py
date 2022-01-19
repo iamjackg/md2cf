@@ -65,7 +65,9 @@ class MinimalConfluence:
 
     def update_page(self, page, body, parent_id=None, update_message=None):
         update_structure = {
-            "version": {"number": page.version.number + 1,},
+            "version": {
+                "number": page.version.number + 1,
+            },
             "title": page.title,
             "type": "page",
             "body": {"storage": {"value": body, "representation": "storage"}},
@@ -81,11 +83,29 @@ class MinimalConfluence:
 
         return self.api.content.put(page.id, json=update_structure)
 
-    def upload_attachment(self, page, fp):
-        return self.api.content(page.id).child.put(
+    def upload_attachment(self, page, fp, path):
+        existing_attachments = self.api.content(page.id).child.get(
             "attachment",
-            format=(None, "json"),
-            headers={"X-Atlassian-Token": "nocheck"},
-            params={"allowDuplicated": "true"},
-            files={"file": fp},
+            headers={"X-Atlassian-Token": "nocheck", "Accept": "application/json"},
+            params={"filename": path.name},
         )
+
+        if existing_attachments.size:
+            return (
+                self.api.content(page.id)
+                .child.attachment(existing_attachments.results[0].id)
+                .post(
+                    "data",
+                    format=(None, "json"),
+                    headers={"X-Atlassian-Token": "nocheck"},
+                    files={"file": fp},
+                )
+            )
+        else:
+            return self.api.content(page.id).child.post(
+                "attachment",
+                format=(None, "json"),
+                headers={"X-Atlassian-Token": "nocheck"},
+                params={"allowDuplicated": "true"},
+                files={"file": fp},
+            )

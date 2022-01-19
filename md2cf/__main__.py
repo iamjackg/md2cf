@@ -188,7 +188,9 @@ def upsert_page(
 
             print(f"Uploading file: {attachment_path}")
             with attachment_path.open("rb") as fp:
-                confluence.upload_attachment(page=existing_page, fp=fp)
+                confluence.upload_attachment(
+                    page=existing_page, fp=fp, path=attachment_path
+                )
 
 
 def main():
