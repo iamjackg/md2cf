@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+- Fix a bug that prevented uploading directories specified with a relative path
+
 ## 1.1.0 - 2022-01-18
 - Add feature to only update things that have changed by storing the SHA1 in the update message
 - Make attachment updates work on both Confluence Server and Confluence Cloud

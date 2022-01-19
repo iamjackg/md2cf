@@ -58,7 +58,7 @@ def get_pages_from_directory(
     parent_page_title = None
     folder_data = dict()
     for current_path, directories, file_names in os.walk(file_path):
-        current_path = Path(current_path)
+        current_path = Path(current_path).resolve()
 
         markdown_files = [
             Path(current_path, file_name)
