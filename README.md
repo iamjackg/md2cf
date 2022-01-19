@@ -34,7 +34,7 @@ usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] -s SPACE
              [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
              PREFACE_FILE] [--collapse-single-pages]
              [--beautify-folders | --use-pages-file]
-             [--collapse-empty | --skip-empty] [--dry-run]
+             [--collapse-empty | --skip-empty] [--dry-run] [--only-changed]
              [file_list [file_list ...]]
 ```
 
@@ -107,13 +107,17 @@ If you want to upload the page under **a specific parent**, you can supply the p
 ### Update message
 
 You can also optionally specify an **update message** to describe the
-change you just made by using the `--message` parameter.
+change you just made by using the `--message` parameter. Note that if you're using the `--only-changed` option there will also be a hash of the page/attachment contents at the end of the version update message.
 
 ### Updating an existing page
 
 Uploading a page with the same title twice will update the existing one.
 
 If you want to update a page by page ID, use the `--page-id` option. This allows you to change the page's title, or to update a page with a title that is annoying to use as a parameter.
+
+### Avoiding uploading content that hasn't changed
+
+If you want to avoid redundant uploads (and the corresponding update emails) when your content hasn't changed, you can add the `--only-changed` option. Note that this will store a hash of the page/attachment contents at the end of the version update message.
 
 ### Uploading folders
 
@@ -210,6 +214,8 @@ output from a markdown document.
 ```python
 import mistune
 from md2cf.confluence_renderer import ConfluenceRenderer
+
+markdown_text = "# Page title\n\nInteresting *content* here!"
 
 renderer = ConfluenceRenderer(use_xhtml=True)
 confluence_mistune = mistune.Markdown(renderer=renderer)

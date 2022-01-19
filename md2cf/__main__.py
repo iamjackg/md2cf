@@ -1,7 +1,9 @@
 import argparse
 import getpass
+import hashlib
 import os
 import pprint
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -12,6 +14,9 @@ from requests import HTTPError
 from md2cf import api
 import md2cf.document
 from md2cf.document import Page
+
+
+CONTENT_HASH_REGEX = re.compile(r"\[v([a-f0-9]{40})]$")
 
 
 def get_parser():
@@ -124,6 +129,12 @@ def get_parser():
         help="print information on all the pages instead of uploading to Confluence",
     )
     parser.add_argument(
+        "--only-changed",
+        action="store_true",
+        help="only upload pages and attachments that have changed. "
+        "This adds a hash of the page or attachment contents to the update message",
+    )
+    parser.add_argument(
         "file_list",
         type=Path,
         help="markdown files or directories to upload to Confluence. Empty for stdin",
@@ -144,8 +155,20 @@ def print_page_details(page: Page):
     pprint.pprint(page.__dict__)
 
 
+# Adapted from https://stackoverflow.com/a/3431838
+def get_file_sha1(file_path: Path):
+    hash_sha1 = hashlib.sha1()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_sha1.update(chunk)
+    return hash_sha1.hexdigest()
+
+
 def upsert_page(
-    confluence: api.MinimalConfluence, message: str, page: md2cf.document.Page
+    confluence: api.MinimalConfluence,
+    message: str,
+    page: md2cf.document.Page,
+    only_changed: bool = False,
 ):
     existing_page = confluence.get_page(
         title=page.title, space_key=page.space, page_id=page.page_id
@@ -160,6 +183,16 @@ def upsert_page(
                 raise KeyError("The parent page could not be found")
             page.parent_id = parent_page.id
 
+    page_message = message
+    if only_changed:
+        # If the functionality was just enabled, the previous version might not have the version hash in the message
+        new_page_hash = page.get_content_hash()
+        page_message = (
+            f"{page_message} [v{new_page_hash}]"
+            if page_message
+            else f"[v{new_page_hash}]"
+        )
+
     if existing_page is None:
         print(f"Creating new page: {page.title}")
         existing_page = confluence.create_page(
@@ -167,16 +200,28 @@ def upsert_page(
             title=page.title,
             body=page.body,
             parent_id=page.parent_id,
-            update_message=message,
+            update_message=page_message,
         )
     else:
-        print(f"Updating page: {page.title}")
-        confluence.update_page(
-            page=existing_page,
-            body=page.body,
-            parent_id=page.parent_id,
-            update_message=message,
-        )
+        should_update = True
+        if only_changed:
+            original_page_hash_match = CONTENT_HASH_REGEX.match(
+                existing_page.version.message
+            )
+            if original_page_hash_match is not None:
+                original_page_hash = original_page_hash_match.group(1)
+                if original_page_hash == page.get_content_hash():
+                    should_update = False
+                    print(f"Skipping page that didn't change: {page.title}")
+
+        if should_update:
+            print(f"Updating page: {page.title}")
+            confluence.update_page(
+                page=existing_page,
+                body=page.body,
+                parent_id=page.parent_id,
+                update_message=page_message,
+            )
 
     if page.attachments:
         print(f"Uploading attachments for page: {page.title}")
@@ -186,11 +231,50 @@ def upsert_page(
             else:
                 attachment_path = attachment
 
-            print(f"Uploading file: {attachment_path}")
-            with attachment_path.open("rb") as fp:
-                confluence.upload_attachment(
-                    page=existing_page, fp=fp, path=attachment_path
+            attachment_message = message
+            if only_changed:
+                new_attachment_hash = get_file_sha1(attachment_path)
+                attachment_message = (
+                    f"{attachment_message} [v{new_attachment_hash}]"
+                    if attachment_message
+                    else f"[v{new_attachment_hash}]"
                 )
+
+            existing_attachment = confluence.get_attachment(
+                existing_page, attachment_path.name
+            )
+
+            if existing_attachment is None:
+                print(f"Uploading file: {attachment_path}")
+                with attachment_path.open("rb") as fp:
+                    confluence.create_attachment(
+                        page=existing_page, fp=fp, message=attachment_message
+                    )
+            else:
+                should_update = True
+                if only_changed:
+                    original_attachment_hash_match = CONTENT_HASH_REGEX.match(
+                        existing_attachment.version.message
+                    )
+                    if original_attachment_hash_match is not None:
+                        original_attachment_hash = original_attachment_hash_match.group(
+                            1
+                        )
+                        if original_attachment_hash == new_attachment_hash:
+                            should_update = False
+                            print(
+                                f"Skipping attachment that didn't change: {attachment_path}"
+                            )
+
+                if should_update:
+                    print(f"Updating file: {attachment_path}")
+                    with attachment_path.open("rb") as fp:
+                        confluence.update_attachment(
+                            page=existing_page,
+                            fp=fp,
+                            existing_attachment=existing_attachment,
+                            message=attachment_message,
+                        )
 
 
 def main():
@@ -306,7 +390,12 @@ def main():
             if args.dry_run:
                 print_page_details(page)
             else:
-                upsert_page(confluence=confluence, message=args.message, page=page)
+                upsert_page(
+                    confluence=confluence,
+                    message=args.message,
+                    page=page,
+                    only_changed=args.only_changed,
+                )
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
             something_went_wrong = True

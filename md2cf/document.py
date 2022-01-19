@@ -1,3 +1,4 @@
+import hashlib
 import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -31,6 +32,9 @@ class Page(object):
         self.parent_id = parent_id
         self.parent_title = parent_title
         self.space = space
+
+    def get_content_hash(self):
+        return hashlib.sha1(self.body.encode()).hexdigest()
 
 
 def find_non_empty_parent_path(

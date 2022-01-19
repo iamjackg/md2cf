@@ -83,29 +83,35 @@ class MinimalConfluence:
 
         return self.api.content.put(page.id, json=update_structure)
 
-    def upload_attachment(self, page, fp, path):
+    def get_attachment(self, page, name):
         existing_attachments = self.api.content(page.id).child.get(
             "attachment",
             headers={"X-Atlassian-Token": "nocheck", "Accept": "application/json"},
-            params={"filename": path.name},
+            params={"filename": name, "expand": "version"},
         )
 
         if existing_attachments.size:
-            return (
-                self.api.content(page.id)
-                .child.attachment(existing_attachments.results[0].id)
-                .post(
-                    "data",
-                    format=(None, "json"),
-                    headers={"X-Atlassian-Token": "nocheck"},
-                    files={"file": fp},
-                )
-            )
-        else:
-            return self.api.content(page.id).child.post(
-                "attachment",
+            return existing_attachments.results[0]
+
+    def update_attachment(self, page, fp, existing_attachment, message=""):
+        return (
+            self.api.content(page.id)
+            .child.attachment(existing_attachment.id)
+            .post(
+                "data",
+                data={"comment": message} if message else None,
                 format=(None, "json"),
                 headers={"X-Atlassian-Token": "nocheck"},
-                params={"allowDuplicated": "true"},
                 files={"file": fp},
             )
+        )
+
+    def create_attachment(self, page, fp, message=""):
+        return self.api.content(page.id).child.post(
+            "attachment",
+            data={"comment": message} if message else None,
+            format=(None, "json"),
+            headers={"X-Atlassian-Token": "nocheck"},
+            params={"allowDuplicated": "true"},
+            files={"file": fp},
+        )
