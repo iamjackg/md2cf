@@ -205,7 +205,7 @@ def upsert_page(
     else:
         should_update = True
         if only_changed:
-            original_page_hash_match = CONTENT_HASH_REGEX.match(
+            original_page_hash_match = CONTENT_HASH_REGEX.search(
                 existing_page.version.message
             )
             if original_page_hash_match is not None:
@@ -253,7 +253,7 @@ def upsert_page(
             else:
                 should_update = True
                 if only_changed:
-                    original_attachment_hash_match = CONTENT_HASH_REGEX.match(
+                    original_attachment_hash_match = CONTENT_HASH_REGEX.search(
                         existing_attachment.version.message
                     )
                     if original_attachment_hash_match is not None:
