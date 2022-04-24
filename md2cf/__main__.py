@@ -44,6 +44,11 @@ def get_parser():
         "If not specified, it will be asked for interactively",
         default=os.getenv("CONFLUENCE_PASSWORD"),
     )
+    login_group.add_argument(
+        "--insecure",
+        action="store_true",
+        help="do not verify SSL certificates",
+    )
 
     required_group = parser.add_argument_group("required arguments")
     parser.add_argument(
@@ -290,7 +295,10 @@ def main():
         args.password = getpass.getpass()
 
     confluence = api.MinimalConfluence(
-        host=args.host, username=args.username, password=args.password
+        host=args.host,
+        username=args.username,
+        password=args.password,
+        verify=not args.insecure,
     )
 
     if (args.title or args.page_id) and (

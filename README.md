@@ -28,7 +28,7 @@ pip install md2cf
 ## Upload script
 
 ```text
-usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] -s SPACE
+usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--insecure] -s SPACE
              [-a PARENT_TITLE | -A PARENT_ID] [-t TITLE] [-m MESSAGE]
              [-i PAGE_ID] [--prefix PREFIX]
              [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
@@ -63,6 +63,8 @@ For the security conscious out there or those who plan on
 using this as part of a pipeline, you can also supply the hostname,
 username, and password as **environment variables**: `CONFLUENCE_HOST`,
 `CONFLUENCE_USERNAME`, and `CONFLUENCE_PASSWORD`.
+
+If you're using self-signed certificates and/or want to ignore SSL errors, add the `--insecure` option.
 
 You can specify multiple files and/or entire folders. If you specify a folder, it will be traversed recursively and all files ending in `.md` will be uploaded. See [Uploading folders](#uploading-folders) for more information.
 

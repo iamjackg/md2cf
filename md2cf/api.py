@@ -1,16 +1,22 @@
 import tortilla
 from requests.auth import HTTPBasicAuth
+import requests.packages
 
 
 class MinimalConfluence:
-    def __init__(self, host, username, password):
+    def __init__(self, host, username, password, verify=True):
         self.host = host
         self.username = username
         self.password = password
 
         self.api = tortilla.wrap(
-            self.host, auth=HTTPBasicAuth(self.username, self.password)
+            self.host, auth=HTTPBasicAuth(self.username, self.password), verify=verify
         )
+
+        if not verify:
+            requests.packages.urllib3.disable_warnings(
+                requests.packages.urllib3.exceptions.InsecureRequestWarning
+            )
 
     def get_page(self, title=None, space_key=None, page_id=None):
         if page_id is not None:
