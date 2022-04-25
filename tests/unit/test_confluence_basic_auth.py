@@ -21,11 +21,12 @@ class Bunch(dict):
 
 @pytest.fixture()
 def confluence(mocker):
-    from md2cf.api import MinimalConfluence
+    from md2cf.api import MinimalConfluenceBasicAuth
 
     mocker.patch("md2cf.api.tortilla", mocker.Mock())
 
-    return MinimalConfluence(host="http://example.com/", username="foo", password="bar")
+    return MinimalConfluenceBasicAuth(host="http://example.com/", username="foo", password="bar")
+
 
 
 def test_object_properly_initialized(confluence, mocker):

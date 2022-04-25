@@ -45,6 +45,13 @@ def get_parser():
         default=os.getenv("CONFLUENCE_PASSWORD"),
     )
     login_group.add_argument(
+        "-b",
+        "--bearer-token",
+        help="Bearer Token for loggin into Confluence. "
+        "Can also be specified as CONFLUENCE_BEARER_TOKEN environment variable",
+        default=os.getenv("CONFLUENCE_BEARER_TOKEN"),
+    )
+    login_group.add_argument(
         "--insecure",
         action="store_true",
         help="do not verify SSL certificates",
@@ -285,21 +292,27 @@ def upsert_page(
 def main():
     args = get_parser().parse_args()
 
-    for required_parameter in ["host", "username"]:
-        if getattr(args, required_parameter) is None:
-            print_missing_parameter(required_parameter)
-            exit(1)
+    if args.host is None:
+        print_missing_parameter(args.host)
+        exit(1)
+    
+    if args.username is None and args.bearer_token is None:
+        print_missing_parameter(f"{args.username} or {args.bearer_token}")
+        exit(1)            
 
-    if args.password is None:
-        print("Password:")
-        args.password = getpass.getpass()
+    if args.username is not None:
+        if args.password is None:
+            print("Password:")
+            args.password = getpass.getpass()
 
-    confluence = api.MinimalConfluence(
-        host=args.host,
-        username=args.username,
-        password=args.password,
-        verify=not args.insecure,
-    )
+        confluence = api.MinimalConfluenceBasicAuth(
+            host=args.host, username=args.username, password=args.password, verify=not args.insecure
+        )
+    elif args.bearer_token is not None:
+        confluence = api.MinimalConfluenceBearerAuth(
+            host=args.host, token=args.bearer_token, verify=not args.insecure
+        )
+
 
     if (args.title or args.page_id) and (
         len(args.file_list) > 1 or any(map(os.path.isdir, args.file_list))

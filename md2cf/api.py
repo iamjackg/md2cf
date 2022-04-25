@@ -4,19 +4,8 @@ import requests.packages
 
 
 class MinimalConfluence:
-    def __init__(self, host, username, password, verify=True):
-        self.host = host
-        self.username = username
-        self.password = password
-
-        self.api = tortilla.wrap(
-            self.host, auth=HTTPBasicAuth(self.username, self.password), verify=verify
-        )
-
-        if not verify:
-            requests.packages.urllib3.disable_warnings(
-                requests.packages.urllib3.exceptions.InsecureRequestWarning
-            )
+    def __init__(self, api):
+        self.api = api
 
     def get_page(self, title=None, space_key=None, page_id=None):
         if page_id is not None:
@@ -121,3 +110,38 @@ class MinimalConfluence:
             params={"allowDuplicated": "true"},
             files={"file": fp},
         )
+
+#CUSTOM AUTH IMPLEMENTATION
+
+class MinimalConfluenceBasicAuth(MinimalConfluence):
+    """
+    MinimalConfluenceBasicAuth is a children of MinimalConfluence.
+    His purpose is to auth to Confluence with user / password feature
+    """
+    def __init__(self, host, username, password, verify=True):
+
+        api = tortilla.wrap(
+            host, auth=HTTPBasicAuth(username, password)
+        )
+        if not verify:
+            requests.packages.urllib3.disable_warnings(
+                requests.packages.urllib3.exceptions.InsecureRequestWarning
+            )
+        super().__init__(api)
+
+class MinimalConfluenceBearerAuth(MinimalConfluence):
+    """
+    MinimalConfluenceBearerAuth is a children of MinimalConfluence.
+    His purpose is to auth to Confluence with bearer token (can be generated under personal token) feature
+    """
+    def __init__(self, host, token, verify=True):
+
+        api = tortilla.wrap(
+            host
+        )
+        api.config.headers.Authorization = f"Bearer {token}"
+        if not verify:
+            requests.packages.urllib3.disable_warnings(
+                requests.packages.urllib3.exceptions.InsecureRequestWarning
+            )
+        super().__init__(api)

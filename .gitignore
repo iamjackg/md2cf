@@ -150,3 +150,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# VSCODE configs
+.vscode

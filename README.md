@@ -28,7 +28,7 @@ pip install md2cf
 ## Upload script
 
 ```text
-usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--insecure] -s SPACE
+usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [-b --BEARER-TOKEN] [--insecure] -s SPACE
              [-a PARENT_TITLE | -A PARENT_ID] [-t TITLE] [-m MESSAGE]
              [-i PAGE_ID] [--prefix PREFIX]
              [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
@@ -45,6 +45,7 @@ following five parameters:
     the REST API (e.g. `http://confluence.example.com/rest/api`)
   - The **username** to use for logging into the instance
   - The corresponding **password**
+  - The **bearer-token** is the personal token (when using --bearer-token, you can omit username and password arguments)
   - The **space** in which to publish the page
   - The **files or directories** to be uploaded -- or standard input if the list is
     missing
@@ -62,7 +63,7 @@ can omit the `--password` parameter and the script will prompt for it.
 For the security conscious out there or those who plan on
 using this as part of a pipeline, you can also supply the hostname,
 username, and password as **environment variables**: `CONFLUENCE_HOST`,
-`CONFLUENCE_USERNAME`, and `CONFLUENCE_PASSWORD`.
+`CONFLUENCE_USERNAME`, and `CONFLUENCE_PASSWORD`; or `CONFLUENCE_HOST` and `CONFLUENCE_BEARER_TOKEN`
 
 If you're using self-signed certificates and/or want to ignore SSL errors, add the `--insecure` option.
 
@@ -229,10 +230,24 @@ confluence_body = confluence_mistune(markdown_text)
 md2cf embeds a teeny-tiny implementation of the Confluence Server REST
 API that allows you to create, read, and update pages.
 
+Here an example with basic authentification (username & password)
 ```python
-from md2cf.api import MinimalConfluence
+from md2cf.api import MinimalConfluenceBasicAuth
 
-confluence = MinimalConfluence(host='http://example.com/rest/api', username='foo', password='bar')
+confluence = MinimalConfluenceBasicAuth(host='http://example.com/rest/api', username='foo', password='bar')
+
+confluence.create_page(space='TEST', title='Test page', body='<p>Nothing</p>', update_message='Created page')
+
+page = confluence.get_page(title='Test page', space_key='TEST')
+confluence.update_page(page=page, body='New content', update_message='Changed page contents')
+```
+
+Here the same example but with the bearer token authentification. 
+"MY_PERSONAL_TOKEN" token can be generated under Confluence on "Personal Token" in Settings.
+```python
+from md2cf.api import MinimalConfluenceBearerAuth
+
+confluence = MinimalConfluenceBearerAuth(host='http://example.com/rest/api', token='MY_PERSONAL_TOKEN')
 
 confluence.create_page(space='TEST', title='Test page', body='<p>Nothing</p>', update_message='Created page')
 
