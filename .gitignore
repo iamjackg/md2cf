@@ -152,3 +152,6 @@ venv.bak/
 
 # VSCODE configs
 .vscode
+
+#MACOS X
+.DS_Store
