@@ -51,7 +51,7 @@ def get_parser():
     )
 
     required_group = parser.add_argument_group("required arguments")
-    parser.add_argument(
+    required_group.add_argument(
         "-s",
         "--space",
         required=True,
