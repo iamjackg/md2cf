@@ -28,6 +28,29 @@ def confluence(mocker):
     return MinimalConfluence(host="http://example.com/", username="foo", password="bar")
 
 
+def test_user_pass_auth():
+    import md2cf.api as api
+
+    c = api.MinimalConfluence(
+        host="http://example.com/", username="foo", password="bar"
+    )
+
+    auth = c.api._parent.defaults["auth"]
+
+    assert auth is not None
+    assert auth.username == "foo"
+    assert auth.password == "bar"
+
+
+def test_token_auth():
+    import md2cf.api as api
+
+    c = api.MinimalConfluence(host="http://example.com/", token="hello")
+
+    assert "auth" not in c.api._parent.defaults
+    assert c.api.config.headers.Authorization == "Bearer hello"
+
+
 def test_object_properly_initialized(confluence, mocker):
     assert isinstance(confluence.api, mocker.Mock)
 
@@ -203,7 +226,9 @@ def test_update_page(confluence):
     test_new_body = "<p>This is my new body</p>"
 
     update_structure = {
-        "version": {"number": test_page_version + 1,},
+        "version": {
+            "number": test_page_version + 1,
+        },
         "title": test_page_title,
         "type": "page",
         "body": {"storage": {"value": test_new_body, "representation": "storage"}},

@@ -45,6 +45,12 @@ def get_parser():
         default=os.getenv("CONFLUENCE_PASSWORD"),
     )
     login_group.add_argument(
+        "--token",
+        help="personal access token for logging into Confluence. "
+        "Can also be specified as CONFLUENCE_TOKEN environment variable",
+        default=os.getenv("CONFLUENCE_TOKEN"),
+    )
+    login_group.add_argument(
         "--insecure",
         action="store_true",
         help="do not verify SSL certificates",
@@ -285,12 +291,15 @@ def upsert_page(
 def main():
     args = get_parser().parse_args()
 
-    for required_parameter in ["host", "username"]:
-        if getattr(args, required_parameter) is None:
-            print_missing_parameter(required_parameter)
-            exit(1)
+    if args.host is None:
+        print_missing_parameter("host")
+        exit(1)
 
-    if args.password is None:
+    if args.username is None and args.token is None:
+        print_missing_parameter("username or bearer token")
+        exit(1)
+
+    if args.password is None and args.token is None:
         print("Password:")
         args.password = getpass.getpass()
 
@@ -298,6 +307,7 @@ def main():
         host=args.host,
         username=args.username,
         password=args.password,
+        token=args.token,
         verify=not args.insecure,
     )
 

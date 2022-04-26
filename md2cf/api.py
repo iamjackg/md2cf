@@ -4,14 +4,23 @@ import requests.packages
 
 
 class MinimalConfluence:
-    def __init__(self, host, username, password, verify=True):
-        self.host = host
-        self.username = username
-        self.password = password
-
-        self.api = tortilla.wrap(
-            self.host, auth=HTTPBasicAuth(self.username, self.password), verify=verify
-        )
+    def __init__(self, host, username=None, password=None, token=None, verify=True):
+        if token is not None:
+            self.api = tortilla.wrap(
+                host,
+                verify=verify,
+            )
+            self.api.config.headers.Authorization = f"Bearer {token}"
+        elif username is not None and password is not None:
+            self.api = tortilla.wrap(
+                host,
+                auth=HTTPBasicAuth(username, password),
+                verify=verify,
+            )
+        else:
+            raise ValueError(
+                "Either a personal access token, or username and password are required"
+            )
 
         if not verify:
             requests.packages.urllib3.disable_warnings(

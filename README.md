@@ -28,9 +28,9 @@ pip install md2cf
 ## Upload script
 
 ```text
-usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--insecure] -s SPACE
-             [-a PARENT_TITLE | -A PARENT_ID] [-t TITLE] [-m MESSAGE]
-             [-i PAGE_ID] [--prefix PREFIX]
+usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
+             [--insecure] -s SPACE [-a PARENT_TITLE | -A PARENT_ID] [-t TITLE]
+             [-m MESSAGE] [-i PAGE_ID] [--prefix PREFIX]
              [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
              PREFACE_FILE] [--collapse-single-pages]
              [--beautify-folders | --use-pages-file]
@@ -43,8 +43,9 @@ following five parameters:
 
   - The **hostname** of your Confluence instance, including the path to
     the REST API (e.g. `http://confluence.example.com/rest/api`)
-  - The **username** to use for logging into the instance
-  - The corresponding **password**
+  - Either
+    - The **username** and **password** to use for logging into the instance, or
+    - a **personal access token**
   - The **space** in which to publish the page
   - The **files or directories** to be uploaded -- or standard input if the list is
     missing
@@ -55,20 +56,26 @@ Example basic usage:
 md2cf --host 'https://confluence.example.com/rest/api' --username foo --password bar --space TEST document.md
 ```
 
+Or, if using a token:
+
+```bash
+md2cf --host 'https://confluence.example.com/rest/api' --bearer-token '2104v3ryl0ngt0k3n720' --space TEST document.md
+```
+
 Note that entering the password as a parameter on the command line is
 generally a bad idea. If you're running the script interactively, you
 can omit the `--password` parameter and the script will prompt for it.
 
 For the security conscious out there or those who plan on
 using this as part of a pipeline, you can also supply the hostname,
-username, and password as **environment variables**: `CONFLUENCE_HOST`,
-`CONFLUENCE_USERNAME`, and `CONFLUENCE_PASSWORD`.
+username, password, and token as **environment variables**: `CONFLUENCE_HOST`,
+`CONFLUENCE_USERNAME`, `CONFLUENCE_PASSWORD`, and `CONFLUENCE_TOKEN`.
 
 If you're using self-signed certificates and/or want to ignore SSL errors, add the `--insecure` option.
 
 You can specify multiple files and/or entire folders. If you specify a folder, it will be traversed recursively and all files ending in `.md` will be uploaded. See [Uploading folders](#uploading-folders) for more information.
 
-If you just want to get a preview of what `md2cf` would try to upload, the `--dry-run` option will print a list of page data but leave Confluence untouched.
+If you just want to get a preview of what `md2cf` would do, the `--dry-run` option will print a list of page data but leave Confluence untouched.
 
 ### Page title
 
