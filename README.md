@@ -1,9 +1,5 @@
 # md2cf
 
-[![image](https://img.shields.io/travis/iamjackg/md2cf/master.svg?label=master)](https://travis-ci.org/iamjackg/md2cf)
-
-[![image](https://img.shields.io/travis/iamjackg/md2cf/develop.svg?label=develop)](https://travis-ci.org/iamjackg/md2cf)
-
 A tool and library to convert documents written in Markdown to Confluence Storage
 format, and optionally upload them to a Confluence Server instance.
 
