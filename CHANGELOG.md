@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for bearer token authentication (thanks @Guuz1)
 
 ## 1.2.0 - 2022-04-24
-- Add option to ignore SSL certificate validation 
+- Add option to ignore SSL certificate validation
 
 ## 1.1.2 - 2022-01-25
 - Fix a bug that would not match the content hash when another message was present

@@ -87,7 +87,7 @@ The **title** of the page can come from a few sources, in order of priority from
   title: This is a title
   ---
   # Rest of the document here
-  ``` 
+  ```
 * the first top-level header found in the document (i.e. the first `#` header)
 * the filename if there are no top-level headers.
 
@@ -105,13 +105,11 @@ The first option allows you to specify markdown text right on the command line, 
 
 **Contents are auto-generated, do not edit.**
 
-The second option takes a path to a markdown file and will prepend its contents to every page. Note that this is parsed
-separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page
-contents such as title or front matter detection. 
+The second option takes a path to a markdown file and will prepend its contents to every page. Note that this is parsed separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page contents such as title or front matter detection.
 
 ### Parent page
 
-If you want to upload the page under **a specific parent**, you can supply the parent's page ID as the `--parent-id` parameter, or its title through the `--parent-title` parameter. Note 
+If you want to upload the page under **a specific parent**, you can supply the parent's page ID as the `--parent-id` parameter, or its title through the `--parent-title` parameter.
 
 ### Update message
 

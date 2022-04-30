@@ -97,7 +97,9 @@ class ConfluenceRenderer(mistune.Renderer):
         if not parsed_source.netloc:
             # Local file, requires upload
             basename = Path(src).name
-            url_tag = ConfluenceTag("attachment", attrib={"filename": basename}, namespace="ri")
+            url_tag = ConfluenceTag(
+                "attachment", attrib={"filename": basename}, namespace="ri"
+            )
             self.attachments.append(src)
         else:
             url_tag = ConfluenceTag("url", attrib={"value": src}, namespace="ri")

@@ -10,14 +10,14 @@ def script_loc(request):
 
     # uses .join instead of .dirname so we get a LocalPath object instead of
     # a string. LocalPath.join calls normpath for us when joining the path
-    return request.fspath.join('..')
+    return request.fspath.join("..")
 
 
 def test_full_document(script_loc):
-    with open(str(script_loc.join('test.md'))) as test_file:
+    with open(str(script_loc.join("test.md"))) as test_file:
         markdown_data = test_file.read()
 
-    with open(str(script_loc.join('result.xml'))) as result_file:
+    with open(str(script_loc.join("result.xml"))) as result_file:
         result_data = result_file.read()
 
     renderer = ConfluenceRenderer(use_xhtml=True)
