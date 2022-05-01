@@ -21,7 +21,9 @@ def test_upsert_page(mocker):
     message = mocker.sentinel.message
 
     main.upsert_page(
-        confluence=confluence, page=page, message=message,
+        confluence=confluence,
+        page=page,
+        message=message,
     )
 
     confluence.get_page.assert_has_calls(
