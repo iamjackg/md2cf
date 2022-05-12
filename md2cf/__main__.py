@@ -60,8 +60,8 @@ def get_parser():
     required_group.add_argument(
         "-s",
         "--space",
-        required=True,
         help="key for the Confluence space the page will be published to",
+        default=os.getenv("CONFLUENCE_SPACE"),
     )
 
     page_group = parser.add_argument_group("page information arguments")
@@ -157,7 +157,7 @@ def get_parser():
 def print_missing_parameter(parameter_name: str):
     sys.stderr.write(
         "Missing required parameter: {}\n"
-        "Use {} --help to get help.".format(parameter_name, sys.argv[0])
+        "Use {} --help to get help.\n".format(parameter_name, sys.argv[0])
     )
 
 
@@ -297,6 +297,10 @@ def main():
 
     if args.username is None and args.token is None:
         print_missing_parameter("username or bearer token")
+        exit(1)
+
+    if args.space is None:
+        print_missing_parameter("space")
         exit(1)
 
     if args.password is None and args.token is None:
