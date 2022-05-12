@@ -234,6 +234,8 @@ def upsert_page(
                 update_message=page_message,
             )
 
+    print(confluence.get_url(existing_page))
+
     if page.attachments:
         print(f"Uploading attachments for page: {page.title}")
         for attachment in page.attachments:
