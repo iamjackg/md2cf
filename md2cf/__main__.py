@@ -26,14 +26,14 @@ def get_parser():
         "-o",
         "--host",
         help="full URL of the Confluence instance. "
-        "Can also be specified as CONFLUENCE_HOST environment variable",
+        "Can also be specified as CONFLUENCE_HOST environment variable.",
         default=os.getenv("CONFLUENCE_HOST"),
     )
     login_group.add_argument(
         "-u",
         "--username",
         help="username for logging into Confluence. "
-        "Can also be specified as CONFLUENCE_USERNAME environment variable",
+        "Can also be specified as CONFLUENCE_USERNAME environment variable.",
         default=os.getenv("CONFLUENCE_USERNAME"),
     )
     login_group.add_argument(
@@ -41,13 +41,13 @@ def get_parser():
         "--password",
         help="password for logging into Confluence. "
         "Can also be specified as CONFLUENCE_PASSWORD environment variable. "
-        "If not specified, it will be asked for interactively",
+        "If not specified, it will be asked for interactively.",
         default=os.getenv("CONFLUENCE_PASSWORD"),
     )
     login_group.add_argument(
         "--token",
         help="personal access token for logging into Confluence. "
-        "Can also be specified as CONFLUENCE_TOKEN environment variable",
+        "Can also be specified as CONFLUENCE_TOKEN environment variable.",
         default=os.getenv("CONFLUENCE_TOKEN"),
     )
     login_group.add_argument(
@@ -60,7 +60,8 @@ def get_parser():
     required_group.add_argument(
         "-s",
         "--space",
-        help="key for the Confluence space the page will be published to",
+        help="key for the Confluence space the page will be published to. "
+        "Can also be specified as CONFLUENCE_SPACE environment variable.",
         default=os.getenv("CONFLUENCE_SPACE"),
     )
 
