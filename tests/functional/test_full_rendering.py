@@ -1,6 +1,6 @@
 import pytest
 
-from md2cf.confluence_renderer import ConfluenceRenderer
+from md2cf import document
 import mistune
 
 
@@ -20,10 +20,7 @@ def test_full_document(script_loc):
     with open(str(script_loc.join("result.xml"))) as result_file:
         result_data = result_file.read()
 
-    # TODO: Consider using document.parse_page instead
-    renderer = ConfluenceRenderer(use_xhtml=True)
-    confluence_mistune = mistune.Markdown(renderer=renderer)
-    confluence_content = confluence_mistune(markdown_data)
+    page = document.parse_page(markdown_data)
 
-    assert confluence_content == result_data
-    assert renderer.title == "Markdown: Syntax"
+    assert page.body == result_data
+    assert page.title == "Markdown: Syntax"
