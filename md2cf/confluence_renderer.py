@@ -62,6 +62,8 @@ class ConfluenceRenderer(mistune.Renderer):
     def header(self, text, level, raw=None):
         if self.title is None and level == 1:
             self.title = text
+            # Don't duplicate page title as a header
+            return ''
 
         return super(ConfluenceRenderer, self).header(text, level, raw=raw)
 
