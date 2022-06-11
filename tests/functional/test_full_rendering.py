@@ -1,6 +1,6 @@
 import pytest
 
-from md2cf.confluence_renderer import ConfluenceRenderer
+from md2cf import document
 import mistune
 
 
@@ -14,14 +14,12 @@ def script_loc(request):
 
 
 def test_full_document(script_loc):
-    with open(str(script_loc.join("test.md"))) as test_file:
-        markdown_data = test_file.read()
+    markdown_path = script_loc.join("test.md")
 
     with open(str(script_loc.join("result.xml"))) as result_file:
         result_data = result_file.read()
 
-    renderer = ConfluenceRenderer(use_xhtml=True)
-    confluence_mistune = mistune.Markdown(renderer=renderer)
-    confluence_content = confluence_mistune(markdown_data)
+    page = document.get_page_data_from_file_path(markdown_path)
 
-    assert confluence_content == result_data
+    assert page.body == result_data
+    assert page.title == "Markdown: Syntax"
