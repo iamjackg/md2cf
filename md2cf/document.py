@@ -39,11 +39,14 @@ class Page(object):
 
 
 def find_non_empty_parent_path(
-    current_dir: Path, folder_data: Dict[Path, Dict[str, Any]]
+    current_dir: Path,
+    folder_data: Dict[Path, Dict[str, Any]],
+    default: Path
 ) -> Path:
     for parent in current_dir.parents:
-        if folder_data[parent]["n_files"]:
+        if parent in folder_data and folder_data[parent]["n_files"]:
             return parent
+    return default.absolute()
 
 
 def get_pages_from_directory(
@@ -97,13 +100,12 @@ def get_pages_from_directory(
             # TODO: add support for .pages file to read folder title
             if skip_empty or collapse_empty:
                 folder_parent_path = find_non_empty_parent_path(
-                    current_path, folder_data
+                    current_path, folder_data, default=file_path
                 )
             else:
                 folder_parent_path = current_path.parent
 
             folder_parent_title = folder_data[folder_parent_path]["title"]
-
             if len(markdown_files) == 1 and collapse_single_pages:
                 parent_page_title = folder_parent_title
             else:
