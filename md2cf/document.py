@@ -7,6 +7,7 @@ import mistune
 import yaml
 from yaml.parser import ParserError
 
+from md2cf.ignored_files import IgnoredFiles
 from md2cf.confluence_renderer import ConfluenceRenderer
 
 
@@ -53,10 +54,23 @@ def get_pages_from_directory(
     beautify_folders: bool = False,
     use_pages_file: bool = False,
 ) -> List[Page]:
+    """
+    Collect a list of markdown files recursively under the file_path directory.
+
+    :param file_path: The starting path from which to search
+    :param collapse_single_pages:
+    :param skip_empty:
+    :param collapse_empty:
+    :param beautify_folders:
+    :param use_pages_file:
+    :return: A list of paths to the markdown files to upload.
+    """
     processed_pages = list()
     base_path = file_path.resolve()
     parent_page_title = None
     folder_data = dict()
+    ignores = IgnoredFiles(file_path)
+
     for current_path, directories, file_names in os.walk(file_path):
         current_path = Path(current_path).resolve()
 
@@ -65,6 +79,8 @@ def get_pages_from_directory(
             for file_name in file_names
             if file_name.endswith(".md")
         ]
+        # Filter out ignored files
+        markdown_files = [path for path in markdown_files if not ignores.is_ignored(path)]
 
         folder_data[current_path] = {
             "n_files": len(markdown_files),

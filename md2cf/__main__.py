@@ -1,6 +1,7 @@
 import argparse
 import getpass
 import hashlib
+import logging
 import os
 import pprint
 import re
@@ -17,6 +18,8 @@ from md2cf.document import Page
 
 
 CONTENT_HASH_REGEX = re.compile(r"\[v([a-f0-9]{40})]$")
+
+logging.basicConfig(level=logging.INFO)
 
 
 def get_parser():
