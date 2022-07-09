@@ -64,8 +64,9 @@ can omit the `--password` parameter and the script will prompt for it.
 
 For the security conscious out there or those who plan on
 using this as part of a pipeline, you can also supply the hostname,
-username, password, and token as **environment variables**: `CONFLUENCE_HOST`,
-`CONFLUENCE_USERNAME`, `CONFLUENCE_PASSWORD`, and `CONFLUENCE_TOKEN`.
+username, password, token, and space as **environment variables**:
+`CONFLUENCE_HOST`, `CONFLUENCE_USERNAME`, `CONFLUENCE_PASSWORD`,
+`CONFLUENCE_TOKEN`, and `CONFLUENCE_SPACE`.
 
 If you're using self-signed certificates and/or want to ignore SSL errors, add the `--insecure` option.
 
