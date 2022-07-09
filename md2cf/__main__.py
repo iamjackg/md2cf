@@ -306,7 +306,6 @@ def main():
         exit(1)
 
     if args.password is None and args.token is None:
-        print("Password:")
         args.password = getpass.getpass()
 
     confluence = api.MinimalConfluence(
