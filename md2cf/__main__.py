@@ -89,6 +89,12 @@ def get_parser():
         help="a string to prefix to every page title to ensure uniqueness",
         type=str,
     )
+    page_group.add_argument(
+        "--strip-top-header",
+        action="store_true",
+        help="remove the top level header from the page",
+    )
+
     preface_group = page_group.add_mutually_exclusive_group()
     preface_group.add_argument(
         "--preface-markdown",
@@ -322,7 +328,9 @@ def main():
     pages_to_upload: List[Page] = list()
     if not args.file_list:  # Uploading from standard input
         pages_to_upload.append(
-            md2cf.document.get_page_data_from_lines(sys.stdin.readlines())
+            md2cf.document.get_page_data_from_lines(
+                sys.stdin.readlines(), strip_header=args.strip_top_header
+            )
         )
 
         if not (pages_to_upload[0].title or args.title):
@@ -347,7 +355,9 @@ def main():
             else:
                 try:
                     pages_to_upload.append(
-                        md2cf.document.get_page_data_from_file_path(file_name)
+                        md2cf.document.get_page_data_from_file_path(
+                            file_name, strip_header=args.strip_top_header
+                        )
                     )
                 except FileNotFoundError:
                     sys.stderr.write(f"File {file_name} does not exist\n")
@@ -378,6 +388,7 @@ def main():
     if args.preface_markdown:
         preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
     elif args.preface_file:
+        # We don't use strip_header here since this is just a preface doc
         preface_markup = md2cf.document.get_page_data_from_file_path(
             args.preface_file
         ).body

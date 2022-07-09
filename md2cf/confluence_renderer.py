@@ -50,8 +50,9 @@ class ConfluenceTag(object):
 
 
 class ConfluenceRenderer(mistune.Renderer):
-    def __init__(self, **kwargs):
+    def __init__(self, strip_header=False, **kwargs):
         super().__init__(**kwargs)
+        self.strip_header = strip_header
         self.attachments = list()
         self.title = None
 
@@ -63,7 +64,8 @@ class ConfluenceRenderer(mistune.Renderer):
         if self.title is None and level == 1:
             self.title = text
             # Don't duplicate page title as a header
-            return ''
+            if self.strip_header:
+                return ""
 
         return super(ConfluenceRenderer, self).header(text, level, raw=raw)
 

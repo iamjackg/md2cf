@@ -97,6 +97,15 @@ def test_tag_render_with_child_and_text():
     assert output == test_tag_markup
 
 
+def test_renderer_reinit():
+    renderer = ConfluenceRenderer()
+    renderer.header("this is a title", 1)
+    assert renderer.title is not None
+
+    renderer.reinit()
+    assert renderer.title is None
+
+
 def test_renderer_block_code():
     test_code = "this is a piece of code"
     test_markup = (
@@ -132,6 +141,15 @@ def test_renderer_header_sets_title():
     renderer.header(test_header, 1)
 
     assert renderer.title == test_header
+
+
+def test_renderer_strips_header():
+    test_header = "this is a header"
+    renderer = ConfluenceRenderer(strip_header=True)
+
+    result = renderer.header(test_header, 1)
+
+    assert result == ""
 
 
 def test_renderer_header_lower_level_does_not_set_title():

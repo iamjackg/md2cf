@@ -89,6 +89,8 @@ The **title** of the page can come from a few sources, in order of priority from
 
 Note that if you're reading from standard input, you must either specify the title through the command line or have a title in the content as a header or in the front matter.
 
+If you want to strip the top level header from the document, so the title isn't repeated in the body of the page, pass the `--`
+
 If you're uploading entire folders, you might want to add a prefix to each page title in order to avoid collisions. You can do this using the `--prefix` parameter.
 
 ### Adding a preface
