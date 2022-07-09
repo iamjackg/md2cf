@@ -130,3 +130,6 @@ class MinimalConfluence:
             params={"allowDuplicated": "true"},
             files={"file": fp},
         )
+
+    def get_url(self, page):
+        return f"{page._links.base}{page._links.webui}"
