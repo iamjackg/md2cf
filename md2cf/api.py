@@ -27,7 +27,9 @@ class MinimalConfluence:
                 requests.packages.urllib3.exceptions.InsecureRequestWarning
             )
 
-    def get_page(self, title=None, space_key=None, page_id=None, additional_expansions=[]):
+    def get_page(
+        self, title=None, space_key=None, page_id=None, additional_expansions=None
+    ):
         """
         Create a new page in a space
 
@@ -41,12 +43,12 @@ class MinimalConfluence:
             The response from the API
 
         """
+        params = None
+        if additional_expansions is not None:
+            params = {"expand": ",".join(additional_expansions)}
+
         if page_id is not None:
-            if additional_expansions is not None:
-                params = {"expand": ",".join(additional_expansions)}
-                return self.api.content.get(page_id, params=params)
-            else:
-                return self.api.content.get(page_id)
+            return self.api.content.get(page_id, params=params)
         elif title is not None:
             params = {"title": title}
             if space_key is not None:
@@ -55,7 +57,10 @@ class MinimalConfluence:
             try:
                 # A search by title/space doesn't return full page objects, and since we don't support expansion in this implementation
                 # just yet, we just retrieve the "full" page data using the page ID for the first search result
-                return self.get_page(page_id=response.results[0].id, additional_expansions=additional_expansions)
+                return self.get_page(
+                    page_id=response.results[0].id,
+                    additional_expansions=additional_expansions,
+                )
             except IndexError:
                 return None
         else:

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Add option to remove the top level header from the page
+- Print page URL after upsert (@bhrutledge)
+- Add environment variable for Confluence space (@bhrutledge)
+- Support expansions when getting a page (@ssaraswati)
+### Fixed
+- Remove duplicate password prompt (@bhrutledge)
 
 ## 1.3.1 - 2022-04-30
 ### Changed
