@@ -52,6 +52,7 @@ def get_pages_from_directory(
     collapse_empty: bool = False,
     beautify_folders: bool = False,
     use_pages_file: bool = False,
+    strip_header: bool = False,
 ) -> List[Page]:
     processed_pages = list()
     base_path = file_path.resolve()
@@ -119,7 +120,9 @@ def get_pages_from_directory(
                 )
 
         for markdown_file in markdown_files:
-            processed_page = get_page_data_from_file_path(markdown_file)
+            processed_page = get_page_data_from_file_path(
+                markdown_file, strip_header=strip_header
+            )
             processed_page.parent_title = parent_page_title
             processed_pages.append(processed_page)
 
@@ -132,14 +135,14 @@ def get_pages_from_directory(
     return processed_pages
 
 
-def get_page_data_from_file_path(file_path: Path) -> Page:
+def get_page_data_from_file_path(file_path: Path, strip_header: bool = False) -> Page:
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
 
     with open(file_path) as file_handle:
         markdown_lines = file_handle.readlines()
 
-    page = get_page_data_from_lines(markdown_lines)
+    page = get_page_data_from_lines(markdown_lines, strip_header=strip_header)
 
     if not page.title:
         page.title = file_path.stem
@@ -149,20 +152,22 @@ def get_page_data_from_file_path(file_path: Path) -> Page:
     return page
 
 
-def get_page_data_from_lines(markdown_lines: List[str]) -> Page:
+def get_page_data_from_lines(
+    markdown_lines: List[str], strip_header: bool = False
+) -> Page:
     frontmatter = get_document_frontmatter(markdown_lines)
     if "frontmatter_end_line" in frontmatter:
         markdown_lines = markdown_lines[frontmatter["frontmatter_end_line"] :]
 
-    page = parse_page(markdown_lines)
+    page = parse_page(markdown_lines, strip_header=strip_header)
 
     if "title" in frontmatter:
         page.title = frontmatter["title"]
     return page
 
 
-def parse_page(markdown_lines: List[str]) -> Page:
-    renderer = ConfluenceRenderer(use_xhtml=True)
+def parse_page(markdown_lines: List[str], strip_header: bool = False) -> Page:
+    renderer = ConfluenceRenderer(use_xhtml=True, strip_header=strip_header)
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune("".join(markdown_lines))
 

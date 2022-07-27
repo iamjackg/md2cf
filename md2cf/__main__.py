@@ -26,14 +26,14 @@ def get_parser():
         "-o",
         "--host",
         help="full URL of the Confluence instance. "
-        "Can also be specified as CONFLUENCE_HOST environment variable",
+        "Can also be specified as CONFLUENCE_HOST environment variable.",
         default=os.getenv("CONFLUENCE_HOST"),
     )
     login_group.add_argument(
         "-u",
         "--username",
         help="username for logging into Confluence. "
-        "Can also be specified as CONFLUENCE_USERNAME environment variable",
+        "Can also be specified as CONFLUENCE_USERNAME environment variable.",
         default=os.getenv("CONFLUENCE_USERNAME"),
     )
     login_group.add_argument(
@@ -41,13 +41,13 @@ def get_parser():
         "--password",
         help="password for logging into Confluence. "
         "Can also be specified as CONFLUENCE_PASSWORD environment variable. "
-        "If not specified, it will be asked for interactively",
+        "If not specified, it will be asked for interactively.",
         default=os.getenv("CONFLUENCE_PASSWORD"),
     )
     login_group.add_argument(
         "--token",
         help="personal access token for logging into Confluence. "
-        "Can also be specified as CONFLUENCE_TOKEN environment variable",
+        "Can also be specified as CONFLUENCE_TOKEN environment variable.",
         default=os.getenv("CONFLUENCE_TOKEN"),
     )
     login_group.add_argument(
@@ -60,8 +60,9 @@ def get_parser():
     required_group.add_argument(
         "-s",
         "--space",
-        required=True,
-        help="key for the Confluence space the page will be published to",
+        help="key for the Confluence space the page will be published to. "
+        "Can also be specified as CONFLUENCE_SPACE environment variable.",
+        default=os.getenv("CONFLUENCE_SPACE"),
     )
 
     page_group = parser.add_argument_group("page information arguments")
@@ -89,6 +90,12 @@ def get_parser():
         help="a string to prefix to every page title to ensure uniqueness",
         type=str,
     )
+    page_group.add_argument(
+        "--strip-top-header",
+        action="store_true",
+        help="remove the top level header from the page",
+    )
+
     preface_group = page_group.add_mutually_exclusive_group()
     preface_group.add_argument(
         "--preface-markdown",
@@ -157,7 +164,7 @@ def get_parser():
 def print_missing_parameter(parameter_name: str):
     sys.stderr.write(
         "Missing required parameter: {}\n"
-        "Use {} --help to get help.".format(parameter_name, sys.argv[0])
+        "Use {} --help to get help.\n".format(parameter_name, sys.argv[0])
     )
 
 
@@ -234,6 +241,8 @@ def upsert_page(
                 update_message=page_message,
             )
 
+    print(confluence.get_url(existing_page))
+
     if page.attachments:
         print(f"Uploading attachments for page: {page.title}")
         for attachment in page.attachments:
@@ -299,8 +308,11 @@ def main():
         print_missing_parameter("username or bearer token")
         exit(1)
 
+    if args.space is None:
+        print_missing_parameter("space")
+        exit(1)
+
     if args.password is None and args.token is None:
-        print("Password:")
         args.password = getpass.getpass()
 
     confluence = api.MinimalConfluence(
@@ -322,7 +334,9 @@ def main():
     pages_to_upload: List[Page] = list()
     if not args.file_list:  # Uploading from standard input
         pages_to_upload.append(
-            md2cf.document.get_page_data_from_lines(sys.stdin.readlines())
+            md2cf.document.get_page_data_from_lines(
+                sys.stdin.readlines(), strip_header=args.strip_top_header
+            )
         )
 
         if not (pages_to_upload[0].title or args.title):
@@ -347,7 +361,9 @@ def main():
             else:
                 try:
                     pages_to_upload.append(
-                        md2cf.document.get_page_data_from_file_path(file_name)
+                        md2cf.document.get_page_data_from_file_path(
+                            file_name, strip_header=args.strip_top_header
+                        )
                     )
                 except FileNotFoundError:
                     sys.stderr.write(f"File {file_name} does not exist\n")
@@ -378,6 +394,7 @@ def main():
     if args.preface_markdown:
         preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
     elif args.preface_file:
+        # We don't use strip_header here since this is just a preface doc
         preface_markup = md2cf.document.get_page_data_from_file_path(
             args.preface_file
         ).body

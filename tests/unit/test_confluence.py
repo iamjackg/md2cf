@@ -62,7 +62,35 @@ def test_get_page_with_page_id(confluence):
 
     page = confluence.get_page(page_id=test_page_id)
 
-    confluence.api.content.get.assert_called_once_with(test_page_id)
+    confluence.api.content.get.assert_called_once_with(test_page_id, params=None)
+    assert page == test_return_value
+
+
+def test_get_page_with_page_id_and_one_expansion(confluence):
+    test_page_id = 12345
+    test_return_value = "some_stuff"
+    confluence.api.content.get.return_value = test_return_value
+
+    page = confluence.get_page(page_id=test_page_id, additional_expansions=["history"])
+
+    confluence.api.content.get.assert_called_once_with(
+        test_page_id, params={"expand": "history"}
+    )
+    assert page == test_return_value
+
+
+def test_get_page_with_page_id_and_multiple_expansions(confluence):
+    test_page_id = 12345
+    test_return_value = "some_stuff"
+    confluence.api.content.get.return_value = test_return_value
+
+    page = confluence.get_page(
+        page_id=test_page_id, additional_expansions=["history", "version"]
+    )
+
+    confluence.api.content.get.assert_called_once_with(
+        test_page_id, params={"expand": "history,version"}
+    )
     assert page == test_return_value
 
 
@@ -76,7 +104,8 @@ def test_get_page_with_title(confluence, mocker):
     page = confluence.get_page(title=test_page_title)
 
     confluence.api.content.get.has_calls(
-        mocker.call(params={"title": test_page_title}), mocker.call(test_page_id)
+        mocker.call(params={"title": test_page_title}),
+        mocker.call(test_page_id, params=None),
     )
 
     assert page == test_return_value
@@ -109,10 +138,15 @@ def test_get_page_with_all_parameters(confluence, mocker):
     confluence.api.content.get.return_value = test_return_value
 
     page = confluence.get_page(
-        page_id=test_page_id, title=test_page_title, space_key=test_page_space
+        page_id=test_page_id,
+        title=test_page_title,
+        space_key=test_page_space,
+        additional_expansions=["history"],
     )
 
-    confluence.api.content.get.assert_called_once_with(test_page_id)
+    confluence.api.content.get.assert_called_once_with(
+        test_page_id, params={"expand": "history"}
+    )
 
     assert page == test_return_value
 
