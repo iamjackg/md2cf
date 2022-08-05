@@ -7,36 +7,31 @@ from typing import List
 from gitignore_parser import parse_gitignore
 
 
-class IgnoredFiles:
+def is_ignored(filepath: Path) -> bool:
     """
-    Use .is_ignored(p) to check path p against all
-    found gitignore files in the parent paths of the repo.
+    Checks a file against all relevant .gitignore files in the tree
+    and returns true if any of them ignores the file.
+    :param filepath: a path representing a file on the filesystem
+    :return: True if the file is ignored by git.
     """
-    def __init__(self, start_path):
-        gitignores = _collect_gitignores(start_path)
-        self.matchers = [parse_gitignore(str(g)) for g in gitignores]
-
-    def is_ignored(self, p: Path):
-        """
-        :param p: The path to the file to check
-        :return: True if the filepath is matched in any .gitignore matchers.
-        """
-        return any([m(str(p)) for m in self.matchers])
+    gitignores = collect_gitignores(filepath)
+    matchers = [parse_gitignore(str(g)) for g in gitignores]
+    return any([m(filepath) for m in matchers])
 
 
-def _collect_gitignores(start_path: Path) -> List[Path]:
+def collect_gitignores(filepath: Path) -> List[Path]:
     """
     Collect all .gitignore files from start location to the root of the
     repository. Note that a .git directory must be present in the parent tree
     for the .gitignore files to be respected.
 
-    :param start_path: The path to start searching for .gitignore files
-    :return:
+    :param filepath: The path to start searching for .gitignore files
+    :return: List of paths to .gitignore files relevant for start_path
     """
 
     ret = list()
 
-    p = start_path.absolute()
+    p = filepath.absolute()
     if p.is_file():
         p = p.parent
     while str(p) != '/':

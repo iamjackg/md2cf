@@ -2,7 +2,7 @@ from pathlib import Path
 from os import mkdir
 
 from tempfile import TemporaryDirectory
-from md2cf.ignored_files import _collect_gitignores, IgnoredFiles
+from md2cf.ignored_files import collect_gitignores, is_ignored
 
 README = """# Title
 
@@ -80,36 +80,32 @@ def test_collect_gitignores():
         expected_root_gitignore = root_path.joinpath(".gitignore")
         expected_subdir_gitignore = root_path.joinpath("subdir_local_ignore", ".gitignore")
 
-        gitignores = _collect_gitignores(root_path)
+        gitignores = collect_gitignores(root_path)
         assert gitignores == [expected_root_gitignore]
 
-        gitignores = _collect_gitignores(root_path.joinpath("subdir_included"))
+        gitignores = collect_gitignores(root_path.joinpath("subdir_included"))
         assert gitignores == [expected_root_gitignore]
 
-        gitignores = _collect_gitignores(root_path.joinpath("subdir_root_ignore"))
+        gitignores = collect_gitignores(root_path.joinpath("subdir_root_ignore"))
         assert gitignores == [expected_root_gitignore]
 
-        gitignores = _collect_gitignores(root_path.joinpath("subdir_local_ignore"))
+        gitignores = collect_gitignores(root_path.joinpath("subdir_local_ignore"))
         assert gitignores == [expected_subdir_gitignore, expected_root_gitignore]
 
 
-def test_ignored_files():
+def test_is_ignored():
     with TemporaryDirectory(prefix="test_ignored_files_") as root_dir:
         root_path = Path(root_dir)
         _create_test_project(root_path)
 
         expected_root_readme = root_path.joinpath("README.md")
-        ignores = IgnoredFiles(expected_root_readme)
-        assert not ignores.is_ignored(expected_root_readme)
+        assert not is_ignored(expected_root_readme)
 
         expected_included_readme = root_path.joinpath("subdir_included", "README.md")
-        ignores = IgnoredFiles(expected_included_readme)
-        assert not ignores.is_ignored(expected_included_readme)
+        assert not is_ignored(expected_included_readme)
 
         expected_root_excluded_readme = root_path.joinpath("subdir_root_ignore", "README.md")
-        ignores = IgnoredFiles(expected_root_excluded_readme)
-        assert ignores.is_ignored(expected_root_excluded_readme)
+        assert is_ignored(expected_root_excluded_readme)
 
         expected_local_excluded_readme = root_path.joinpath("subdir_local_ignore", "README.md")
-        ignores = IgnoredFiles(expected_local_excluded_readme)
-        assert ignores.is_ignored(expected_local_excluded_readme)
+        assert is_ignored(expected_local_excluded_readme)

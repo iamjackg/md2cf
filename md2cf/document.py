@@ -7,7 +7,7 @@ import mistune
 import yaml
 from yaml.parser import ParserError
 
-from md2cf.ignored_files import IgnoredFiles
+from md2cf.ignored_files import is_ignored
 from md2cf.confluence_renderer import ConfluenceRenderer
 
 
@@ -72,7 +72,6 @@ def get_pages_from_directory(
     base_path = file_path.resolve()
     parent_page_title = None
     folder_data = dict()
-    ignores = IgnoredFiles(file_path)
 
     for current_path, directories, file_names in os.walk(file_path):
         current_path = Path(current_path).resolve()
@@ -83,7 +82,7 @@ def get_pages_from_directory(
             if file_name.endswith(".md")
         ]
         # Filter out ignored files
-        markdown_files = [path for path in markdown_files if not ignores.is_ignored(path)]
+        markdown_files = [path for path in markdown_files if not is_ignored(path)]
 
         folder_data[current_path] = {
             "n_files": len(markdown_files),
