@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from typing import List
 
-from .gitignore_parser import parse_gitignore
+from gitignore_parser import parse_gitignore
 
 log = logging.getLogger("ignored_files")
 log.setLevel(logging.WARNING)

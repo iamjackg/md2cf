@@ -20,7 +20,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     keywords="markdown confluence",
-    install_requires=["mistune==0.8.4", "tortilla==0.5.0", "PyYAML==6.0"],
+    install_requires=["mistune==0.8.4", "tortilla==0.5.0", "PyYAML==6.0", "gitignore_parser==0.0.8"],
     python_requires=">=3.6",
     entry_points={"console_scripts": ["md2cf=md2cf.__main__:main"]},
 )
