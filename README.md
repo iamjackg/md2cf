@@ -64,8 +64,9 @@ can omit the `--password` parameter and the script will prompt for it.
 
 For the security conscious out there or those who plan on
 using this as part of a pipeline, you can also supply the hostname,
-username, password, and token as **environment variables**: `CONFLUENCE_HOST`,
-`CONFLUENCE_USERNAME`, `CONFLUENCE_PASSWORD`, and `CONFLUENCE_TOKEN`.
+username, password, token, and space as **environment variables**:
+`CONFLUENCE_HOST`, `CONFLUENCE_USERNAME`, `CONFLUENCE_PASSWORD`,
+`CONFLUENCE_TOKEN`, and `CONFLUENCE_SPACE`.
 
 If you're using self-signed certificates and/or want to ignore SSL errors, add the `--insecure` option.
 
@@ -88,6 +89,8 @@ The **title** of the page can come from a few sources, in order of priority from
 * the filename if there are no top-level headers.
 
 Note that if you're reading from standard input, you must either specify the title through the command line or have a title in the content as a header or in the front matter.
+
+If you want to strip the top level header from the document, so the title isn't repeated in the body of the page, pass the `--`
 
 If you're uploading entire folders, you might want to add a prefix to each page title in order to avoid collisions. You can do this using the `--prefix` parameter.
 

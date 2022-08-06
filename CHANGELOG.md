@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.4.0 - 2022-07-27
+### Added
+- Add option to remove the top level header from the page
+- Print page URL after upsert (@bhrutledge)
+- Add environment variable for Confluence space (@bhrutledge)
+- Support expansions when getting a page (@ssaraswati)
+### Fixed
+- Remove duplicate password prompt (@bhrutledge)
+
 ## 1.3.1 - 2022-04-30
 ### Changed
 - Upgraded PyYAML to 6.0
