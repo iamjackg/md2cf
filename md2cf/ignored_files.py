@@ -15,8 +15,9 @@ class GitRepository:
     the .terraform folder may contain copies of the tree including the .git
     folder.
     """
-    def __init__(self, repo_path: Path):
-        self.root_dir = self._find_root_dir(repo_path)
+    def __init__(self, repo_path: Path, use_gitignore=True):
+        self.use_gitignore = use_gitignore
+        self.root_dir = self._find_root_dir(repo_path) if use_gitignore else None
 
     @staticmethod
     def _find_root_dir(start_path: Path):
@@ -69,6 +70,8 @@ class GitRepository:
         :param filepath: Path to the file to check if it is ignored.
         :return: True if the file is ignored in any .gitignore file
         """
+        if not self.use_gitignore:
+            return False
         if self.root_dir is None:
             return False
         gitignores = self.collect_gitignores(filepath)

@@ -56,6 +56,7 @@ def get_pages_from_directory(
     collapse_empty: bool = False,
     beautify_folders: bool = False,
     use_pages_file: bool = False,
+    use_gitignore: bool = True
 ) -> List[Page]:
     """
     Collect a list of markdown files recursively under the file_path directory.
@@ -66,14 +67,14 @@ def get_pages_from_directory(
     :param collapse_empty:
     :param beautify_folders:
     :param use_pages_file:
+    :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory search
     :return: A list of paths to the markdown files to upload.
     """
     processed_pages = list()
     base_path = file_path.resolve()
     parent_page_title = None
     folder_data = dict()
-    git_repo = GitRepository(file_path)
-
+    git_repo = GitRepository(file_path, use_gitignore=use_gitignore)
 
     for current_path, directories, file_names in os.walk(file_path):
         current_path = Path(current_path).resolve()

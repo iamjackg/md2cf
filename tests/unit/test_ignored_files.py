@@ -111,3 +111,22 @@ def test_is_ignored():
 
         expected_local_excluded_readme = root_path.joinpath("subdir_local_ignore", "README.md")
         assert git_repo.is_ignored(expected_local_excluded_readme)
+
+
+def test_is_ignored_with_disabled_gitignores():
+    with TemporaryDirectory(prefix="test_ignored_files_") as root_dir:
+        root_path = Path(root_dir)
+        _create_test_project(root_path)
+        git_repo = GitRepository(root_path, use_gitignore=False)
+
+        expected_root_readme = root_path.joinpath("README.md")
+        assert not git_repo.is_ignored(expected_root_readme)
+
+        expected_included_readme = root_path.joinpath("subdir_included", "README.md")
+        assert not git_repo.is_ignored(expected_included_readme)
+
+        expected_root_excluded_readme = root_path.joinpath("subdir_root_ignore", "README.md")
+        assert not git_repo.is_ignored(expected_root_excluded_readme)
+
+        expected_local_excluded_readme = root_path.joinpath("subdir_local_ignore", "README.md")
+        assert not git_repo.is_ignored(expected_local_excluded_readme)
