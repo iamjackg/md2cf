@@ -74,6 +74,7 @@ def get_pages_from_directory(
     folder_data = dict()
     git_repo = GitRepository(file_path)
 
+
     for current_path, directories, file_names in os.walk(file_path):
         current_path = Path(current_path).resolve()
 

@@ -19,7 +19,7 @@ class GitRepository:
         self.root_dir = self._find_root_dir(repo_path)
 
     @staticmethod
-    def _find_root_dir(start_path: Path) -> Path:
+    def _find_root_dir(start_path: Path):
         """
         Traverse the parents of the start_path until we find a .git directory
         :param start_path: A file or directory path to start searching from
@@ -33,7 +33,8 @@ class GitRepository:
             if git_dir.exists() and git_dir.is_dir():
                 return p
             p = p.parent
-        raise Exception(f"Failed to locate .git dir for {start_path}")
+        print(f"No git root found, gitignore checking disabled.")
+        return None
 
     def collect_gitignores(self, filepath: Path) -> List[Path]:
         """
@@ -68,6 +69,8 @@ class GitRepository:
         :param filepath: Path to the file to check if it is ignored.
         :return: True if the file is ignored in any .gitignore file
         """
+        if self.root_dir is None:
+            return False
         gitignores = self.collect_gitignores(filepath)
         matchers = [parse_gitignore(str(g)) for g in gitignores]
         return any([m(filepath) for m in matchers])
