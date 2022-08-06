@@ -20,6 +20,11 @@ class GitRepository:
 
     @staticmethod
     def _find_root_dir(start_path: Path) -> Path:
+        """
+        Traverse the parents of the start_path until we find a .git directory
+        :param start_path: A file or directory path to start searching from
+        :return: The root directory of the git repo.
+        """
         p = start_path.absolute()
         if p.is_file():
             p = p.parent
@@ -58,6 +63,11 @@ class GitRepository:
         return list()
 
     def is_ignored(self, filepath: Path) -> bool:
+        """
+        Check if filepath is ignored in the git repository
+        :param filepath: Path to the file to check if it is ignored.
+        :return: True if the file is ignored in any .gitignore file
+        """
         gitignores = self.collect_gitignores(filepath)
         matchers = [parse_gitignore(str(g)) for g in gitignores]
         return any([m(filepath) for m in matchers])
