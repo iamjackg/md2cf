@@ -82,6 +82,15 @@ class ConfluenceRenderer(mistune.Renderer):
         body_tag.text = text
         return body_tag
 
+    def text(self, text):
+        """
+        Rendering unformatted text.
+        Replace newlines with spaces to create well-aligned paragraphs in Confluence.
+
+        :param text: text content.
+        """
+        return super().text(text.replace('\n',' '))
+
     def block_code(self, code, lang=None):
         root_element = self.structured_macro("code")
         if lang is not None:

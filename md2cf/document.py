@@ -7,6 +7,7 @@ import mistune
 import yaml
 from yaml.parser import ParserError
 
+from md2cf.ignored_files import GitRepository
 from md2cf.confluence_renderer import ConfluenceRenderer
 
 
@@ -38,11 +39,14 @@ class Page(object):
 
 
 def find_non_empty_parent_path(
-    current_dir: Path, folder_data: Dict[Path, Dict[str, Any]]
+    current_dir: Path,
+    folder_data: Dict[Path, Dict[str, Any]],
+    default: Path
 ) -> Path:
     for parent in current_dir.parents:
-        if folder_data[parent]["n_files"]:
+        if parent in folder_data and folder_data[parent]["n_files"]:
             return parent
+    return default.absolute()
 
 
 def get_pages_from_directory(
@@ -53,11 +57,26 @@ def get_pages_from_directory(
     beautify_folders: bool = False,
     use_pages_file: bool = False,
     strip_header: bool = False,
+    use_gitignore: bool = True
 ) -> List[Page]:
+    """
+    Collect a list of markdown files recursively under the file_path directory.
+
+    :param file_path: The starting path from which to search
+    :param collapse_single_pages:
+    :param skip_empty:
+    :param collapse_empty:
+    :param beautify_folders:
+    :param use_pages_file:
+    :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory search
+    :return: A list of paths to the markdown files to upload.
+    """
     processed_pages = list()
     base_path = file_path.resolve()
     parent_page_title = None
     folder_data = dict()
+    git_repo = GitRepository(file_path, use_gitignore=use_gitignore)
+
     for current_path, directories, file_names in os.walk(file_path):
         current_path = Path(current_path).resolve()
 
@@ -66,6 +85,8 @@ def get_pages_from_directory(
             for file_name in file_names
             if file_name.endswith(".md")
         ]
+        # Filter out ignored files
+        markdown_files = [path for path in markdown_files if not git_repo.is_ignored(path)]
 
         folder_data[current_path] = {
             "n_files": len(markdown_files),
@@ -82,13 +103,12 @@ def get_pages_from_directory(
             # TODO: add support for .pages file to read folder title
             if skip_empty or collapse_empty:
                 folder_parent_path = find_non_empty_parent_path(
-                    current_path, folder_data
+                    current_path, folder_data, default=file_path
                 )
             else:
                 folder_parent_path = current_path.parent
 
             folder_parent_title = folder_data[folder_parent_path]["title"]
-
             if len(markdown_files) == 1 and collapse_single_pages:
                 parent_page_title = folder_parent_title
             else:
