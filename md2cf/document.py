@@ -39,9 +39,7 @@ class Page(object):
 
 
 def find_non_empty_parent_path(
-    current_dir: Path,
-    folder_data: Dict[Path, Dict[str, Any]],
-    default: Path
+    current_dir: Path, folder_data: Dict[Path, Dict[str, Any]], default: Path
 ) -> Path:
     for parent in current_dir.parents:
         if parent in folder_data and folder_data[parent]["n_files"]:
@@ -57,7 +55,7 @@ def get_pages_from_directory(
     beautify_folders: bool = False,
     use_pages_file: bool = False,
     strip_header: bool = False,
-    use_gitignore: bool = True
+    use_gitignore: bool = True,
 ) -> List[Page]:
     """
     Collect a list of markdown files recursively under the file_path directory.
@@ -68,6 +66,7 @@ def get_pages_from_directory(
     :param collapse_empty:
     :param beautify_folders:
     :param use_pages_file:
+    :param strip_header:
     :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory search
     :return: A list of paths to the markdown files to upload.
     """
@@ -86,7 +85,9 @@ def get_pages_from_directory(
             if file_name.endswith(".md")
         ]
         # Filter out ignored files
-        markdown_files = [path for path in markdown_files if not git_repo.is_ignored(path)]
+        markdown_files = [
+            path for path in markdown_files if not git_repo.is_ignored(path)
+        ]
 
         folder_data[current_path] = {
             "n_files": len(markdown_files),

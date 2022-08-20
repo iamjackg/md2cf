@@ -134,8 +134,9 @@ def get_parser():
         action="store_false",
         dest="use_gitignore",
         default=True,
-        help="do not use .gitignore files to filter directory search"
+        help="do not use .gitignore files to filter directory search",
     )
+
     empty_group = dir_group.add_mutually_exclusive_group()
     empty_group.add_argument(
         "--collapse-empty",
@@ -364,7 +365,7 @@ def main():
                     collapse_empty=args.collapse_empty,
                     beautify_folders=args.beautify_folders,
                     use_pages_file=args.use_pages_file,
-                    use_gitignore=args.use_gitignore
+                    use_gitignore=args.use_gitignore,
                 )
             else:
                 try:

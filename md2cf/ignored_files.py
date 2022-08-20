@@ -17,6 +17,7 @@ class GitRepository:
     known git root. After that all files will be correctly handled by the
     is_ignored() method.
     """
+
     def __init__(self, repo_path: Path, use_gitignore=True):
         self.use_gitignore = use_gitignore
         self.root_dir = self._find_root_dir(repo_path) if use_gitignore else None
@@ -33,7 +34,7 @@ class GitRepository:
         if p.is_file():
             p = p.parent
         while p != fs_root:
-            git_dir = p.joinpath('.git')
+            git_dir = p.joinpath(".git")
             if git_dir.exists() and git_dir.is_dir():
                 return p
             p = p.parent
@@ -56,7 +57,7 @@ class GitRepository:
         if p.is_file():
             p = p.parent
         while p != fs_root:
-            gitignore_file = p.joinpath('.gitignore')
+            gitignore_file = p.joinpath(".gitignore")
             if gitignore_file.exists() and gitignore_file.is_file():
                 ret.append(gitignore_file)
             if p == self.root_dir:

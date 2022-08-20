@@ -22,7 +22,7 @@ def _create_readme(dirpath: Path):
     :return:
     """
     filepath = dirpath.joinpath("README.md")
-    with open(filepath, mode='w') as f:
+    with open(filepath, mode="w") as f:
         f.write(README)
 
 
@@ -33,7 +33,7 @@ def _create_gitignore(dirpath: Path, content: str = GITIGNORE):
     :return:
     """
     filepath = dirpath.joinpath(".gitignore")
-    with open(filepath, mode='w') as f:
+    with open(filepath, mode="w") as f:
         f.write(content)
 
 
@@ -79,7 +79,9 @@ def test_collect_gitignores():
         git_repo = GitRepository(root_path)
 
         expected_root_gitignore = root_path.joinpath(".gitignore")
-        expected_subdir_gitignore = root_path.joinpath("subdir_local_ignore", ".gitignore")
+        expected_subdir_gitignore = root_path.joinpath(
+            "subdir_local_ignore", ".gitignore"
+        )
 
         gitignores = git_repo.collect_gitignores(root_path)
         assert gitignores == [expected_root_gitignore]
@@ -87,10 +89,14 @@ def test_collect_gitignores():
         gitignores = git_repo.collect_gitignores(root_path.joinpath("subdir_included"))
         assert gitignores == [expected_root_gitignore]
 
-        gitignores = git_repo.collect_gitignores(root_path.joinpath("subdir_root_ignore"))
+        gitignores = git_repo.collect_gitignores(
+            root_path.joinpath("subdir_root_ignore")
+        )
         assert gitignores == [expected_root_gitignore]
 
-        gitignores = git_repo.collect_gitignores(root_path.joinpath("subdir_local_ignore"))
+        gitignores = git_repo.collect_gitignores(
+            root_path.joinpath("subdir_local_ignore")
+        )
         assert gitignores == [expected_subdir_gitignore, expected_root_gitignore]
 
 
@@ -106,10 +112,14 @@ def test_is_ignored():
         expected_included_readme = root_path.joinpath("subdir_included", "README.md")
         assert not git_repo.is_ignored(expected_included_readme)
 
-        expected_root_excluded_readme = root_path.joinpath("subdir_root_ignore", "README.md")
+        expected_root_excluded_readme = root_path.joinpath(
+            "subdir_root_ignore", "README.md"
+        )
         assert git_repo.is_ignored(expected_root_excluded_readme)
 
-        expected_local_excluded_readme = root_path.joinpath("subdir_local_ignore", "README.md")
+        expected_local_excluded_readme = root_path.joinpath(
+            "subdir_local_ignore", "README.md"
+        )
         assert git_repo.is_ignored(expected_local_excluded_readme)
 
 
@@ -125,8 +135,12 @@ def test_is_ignored_with_disabled_gitignores():
         expected_included_readme = root_path.joinpath("subdir_included", "README.md")
         assert not git_repo.is_ignored(expected_included_readme)
 
-        expected_root_excluded_readme = root_path.joinpath("subdir_root_ignore", "README.md")
+        expected_root_excluded_readme = root_path.joinpath(
+            "subdir_root_ignore", "README.md"
+        )
         assert not git_repo.is_ignored(expected_root_excluded_readme)
 
-        expected_local_excluded_readme = root_path.joinpath("subdir_local_ignore", "README.md")
+        expected_local_excluded_readme = root_path.joinpath(
+            "subdir_local_ignore", "README.md"
+        )
         assert not git_repo.is_ignored(expected_local_excluded_readme)
