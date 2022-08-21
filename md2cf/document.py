@@ -37,6 +37,23 @@ class Page(object):
     def get_content_hash(self):
         return hashlib.sha1(self.body.encode()).hexdigest()
 
+    def __repr__(self):
+        return "Page({})".format(
+            ", ".join(
+                [
+                    "{}={}".format(name, repr(value))
+                    for name, value in [
+                        ["title", self.title],
+                        ["file_path", self.file_path],
+                        ["page_id", self.page_id],
+                        ["parent_id", self.parent_id],
+                        ["parent_title", self.parent_title],
+                        ["space", self.space],
+                    ]
+                ]
+            )
+        )
+
 
 def find_non_empty_parent_path(
     current_dir: Path, folder_data: Dict[Path, Dict[str, Any]], default: Path
@@ -114,8 +131,8 @@ def get_pages_from_directory(
                 parent_page_title = folder_parent_title
             else:
                 if collapse_empty:
-                    folder_data[current_path]["title"] = current_path.relative_to(
-                        folder_parent_path
+                    folder_data[current_path]["title"] = str(
+                        current_path.relative_to(folder_parent_path)
                     )
                 if beautify_folders:
                     folder_data[current_path]["title"] = (
