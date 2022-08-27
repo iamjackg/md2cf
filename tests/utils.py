@@ -1,5 +1,5 @@
 class FakePage(object):
-    """Assert helper that always matches."""
+    """Assert helper that compares specified Page parameters."""
 
     def __init__(self, **kwargs):
         self.attrs_to_compare = dict()
@@ -21,7 +21,6 @@ class FakePage(object):
         for attribute_name, attribute_value in self.attrs_to_compare.items():
             actual_attribute = getattr(actual, attribute_name, None)
             if actual_attribute != attribute_value:
-                # print(f"{attribute_name}={repr(attribute_value)} != {repr(actual_attribute)}")
                 return False
         return True
 

@@ -90,9 +90,32 @@ The **title** of the page can come from a few sources, in order of priority from
 
 Note that if you're reading from standard input, you must either specify the title through the command line or have a title in the content as a header or in the front matter.
 
-If you want to strip the top level header from the document, so the title isn't repeated in the body of the page, pass the `--`
+If you want to strip the top level header from the document, so the title isn't repeated in the body of the page, pass the `--strip-top-header` parameter.
 
 If you're uploading entire folders, you might want to add a prefix to each page title in order to avoid collisions. You can do this using the `--prefix` parameter.
+
+### Removing extra newlines
+
+If your document uses single newlines to break lines, for example if it was typeset with a fixed column width, Confluence Cloud might respect those newlines and produce a document that's difficult to read. Use the `--remove-text-newlines` parameter to replace every newline within a paragraph with a space.
+
+For example, this will turn
+
+```text
+This is a document
+with hardcoded newlines
+in its paragraphs.
+
+It's not that nice
+to read.
+```
+
+into
+
+```text
+This is a document with hardcoded newlines in its paragraphs.
+
+It's not that nice to read.
+```
 
 ### Adding a preface
 
@@ -129,7 +152,11 @@ If you want to avoid redundant uploads (and the corresponding update emails) whe
 
 `md2cf` can upload entire folders for you. This can be useful if you want to mirror some in-repo documentation to Confluence.
 
-When uploading entire folders, `md2cf` will recursively traverse all subdirectories and upload any `.md` file it encounters. Folders will be represented by empty pages in the final upload, since Confluence can only nest pages under other pages. You can modify this behaviour through three command line parameters.
+When uploading entire folders, `md2cf` will recursively traverse all subdirectories and upload any `.md` file it encounters.
+
+By default, `md2cf` will honour your `.gitignore` and skip any files or folders it defines. If you want to avoid this, add the `--no-gitignore` option.
+
+Folders will be represented by empty pages in the final upload, since Confluence can only nest pages under other pages. You can modify this behaviour through three command line parameters.
 
 #### Customizing folder names
 
