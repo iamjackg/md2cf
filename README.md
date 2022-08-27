@@ -1,18 +1,18 @@
 # md2cf
 
 A tool and library to convert documents written in Markdown to Confluence Storage
-format, and optionally upload them to a Confluence Server instance.
+format and upload them to a Confluence instance.
 
 ## Features
 
-  - **Convert Markdown documents.** The library implements a
+  - **Convert Markdown documents:** a library implementing a
     [Mistune](https://github.com/lepture/mistune) renderer that outputs
     Confluence Storage Format.
-  - **Basic Confluence API support.** Embedded micro-implementation of
+  - **Talk to the Confluence API:** an embedded micro-implementation of
     the [Confluence Server REST
     API](https://developer.atlassian.com/server/confluence/confluence-server-rest-api/)
     with basic support for creating and updating pages.
-  - **Upload automation.** Includes a small script that can automate the
+  - **Upload your documents automatically:** a full-featured command line utility that can automate the
     upload process for you.
 
 ## Installation
@@ -25,10 +25,11 @@ pip install md2cf
 
 ```text
 usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
-             [--insecure] -s SPACE [-a PARENT_TITLE | -A PARENT_ID] [-t TITLE]
-             [-m MESSAGE] [-i PAGE_ID] [--prefix PREFIX]
+             [--insecure] [-s SPACE] [-a PARENT_TITLE | -A PARENT_ID]
+             [-t TITLE] [-m MESSAGE] [-i PAGE_ID] [--prefix PREFIX]
+             [--strip-top-header] [--remove-text-newlines]
              [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
-             PREFACE_FILE] [--collapse-single-pages]
+             PREFACE_FILE] [--collapse-single-pages] [--no-gitignore]
              [--beautify-folders | --use-pages-file]
              [--collapse-empty | --skip-empty] [--dry-run] [--only-changed]
              [file_list [file_list ...]]
@@ -37,14 +38,13 @@ usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
 In order to upload a document, you'll need to supply at least the
 following five parameters:
 
-  - The **hostname** of your Confluence instance, including the path to
+  - The **URL** of your Confluence instance, including the path to
     the REST API (e.g. `http://confluence.example.com/rest/api`)
   - Either
-    - The **username** and **password** to use for logging into the instance, or
+    - The **username** and **password** to log into the instance, or
     - a **personal access token**
   - The **space** in which to publish the page
-  - The **files or directories** to be uploaded -- or standard input if the list is
-    missing
+  - The **files or directories** to be uploaded -- if none are specified, the contents will be read from the standard input
 
 Example basic usage:
 
@@ -123,7 +123,7 @@ The `--preface-markdown` and `--preface-file` commands allow you to add some tex
 if you're mirroring documentation to Confluence and want people to know that it's going to be overwritten in an automated
 fashion.
 
-The first option allows you to specify markdown text right on the command line, and defaults to a paragraph saying
+The first option allows you to specify Markdown text right on the command line. If you don't specify anything, it defaults to a paragraph saying
 
 **Contents are auto-generated, do not edit.**
 
@@ -223,7 +223,7 @@ folderA/
     lonely-document
 ```
 
-Alternatively, you can specify `--collapse-empty` to merge empty folders together with the following result:
+Alternatively, you can specify `--collapse-empty` to merge empty folders together, producing the following result:
 
 ```text
 document
@@ -242,7 +242,7 @@ folderA/
 ### Renderer
 
 Use the `ConfluenceRenderer` class to generate Confluence Storage Format
-output from a markdown document.
+output from a Markdown document.
 
 ```python
 import mistune
@@ -263,7 +263,7 @@ API that allows you to create, read, and update pages.
 ```python
 from md2cf.api import MinimalConfluence
 
-confluence = MinimalConfluence(host='http://example.com/rest/api', username='foo', password='bar')
+confluence = MinimalConfluence(host='https://example.com/rest/api', username='foo', password='bar')
 
 confluence.create_page(space='TEST', title='Test page', body='<p>Nothing</p>', update_message='Created page')
 

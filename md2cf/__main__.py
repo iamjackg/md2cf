@@ -125,6 +125,13 @@ def get_parser():
         help="if a folder contains a single document, collapse it "
         "so the folder doesn't appear",
     )
+    dir_group.add_argument(
+        "--no-gitignore",
+        action="store_false",
+        dest="use_gitignore",
+        default=True,
+        help="do not use .gitignore files to filter directory search",
+    )
     dir_title_group = dir_group.add_mutually_exclusive_group()
     dir_title_group.add_argument(
         "--beautify-folders",
@@ -137,13 +144,6 @@ def get_parser():
         action="store_true",
         help='use the "title" entry in YAML files called .pages in each '
         "directory to change the folder name",
-    )
-    dir_title_group.add_argument(
-        "--no-gitignore",
-        action="store_false",
-        dest="use_gitignore",
-        default=True,
-        help="do not use .gitignore files to filter directory search",
     )
 
     empty_group = dir_group.add_mutually_exclusive_group()
