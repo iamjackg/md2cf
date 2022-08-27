@@ -72,6 +72,7 @@ def get_pages_from_directory(
     beautify_folders: bool = False,
     use_pages_file: bool = False,
     strip_header: bool = False,
+    remove_text_newlines: bool = False,
     use_gitignore: bool = True,
 ) -> List[Page]:
     """
@@ -84,6 +85,7 @@ def get_pages_from_directory(
     :param beautify_folders:
     :param use_pages_file:
     :param strip_header:
+    :param remove_text_newlines:
     :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory search
     :return: A list of paths to the markdown files to upload.
     """
@@ -159,7 +161,9 @@ def get_pages_from_directory(
 
         for markdown_file in markdown_files:
             processed_page = get_page_data_from_file_path(
-                markdown_file, strip_header=strip_header
+                markdown_file,
+                strip_header=strip_header,
+                remove_text_newlines=remove_text_newlines,
             )
             processed_page.parent_title = parent_page_title
             processed_pages.append(processed_page)
@@ -173,14 +177,20 @@ def get_pages_from_directory(
     return processed_pages
 
 
-def get_page_data_from_file_path(file_path: Path, strip_header: bool = False) -> Page:
+def get_page_data_from_file_path(
+    file_path: Path, strip_header: bool = False, remove_text_newlines: bool = False
+) -> Page:
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
 
     with open(file_path) as file_handle:
         markdown_lines = file_handle.readlines()
 
-    page = get_page_data_from_lines(markdown_lines, strip_header=strip_header)
+    page = get_page_data_from_lines(
+        markdown_lines,
+        strip_header=strip_header,
+        remove_text_newlines=remove_text_newlines,
+    )
 
     if not page.title:
         page.title = file_path.stem
@@ -191,21 +201,35 @@ def get_page_data_from_file_path(file_path: Path, strip_header: bool = False) ->
 
 
 def get_page_data_from_lines(
-    markdown_lines: List[str], strip_header: bool = False
+    markdown_lines: List[str],
+    strip_header: bool = False,
+    remove_text_newlines: bool = False,
 ) -> Page:
     frontmatter = get_document_frontmatter(markdown_lines)
     if "frontmatter_end_line" in frontmatter:
         markdown_lines = markdown_lines[frontmatter["frontmatter_end_line"] :]
 
-    page = parse_page(markdown_lines, strip_header=strip_header)
+    page = parse_page(
+        markdown_lines,
+        strip_header=strip_header,
+        remove_text_newlines=remove_text_newlines,
+    )
 
     if "title" in frontmatter:
         page.title = frontmatter["title"]
     return page
 
 
-def parse_page(markdown_lines: List[str], strip_header: bool = False) -> Page:
-    renderer = ConfluenceRenderer(use_xhtml=True, strip_header=strip_header)
+def parse_page(
+    markdown_lines: List[str],
+    strip_header: bool = False,
+    remove_text_newlines: bool = False,
+) -> Page:
+    renderer = ConfluenceRenderer(
+        use_xhtml=True,
+        strip_header=strip_header,
+        remove_text_newlines=remove_text_newlines,
+    )
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune("".join(markdown_lines))
 

@@ -239,3 +239,12 @@ def test_renderer_image_internal_relative():
 
     assert renderer.image(test_image_src, "", "") == test_image_markup
     assert renderer.attachments == [test_image_src]
+
+
+def test_renderer_remove_text_newlines():
+    test_text = "This is a paragraph\nwith some newlines\nin it."
+    test_stripped_text = "This is a paragraph with some newlines in it."
+
+    renderer = ConfluenceRenderer(remove_text_newlines=True)
+
+    assert renderer.text(test_text) == test_stripped_text

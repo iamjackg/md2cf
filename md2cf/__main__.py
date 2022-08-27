@@ -95,6 +95,11 @@ def get_parser():
         action="store_true",
         help="remove the top level header from the page",
     )
+    page_group.add_argument(
+        "--remove-text-newlines",
+        action="store_true",
+        help="remove single newlines in paragraphs",
+    )
 
     preface_group = page_group.add_mutually_exclusive_group()
     preface_group.add_argument(
@@ -104,7 +109,8 @@ def get_parser():
         default=None,
         const="**Contents are auto-generated, do not edit.**",
         help="markdown content to prepend to each page. "
-        'Defaults to "**Contents are auto-generated, do not edit.**" if no markdown is specified',
+        'Defaults to "**Contents are auto-generated, do not edit.**" '
+        "if no markdown is specified",
     )
     preface_group.add_argument(
         "--preface-file",
@@ -116,18 +122,21 @@ def get_parser():
     dir_group.add_argument(
         "--collapse-single-pages",
         action="store_true",
-        help="if a folder contains a single document, collapse it so the folder doesn't appear",
+        help="if a folder contains a single document, collapse it "
+        "so the folder doesn't appear",
     )
     dir_title_group = dir_group.add_mutually_exclusive_group()
     dir_title_group.add_argument(
         "--beautify-folders",
         action="store_true",
-        help="replace hyphens and underscore in folder names with spaces, and capitalize the first letter",
+        help="replace hyphens and underscore in folder names with spaces, "
+        "and capitalize the first letter",
     )
     dir_title_group.add_argument(
         "--use-pages-file",
         action="store_true",
-        help='use the "title" entry in YAML files called .pages in each directory to change the folder name',
+        help='use the "title" entry in YAML files called .pages in each '
+        "directory to change the folder name",
     )
     dir_title_group.add_argument(
         "--no-gitignore",
@@ -211,7 +220,8 @@ def upsert_page(
 
     page_message = message
     if only_changed:
-        # If the functionality was just enabled, the previous version might not have the version hash in the message
+        # If the functionality was just enabled, the previous version might not have
+        # the version hash in the message
         new_page_hash = page.get_content_hash()
         page_message = (
             f"{page_message} [v{new_page_hash}]"
@@ -335,7 +345,8 @@ def main():
         len(args.file_list) > 1 or any(map(os.path.isdir, args.file_list))
     ):
         sys.stderr.write(
-            "Title and page ID cannot be specified on the command line if uploading more than one file or whole directories\n"
+            "Title and page ID cannot be specified on the command line "
+            "if uploading more than one file or whole directories\n"
         )
         exit(1)
 
@@ -343,13 +354,16 @@ def main():
     if not args.file_list:  # Uploading from standard input
         pages_to_upload.append(
             md2cf.document.get_page_data_from_lines(
-                sys.stdin.readlines(), strip_header=args.strip_top_header
+                sys.stdin.readlines(),
+                strip_header=args.strip_top_header,
+                remove_text_newlines=args.remove_text_newlines,
             )
         )
 
         if not (pages_to_upload[0].title or args.title):
             sys.stderr.write(
-                "You must specify a title or have a title in the document if uploading from standard input\n"
+                "You must specify a title or have a title in the document "
+                "if uploading from standard input\n"
             )
             exit(1)
 
@@ -371,7 +385,9 @@ def main():
                 try:
                     pages_to_upload.append(
                         md2cf.document.get_page_data_from_file_path(
-                            file_name, strip_header=args.strip_top_header
+                            file_name,
+                            strip_header=args.strip_top_header,
+                            remove_text_newlines=args.remove_text_newlines,
                         )
                     )
                 except FileNotFoundError:
@@ -389,7 +405,8 @@ def main():
     ]
     if colliding_titles:
         sys.stderr.write(
-            "Some documents have the same title, but all Confluence pages in the same space must have different titles.\n"
+            "Some documents have the same title, but all Confluence pages "
+            "in the same space must have different titles.\n"
             "These are the documents (and path, if available) with identical titles:\n"
         )
         for title in colliding_titles:
@@ -403,7 +420,8 @@ def main():
     if args.preface_markdown:
         preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
     elif args.preface_file:
-        # We don't use strip_header here since this is just a preface doc
+        # We don't use strip_header or remove_text_newlines here
+        # since this is just a preface doc
         preface_markup = md2cf.document.get_page_data_from_file_path(
             args.preface_file
         ).body
@@ -413,7 +431,8 @@ def main():
         page.page_id = args.page_id
 
         if page.parent_title is None:  # This only happens for top level pages
-            # If the argument is not supplied this leaves the parent_title as None, which is fine
+            # If the argument is not supplied this leaves
+            # the parent_title as None, which is fine
             page.parent_title = args.parent_title
         else:
             if args.prefix:

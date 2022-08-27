@@ -50,9 +50,10 @@ class ConfluenceTag(object):
 
 
 class ConfluenceRenderer(mistune.Renderer):
-    def __init__(self, strip_header=False, **kwargs):
+    def __init__(self, strip_header=False, remove_text_newlines=False, **kwargs):
         super().__init__(**kwargs)
         self.strip_header = strip_header
+        self.remove_text_newlines = remove_text_newlines
         self.attachments = list()
         self.title = None
 
@@ -81,6 +82,12 @@ class ConfluenceRenderer(mistune.Renderer):
         body_tag = ConfluenceTag("plain-text-body", cdata=True)
         body_tag.text = text
         return body_tag
+
+    def text(self, text):
+        if self.remove_text_newlines:
+            text = text.replace("\n", " ")
+
+        return super().text(text)
 
     def block_code(self, code, lang=None):
         root_element = self.structured_macro("code")
