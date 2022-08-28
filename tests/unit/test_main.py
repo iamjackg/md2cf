@@ -28,8 +28,27 @@ def test_upsert_page(mocker):
 
     confluence.get_page.assert_has_calls(
         [
-            mocker.call(title=page.title, space_key=page.space, page_id=None),
-            mocker.call(title=page.parent_title, space_key=page.space),
+            mocker.call(
+                title=page.title,
+                space_key=page.space,
+                page_id=None,
+                additional_expansions=[
+                    "space",
+                    "history",
+                    "version",
+                    "metadata.labels",
+                ],
+            ),
+            mocker.call(
+                title=page.parent_title,
+                space_key=page.space,
+                additional_expansions=[
+                    "space",
+                    "history",
+                    "version",
+                    "metadata.labels",
+                ],
+            ),
         ],
         any_order=False,
     )
@@ -40,4 +59,5 @@ def test_upsert_page(mocker):
         body=page.body,
         parent_id=mocker.sentinel.parent_page_id,
         update_message=message,
+        labels=None,
     )

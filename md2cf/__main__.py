@@ -95,6 +95,16 @@ def get_parser():
         action="store_true",
         help="remove the top level header from the page",
     )
+    page_group.add_argument(
+        "--remove-text-newlines",
+        action="store_true",
+        help="remove single newlines in paragraphs",
+    )
+    page_group.add_argument(
+        "--replace-all-labels",
+        action="store_true",
+        help="replace all labels instead of only adding new ones",
+    )
 
     preface_group = page_group.add_mutually_exclusive_group()
     preface_group.add_argument(
@@ -104,7 +114,8 @@ def get_parser():
         default=None,
         const="**Contents are auto-generated, do not edit.**",
         help="markdown content to prepend to each page. "
-        'Defaults to "**Contents are auto-generated, do not edit.**" if no markdown is specified',
+        'Defaults to "**Contents are auto-generated, do not edit.**" '
+        "if no markdown is specified",
     )
     preface_group.add_argument(
         "--preface-file",
@@ -112,23 +123,51 @@ def get_parser():
         help="path to a markdown file to be prepended to every page",
     )
 
+    postface_group = page_group.add_mutually_exclusive_group()
+    postface_group.add_argument(
+        "--postface-markdown",
+        nargs="?",
+        type=str,
+        default=None,
+        const="**Contents are auto-generated, do not edit.**",
+        help="markdown content to append to each page. "
+        'Defaults to "**Contents are auto-generated, do not edit.**" '
+        "if no markdown is specified",
+    )
+    postface_group.add_argument(
+        "--postface-file",
+        type=Path,
+        help="path to a markdown file to be appended to every page",
+    )
+
     dir_group = parser.add_argument_group("directory arguments")
     dir_group.add_argument(
         "--collapse-single-pages",
         action="store_true",
-        help="if a folder contains a single document, collapse it so the folder doesn't appear",
+        help="if a folder contains a single document, collapse it "
+        "so the folder doesn't appear",
+    )
+    dir_group.add_argument(
+        "--no-gitignore",
+        action="store_false",
+        dest="use_gitignore",
+        default=True,
+        help="do not use .gitignore files to filter directory search",
     )
     dir_title_group = dir_group.add_mutually_exclusive_group()
     dir_title_group.add_argument(
         "--beautify-folders",
         action="store_true",
-        help="replace hyphens and underscore in folder names with spaces, and capitalize the first letter",
+        help="replace hyphens and underscore in folder names with spaces, "
+        "and capitalize the first letter",
     )
     dir_title_group.add_argument(
         "--use-pages-file",
         action="store_true",
-        help='use the "title" entry in YAML files called .pages in each directory to change the folder name',
+        help='use the "title" entry in YAML files called .pages in each '
+        "directory to change the folder name",
     )
+
     empty_group = dir_group.add_mutually_exclusive_group()
     empty_group.add_argument(
         "--collapse-empty",
@@ -187,15 +226,26 @@ def upsert_page(
     message: str,
     page: md2cf.document.Page,
     only_changed: bool = False,
+    replace_all_labels: bool = False,
 ):
     existing_page = confluence.get_page(
-        title=page.title, space_key=page.space, page_id=page.page_id
+        title=page.title,
+        space_key=page.space,
+        page_id=page.page_id,
+        additional_expansions=["space", "history", "version", "metadata.labels"],
     )
 
     if page.parent_id is None:
         if page.parent_title is not None:
             parent_page = confluence.get_page(
-                title=page.parent_title, space_key=page.space
+                title=page.parent_title,
+                space_key=page.space,
+                additional_expansions=[
+                    "space",
+                    "history",
+                    "version",
+                    "metadata.labels",
+                ],
             )
             if parent_page is None:
                 raise KeyError("The parent page could not be found")
@@ -203,7 +253,8 @@ def upsert_page(
 
     page_message = message
     if only_changed:
-        # If the functionality was just enabled, the previous version might not have the version hash in the message
+        # If the functionality was just enabled, the previous version might not have
+        # the version hash in the message
         new_page_hash = page.get_content_hash()
         page_message = (
             f"{page_message} [v{new_page_hash}]"
@@ -219,18 +270,30 @@ def upsert_page(
             body=page.body,
             parent_id=page.parent_id,
             update_message=page_message,
+            labels=page.labels,
         )
     else:
         should_update = True
         if only_changed:
-            original_page_hash_match = CONTENT_HASH_REGEX.search(
-                existing_page.version.message
-            )
-            if original_page_hash_match is not None:
-                original_page_hash = original_page_hash_match.group(1)
-                if original_page_hash == page.get_content_hash():
-                    should_update = False
-                    print(f"Skipping page that didn't change: {page.title}")
+            if (
+                replace_all_labels
+                and page.labels is not None
+                and sorted(
+                    [label.name for label in existing_page.metadata.labels.results]
+                )
+                != sorted(page.labels)
+            ):
+                print(f"Page labels have changed: {page.title} {page.labels}")
+                should_update = True
+            else:
+                original_page_hash_match = CONTENT_HASH_REGEX.search(
+                    existing_page.version.message
+                )
+                if original_page_hash_match is not None:
+                    original_page_hash = original_page_hash_match.group(1)
+                    if original_page_hash == page.get_content_hash():
+                        should_update = False
+                        print(f"Skipping page that didn't change: {page.title}")
 
         if should_update:
             print(f"Updating page: {page.title}")
@@ -239,7 +302,12 @@ def upsert_page(
                 body=page.body,
                 parent_id=page.parent_id,
                 update_message=page_message,
+                labels=page.labels if replace_all_labels else None,
             )
+
+        if not replace_all_labels and page.labels:
+            print(f"Adding labels to page: {page.title} {page.labels}")
+            confluence.add_labels(page=existing_page, labels=page.labels)
 
     print(confluence.get_url(existing_page))
 
@@ -327,50 +395,12 @@ def main():
         len(args.file_list) > 1 or any(map(os.path.isdir, args.file_list))
     ):
         sys.stderr.write(
-            "Title and page ID cannot be specified on the command line if uploading more than one file or whole directories\n"
+            "Title and page ID cannot be specified on the command line "
+            "if uploading more than one file or whole directories\n"
         )
         exit(1)
 
-    pages_to_upload: List[Page] = list()
-    if not args.file_list:  # Uploading from standard input
-        pages_to_upload.append(
-            md2cf.document.get_page_data_from_lines(
-                sys.stdin.readlines(), strip_header=args.strip_top_header
-            )
-        )
-
-        if not (pages_to_upload[0].title or args.title):
-            sys.stderr.write(
-                "You must specify a title or have a title in the document if uploading from standard input\n"
-            )
-            exit(1)
-
-        if args.title:
-            pages_to_upload[0].title = args.title
-    else:
-        for file_name in args.file_list:
-            if file_name.is_dir():
-                pages_to_upload += md2cf.document.get_pages_from_directory(
-                    file_name,
-                    collapse_single_pages=args.collapse_single_pages,
-                    skip_empty=args.skip_empty,
-                    collapse_empty=args.collapse_empty,
-                    beautify_folders=args.beautify_folders,
-                    use_pages_file=args.use_pages_file,
-                )
-            else:
-                try:
-                    pages_to_upload.append(
-                        md2cf.document.get_page_data_from_file_path(
-                            file_name, strip_header=args.strip_top_header
-                        )
-                    )
-                except FileNotFoundError:
-                    sys.stderr.write(f"File {file_name} does not exist\n")
-
-        if len(pages_to_upload) == 1:
-            if args.title:
-                pages_to_upload[0].title = args.title
+    pages_to_upload = collect_pages_to_upload(args)
 
     something_went_wrong = False
 
@@ -380,7 +410,8 @@ def main():
     ]
     if colliding_titles:
         sys.stderr.write(
-            "Some documents have the same title, but all Confluence pages in the same space must have different titles.\n"
+            "Some documents have the same title, but all Confluence pages "
+            "in the same space must have different titles.\n"
             "These are the documents (and path, if available) with identical titles:\n"
         )
         for title in colliding_titles:
@@ -394,9 +425,20 @@ def main():
     if args.preface_markdown:
         preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
     elif args.preface_file:
-        # We don't use strip_header here since this is just a preface doc
+        # We don't use strip_header or remove_text_newlines here
+        # since this is just a preface doc
         preface_markup = md2cf.document.get_page_data_from_file_path(
             args.preface_file
+        ).body
+
+    postface_markup = ""
+    if args.postface_markdown:
+        postface_markup = md2cf.document.parse_page([args.postface_markdown]).body
+    elif args.postface_file:
+        # We don't use strip_header or remove_text_newlines here
+        # since this is just a postface doc
+        postface_markup = md2cf.document.get_page_data_from_file_path(
+            args.postface_file
         ).body
 
     for page in pages_to_upload:
@@ -404,7 +446,8 @@ def main():
         page.page_id = args.page_id
 
         if page.parent_title is None:  # This only happens for top level pages
-            # If the argument is not supplied this leaves the parent_title as None, which is fine
+            # If the argument is not supplied this leaves
+            # the parent_title as None, which is fine
             page.parent_title = args.parent_title
         else:
             if args.prefix:
@@ -421,6 +464,9 @@ def main():
         if preface_markup:
             page.body = preface_markup + page.body
 
+        if postface_markup:
+            page.body = page.body + postface_markup
+
         try:
             if args.dry_run:
                 print_page_details(page)
@@ -430,6 +476,7 @@ def main():
                     message=args.message,
                     page=page,
                     only_changed=args.only_changed,
+                    replace_all_labels=args.replace_all_labels,
                 )
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
@@ -440,6 +487,56 @@ def main():
 
     if something_went_wrong:
         exit(1)
+
+
+def collect_pages_to_upload(args):
+    pages_to_upload: List[Page] = list()
+    if not args.file_list:  # Uploading from standard input
+        pages_to_upload.append(
+            md2cf.document.get_page_data_from_lines(
+                sys.stdin.readlines(),
+                strip_header=args.strip_top_header,
+                remove_text_newlines=args.remove_text_newlines,
+            )
+        )
+
+        if not (pages_to_upload[0].title or args.title):
+            sys.stderr.write(
+                "You must specify a title or have a title in the document "
+                "if uploading from standard input\n"
+            )
+            exit(1)
+
+        if args.title:
+            pages_to_upload[0].title = args.title
+    else:
+        for file_name in args.file_list:
+            if file_name.is_dir():
+                pages_to_upload += md2cf.document.get_pages_from_directory(
+                    file_name,
+                    collapse_single_pages=args.collapse_single_pages,
+                    skip_empty=args.skip_empty,
+                    collapse_empty=args.collapse_empty,
+                    beautify_folders=args.beautify_folders,
+                    use_pages_file=args.use_pages_file,
+                    use_gitignore=args.use_gitignore,
+                )
+            else:
+                try:
+                    pages_to_upload.append(
+                        md2cf.document.get_page_data_from_file_path(
+                            file_name,
+                            strip_header=args.strip_top_header,
+                            remove_text_newlines=args.remove_text_newlines,
+                        )
+                    )
+                except FileNotFoundError:
+                    sys.stderr.write(f"File {file_name} does not exist\n")
+
+        if len(pages_to_upload) == 1:
+            if args.title:
+                pages_to_upload[0].title = args.title
+    return pages_to_upload
 
 
 if __name__ == "__main__":
