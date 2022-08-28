@@ -118,6 +118,23 @@ def get_parser():
         help="path to a markdown file to be prepended to every page",
     )
 
+    postface_group = page_group.add_mutually_exclusive_group()
+    postface_group.add_argument(
+        "--postface-markdown",
+        nargs="?",
+        type=str,
+        default=None,
+        const="**Contents are auto-generated, do not edit.**",
+        help="markdown content to append to each page. "
+        'Defaults to "**Contents are auto-generated, do not edit.**" '
+        "if no markdown is specified",
+    )
+    postface_group.add_argument(
+        "--postface-file",
+        type=Path,
+        help="path to a markdown file to be appended to every page",
+    )
+
     dir_group = parser.add_argument_group("directory arguments")
     dir_group.add_argument(
         "--collapse-single-pages",
@@ -350,6 +367,95 @@ def main():
         )
         exit(1)
 
+    pages_to_upload = collect_pages_to_upload(args)
+
+    something_went_wrong = False
+
+    page_title_counts = Counter([page.title for page in pages_to_upload])
+    colliding_titles = [
+        title for title, count in page_title_counts.most_common() if count > 1
+    ]
+    if colliding_titles:
+        sys.stderr.write(
+            "Some documents have the same title, but all Confluence pages "
+            "in the same space must have different titles.\n"
+            "These are the documents (and path, if available) with identical titles:\n"
+        )
+        for title in colliding_titles:
+            for filename in [
+                page.file_path for page in pages_to_upload if page.title == title
+            ]:
+                sys.stderr.write(f"{title}\t{filename}\n")
+        exit(1)
+
+    preface_markup = ""
+    if args.preface_markdown:
+        preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
+    elif args.preface_file:
+        # We don't use strip_header or remove_text_newlines here
+        # since this is just a preface doc
+        preface_markup = md2cf.document.get_page_data_from_file_path(
+            args.preface_file
+        ).body
+
+    postface_markup = ""
+    if args.postface_markdown:
+        postface_markup = md2cf.document.parse_page([args.postface_markdown]).body
+    elif args.postface_file:
+        # We don't use strip_header or remove_text_newlines here
+        # since this is just a postface doc
+        postface_markup = md2cf.document.get_page_data_from_file_path(
+            args.postface_file
+        ).body
+
+    for page in pages_to_upload:
+        page.space = args.space
+        page.page_id = args.page_id
+
+        if page.parent_title is None:  # This only happens for top level pages
+            # If the argument is not supplied this leaves
+            # the parent_title as None, which is fine
+            page.parent_title = args.parent_title
+        else:
+            if args.prefix:
+                page.parent_title = f"{args.prefix} - {page.parent_title}"
+
+        if page.parent_title is None:
+            page.parent_id = (
+                page.parent_id or args.parent_id
+            )  # This can still end up being None. It's fine.
+
+        if args.prefix:
+            page.title = f"{args.prefix} - {page.title}"
+
+        if preface_markup:
+            page.body = preface_markup + page.body
+
+        if postface_markup:
+            page.body = page.body + postface_markup
+
+        try:
+            if args.dry_run:
+                print_page_details(page)
+            else:
+                upsert_page(
+                    confluence=confluence,
+                    message=args.message,
+                    page=page,
+                    only_changed=args.only_changed,
+                )
+        except HTTPError as e:
+            sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
+            something_went_wrong = True
+        except Exception as e:
+            sys.stderr.write("ERROR: {}\n".format(str(e)))
+            something_went_wrong = True
+
+    if something_went_wrong:
+        exit(1)
+
+
+def collect_pages_to_upload(args):
     pages_to_upload: List[Page] = list()
     if not args.file_list:  # Uploading from standard input
         pages_to_upload.append(
@@ -396,78 +502,7 @@ def main():
         if len(pages_to_upload) == 1:
             if args.title:
                 pages_to_upload[0].title = args.title
-
-    something_went_wrong = False
-
-    page_title_counts = Counter([page.title for page in pages_to_upload])
-    colliding_titles = [
-        title for title, count in page_title_counts.most_common() if count > 1
-    ]
-    if colliding_titles:
-        sys.stderr.write(
-            "Some documents have the same title, but all Confluence pages "
-            "in the same space must have different titles.\n"
-            "These are the documents (and path, if available) with identical titles:\n"
-        )
-        for title in colliding_titles:
-            for filename in [
-                page.file_path for page in pages_to_upload if page.title == title
-            ]:
-                sys.stderr.write(f"{title}\t{filename}\n")
-        exit(1)
-
-    preface_markup = ""
-    if args.preface_markdown:
-        preface_markup = md2cf.document.parse_page([args.preface_markdown]).body
-    elif args.preface_file:
-        # We don't use strip_header or remove_text_newlines here
-        # since this is just a preface doc
-        preface_markup = md2cf.document.get_page_data_from_file_path(
-            args.preface_file
-        ).body
-
-    for page in pages_to_upload:
-        page.space = args.space
-        page.page_id = args.page_id
-
-        if page.parent_title is None:  # This only happens for top level pages
-            # If the argument is not supplied this leaves
-            # the parent_title as None, which is fine
-            page.parent_title = args.parent_title
-        else:
-            if args.prefix:
-                page.parent_title = f"{args.prefix} - {page.parent_title}"
-
-        if page.parent_title is None:
-            page.parent_id = (
-                page.parent_id or args.parent_id
-            )  # This can still end up being None. It's fine.
-
-        if args.prefix:
-            page.title = f"{args.prefix} - {page.title}"
-
-        if preface_markup:
-            page.body = preface_markup + page.body
-
-        try:
-            if args.dry_run:
-                print_page_details(page)
-            else:
-                upsert_page(
-                    confluence=confluence,
-                    message=args.message,
-                    page=page,
-                    only_changed=args.only_changed,
-                )
-        except HTTPError as e:
-            sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
-            something_went_wrong = True
-        except Exception as e:
-            sys.stderr.write("ERROR: {}\n".format(str(e)))
-            something_went_wrong = True
-
-    if something_went_wrong:
-        exit(1)
+    return pages_to_upload
 
 
 if __name__ == "__main__":

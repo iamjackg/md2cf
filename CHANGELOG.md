@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Option to add a postface to every page
 - Honour existing `.gitignore` files (@bjorns)
 - Add option to remove single newlines from paragraphs (@bjorns)
 

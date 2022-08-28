@@ -29,8 +29,9 @@ usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
              [-t TITLE] [-m MESSAGE] [-i PAGE_ID] [--prefix PREFIX]
              [--strip-top-header] [--remove-text-newlines]
              [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
-             PREFACE_FILE] [--collapse-single-pages] [--no-gitignore]
-             [--beautify-folders | --use-pages-file]
+             PREFACE_FILE] [--postface-markdown [POSTFACE_MARKDOWN] |
+             --postface-file POSTFACE_FILE] [--collapse-single-pages]
+             [--no-gitignore] [--beautify-folders | --use-pages-file]
              [--collapse-empty | --skip-empty] [--dry-run] [--only-changed]
              [file_list [file_list ...]]
 ```
@@ -117,17 +118,15 @@ This is a document with hardcoded newlines in its paragraphs.
 It's not that nice to read.
 ```
 
-### Adding a preface
+### Adding a preface and/or postface
 
-The `--preface-markdown` and `--preface-file` commands allow you to add some text at the top of each page. This is useful
-if you're mirroring documentation to Confluence and want people to know that it's going to be overwritten in an automated
-fashion.
+The `--preface-markdown`, `--preface-file`, `--postface-markdown`, and `--postface-file` commands allow you to add some text at the top or bottom of each page. This is useful  if you're mirroring documentation to Confluence and want people to know that it's going to be overwritten in an automated fashion.
 
 The first option allows you to specify Markdown text right on the command line. If you don't specify anything, it defaults to a paragraph saying
 
 **Contents are auto-generated, do not edit.**
 
-The second option takes a path to a markdown file and will prepend its contents to every page. Note that this is parsed separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page contents such as title or front matter detection.
+The second option takes a path to a markdown file and will prepend or append its contents to every page. Note that this is parsed separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page contents, such as title or front matter detection.
 
 ### Parent page
 
