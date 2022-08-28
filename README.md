@@ -28,10 +28,11 @@ usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
              [--insecure] [-s SPACE] [-a PARENT_TITLE | -A PARENT_ID]
              [-t TITLE] [-m MESSAGE] [-i PAGE_ID] [--prefix PREFIX]
              [--strip-top-header] [--remove-text-newlines]
-             [--preface-markdown [PREFACE_MARKDOWN] | --preface-file
-             PREFACE_FILE] [--postface-markdown [POSTFACE_MARKDOWN] |
-             --postface-file POSTFACE_FILE] [--collapse-single-pages]
-             [--no-gitignore] [--beautify-folders | --use-pages-file]
+             [--replace-all-labels] [--preface-markdown [PREFACE_MARKDOWN] |
+             --preface-file PREFACE_FILE]
+             [--postface-markdown [POSTFACE_MARKDOWN] | --postface-file
+             POSTFACE_FILE] [--collapse-single-pages] [--no-gitignore]
+             [--beautify-folders | --use-pages-file]
              [--collapse-empty | --skip-empty] [--dry-run] [--only-changed]
              [file_list [file_list ...]]
 ```
