@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Support for labels in the Markdown front matter
+- Option to replace all labels with the set specified in the Markdown front matter
 - Option to add a postface to every page
-- Honour existing `.gitignore` files (@bjorns)
-- Add option to remove single newlines from paragraphs (@bjorns)
+- Option to ignore `.gitignore` files (@bjorns)
+- Option to remove single newlines from paragraphs (@bjorns)
+### Changed
+- Skip files and directories listed in `.gitignore` files (@bjorns)
 
 ## 1.4.0 - 2022-07-27
 ### Added

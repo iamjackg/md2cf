@@ -100,6 +100,11 @@ def get_parser():
         action="store_true",
         help="remove single newlines in paragraphs",
     )
+    page_group.add_argument(
+        "--replace-all-labels",
+        action="store_true",
+        help="replace all labels instead of only adding new ones",
+    )
 
     preface_group = page_group.add_mutually_exclusive_group()
     preface_group.add_argument(
@@ -221,15 +226,26 @@ def upsert_page(
     message: str,
     page: md2cf.document.Page,
     only_changed: bool = False,
+    replace_all_labels: bool = False,
 ):
     existing_page = confluence.get_page(
-        title=page.title, space_key=page.space, page_id=page.page_id
+        title=page.title,
+        space_key=page.space,
+        page_id=page.page_id,
+        additional_expansions=["space", "history", "version", "metadata.labels"],
     )
 
     if page.parent_id is None:
         if page.parent_title is not None:
             parent_page = confluence.get_page(
-                title=page.parent_title, space_key=page.space
+                title=page.parent_title,
+                space_key=page.space,
+                additional_expansions=[
+                    "space",
+                    "history",
+                    "version",
+                    "metadata.labels",
+                ],
             )
             if parent_page is None:
                 raise KeyError("The parent page could not be found")
@@ -254,18 +270,30 @@ def upsert_page(
             body=page.body,
             parent_id=page.parent_id,
             update_message=page_message,
+            labels=page.labels,
         )
     else:
         should_update = True
         if only_changed:
-            original_page_hash_match = CONTENT_HASH_REGEX.search(
-                existing_page.version.message
-            )
-            if original_page_hash_match is not None:
-                original_page_hash = original_page_hash_match.group(1)
-                if original_page_hash == page.get_content_hash():
-                    should_update = False
-                    print(f"Skipping page that didn't change: {page.title}")
+            if (
+                replace_all_labels
+                and page.labels is not None
+                and sorted(
+                    [label.name for label in existing_page.metadata.labels.results]
+                )
+                != sorted(page.labels)
+            ):
+                print(f"Page labels have changed: {page.title} {page.labels}")
+                should_update = True
+            else:
+                original_page_hash_match = CONTENT_HASH_REGEX.search(
+                    existing_page.version.message
+                )
+                if original_page_hash_match is not None:
+                    original_page_hash = original_page_hash_match.group(1)
+                    if original_page_hash == page.get_content_hash():
+                        should_update = False
+                        print(f"Skipping page that didn't change: {page.title}")
 
         if should_update:
             print(f"Updating page: {page.title}")
@@ -274,7 +302,12 @@ def upsert_page(
                 body=page.body,
                 parent_id=page.parent_id,
                 update_message=page_message,
+                labels=page.labels if replace_all_labels else None,
             )
+
+        if not replace_all_labels and page.labels:
+            print(f"Adding labels to page: {page.title} {page.labels}")
+            confluence.add_labels(page=existing_page, labels=page.labels)
 
     print(confluence.get_url(existing_page))
 
@@ -443,6 +476,7 @@ def main():
                     message=args.message,
                     page=page,
                     only_changed=args.only_changed,
+                    replace_all_labels=args.replace_all_labels,
                 )
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))

@@ -22,6 +22,7 @@ class Page(object):
         parent_id: str = None,
         parent_title: str = None,
         space: str = None,
+        labels: Optional[List[str]] = None,
     ):
         self.title = title
         self.body = body
@@ -33,6 +34,7 @@ class Page(object):
         self.parent_id = parent_id
         self.parent_title = parent_title
         self.space = space
+        self.labels = labels
 
     def get_content_hash(self):
         return hashlib.sha1(self.body.encode()).hexdigest()
@@ -217,6 +219,14 @@ def get_page_data_from_lines(
 
     if "title" in frontmatter:
         page.title = frontmatter["title"]
+
+    if "labels" in frontmatter:
+        if isinstance(frontmatter["labels"], list):
+            page.labels = [str(label) for label in frontmatter["labels"]]
+        else:
+            raise TypeError(
+                "the labels section in the frontmatter " "must be a list of strings"
+            )
     return page
 
 

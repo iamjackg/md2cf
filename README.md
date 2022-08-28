@@ -128,6 +128,21 @@ The first option allows you to specify Markdown text right on the command line. 
 
 The second option takes a path to a markdown file and will prepend or append its contents to every page. Note that this is parsed separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page contents, such as title or front matter detection.
 
+### Page labels
+
+You can specify labels for your page by adding a `labels` entry in your document's front matter, i.e. a YAML block delimited by `---` lines at the top of the file
+
+```yaml
+  ---
+  labels:
+    - first label
+    - second label
+  ---
+  # Rest of the document here
+```
+
+By default, labels will only be added. If you want the final set of labels to _exactly_ match what you listed in the front matter, pass the `--replace-all-labels` option.
+
 ### Parent page
 
 If you want to upload the page under **a specific parent**, you can supply the parent's page ID as the `--parent-id` parameter, or its title through the `--parent-title` parameter.

@@ -169,3 +169,76 @@ def test_get_pages_from_directory_beautify_folders(fs):
             parent_title="Another yucky folder",
         ),
     ]
+
+
+def test_get_document_frontmatter():
+    source_markdown = """---
+title: This is a title
+labels:
+  - label1
+  - label2
+---
+# This is normal markdown content
+
+Yep.
+"""
+
+    assert doc.get_document_frontmatter(source_markdown.splitlines(keepends=True)) == {
+        "title": "This is a title",
+        "labels": ["label1", "label2"],
+        "frontmatter_end_line": 6,
+    }
+
+
+def test_get_document_frontmatter_only_first():
+    source_markdown = """---
+title: This is a title
+---
+# This is normal markdown content
+
+---
+
+With other triple dashes!
+
+Yep.
+"""
+
+    assert doc.get_document_frontmatter(source_markdown.splitlines(keepends=True)) == {
+        "title": "This is a title",
+        "frontmatter_end_line": 3,
+    }
+
+
+def test_get_document_frontmatter_no_closing():
+    source_markdown = """---
+# This is normal markdown content
+
+Yep.
+"""
+
+    assert doc.get_document_frontmatter(source_markdown.splitlines(keepends=True)) == {}
+
+
+def test_get_document_frontmatter_extra_whitespace():
+    source_markdown = """
+
+---
+title: This is a title
+---
+# This is normal markdown content
+
+Yep.
+"""
+
+    assert doc.get_document_frontmatter(source_markdown.splitlines(keepends=True)) == {}
+
+
+def test_get_document_frontmatter_empty():
+    source_markdown = """---
+---
+# This is normal markdown content
+
+Yep.
+"""
+
+    assert doc.get_document_frontmatter(source_markdown.splitlines(keepends=True)) == {}
