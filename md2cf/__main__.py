@@ -518,6 +518,8 @@ def collect_pages_to_upload(args):
                     skip_empty=args.skip_empty,
                     collapse_empty=args.collapse_empty,
                     beautify_folders=args.beautify_folders,
+                    remove_text_newlines=args.remove_text_newlines,
+                    strip_header=args.strip_top_header,
                     use_pages_file=args.use_pages_file,
                     use_gitignore=args.use_gitignore,
                 )
