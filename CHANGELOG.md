@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Fixed
-- Correctly propagate `strip-top-header` and `remove-text-newlines` flags
+- Correctly propagate `strip-top-header` and `remove-text-newlines` flags (@bjorns)
 
 ## 1.5.0 - 2022-08-28
 ### Added
