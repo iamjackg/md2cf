@@ -1,10 +1,21 @@
 import tortilla
 from requests.auth import HTTPBasicAuth
 import requests.packages
+import html
+import re
+from md2cf.confluence_renderer import ConfluenceRenderer, ConfluenceTag
 
 
 class MinimalConfluence:
-    def __init__(self, host, username=None, password=None, token=None, verify=True):
+    def __init__(
+        self,
+        host,
+        username=None,
+        password=None,
+        token=None,
+        verify=True,
+        placeholders=None,
+    ):
         if token is not None:
             self.api = tortilla.wrap(
                 host,
@@ -26,6 +37,8 @@ class MinimalConfluence:
             requests.packages.urllib3.disable_warnings(
                 requests.packages.urllib3.exceptions.InsecureRequestWarning
             )
+
+        self.placeholders = placeholders or {}
 
     def get_page(
         self, title=None, space_key=None, page_id=None, additional_expansions=None
@@ -66,6 +79,54 @@ class MinimalConfluence:
         else:
             raise ValueError("At least one of title or page_id must not be None")
 
+    def generate_macro(self, name, parameters=None, additions=None):
+        """
+        generate and return Confluence macro syntax
+
+        based on https://community.atlassian.com/t5/Confluence-questions/Can-I-insert-the-History-macro-through-REST-API-call/qaq-p/1038703#M173031
+
+        Args:
+            name (str): short name of the Confluence macro
+            params (dict): optional. Parameters to configure the macro
+            additions (list of str): optional. Text to be added to the macro
+
+        Returns:
+            String with Confluence XHTML syntax of macro
+        """
+        parameters = parameters or {}
+        additions = additions or []
+        cf_render = ConfluenceRenderer()
+        macro = cf_render.structured_macro(name)
+        for key, value in parameters.items():
+            macro.append(cf_render.parameter(name=key, value=value))
+        macro.append("".join(additions))
+        macro_text = macro.render()
+        return macro_text
+
+    def process_body(self, body):
+        """
+        apply placeholder replacements to body
+
+        Args:
+            body (str): generated body
+
+        Returns:
+            String body with replacements
+        """
+        for match, config in self.placeholders.items():
+            replace = ""
+            match = html.escape(match)
+            if config.get("type") == "macro":
+                replace = self.generate_macro(
+                    config.get("name"),
+                    config.get("parameters"),
+                    config.get("additions"),
+                )
+            elif config.get("type") == "static":
+                replace = config.get("text")
+            body = re.sub(match, replace, body)
+        return body
+
     def create_page(
         self, space, title, body, parent_id=None, update_message=None, labels=None
     ):
@@ -88,7 +149,12 @@ class MinimalConfluence:
             "title": title,
             "type": "page",
             "space": {"key": space},
-            "body": {"storage": {"value": body, "representation": "storage"}},
+            "body": {
+                "storage": {
+                    "value": self.process_body(body),
+                    "representation": "storage",
+                }
+            },
         }
 
         if parent_id is not None:
@@ -113,7 +179,12 @@ class MinimalConfluence:
             },
             "title": page.title,
             "type": "page",
-            "body": {"storage": {"value": body, "representation": "storage"}},
+            "body": {
+                "storage": {
+                    "value": self.process_body(body),
+                    "representation": "storage",
+                }
+            },
         }
 
         if parent_id is not None:

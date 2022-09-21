@@ -35,7 +35,10 @@ class ConfluenceTag(object):
             )
             if namespaced_attribs
             else "",
-            "".join([child.render() for child in self.children]),
+            "".join([child.render()
+            if isinstance(child, ConfluenceTag)
+            else child
+            for child in self.children]),
             "<![CDATA[{}]]>".format(self.text) if self.cdata else self.text,
             namespaced_name,
         )
