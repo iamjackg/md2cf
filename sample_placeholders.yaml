@@ -1,0 +1,35 @@
+---
+# yamllint disable rule:line-length
+# for regex you can test using:
+#   https://pythex.org/
+# for macro syntax see:
+#   https://confluence.atlassian.com/doc/macros-139387.html
+#   https://confluence.atlassian.com/display/CONF57/Macros
+# replace table-of-content macro of hugo theme geekdocs with Confluence macro.
+'{{< toc >}}':
+  type: 'macro'
+  name: 'toc'
+  parameters:
+    printable: 'true'
+    style: 'disc'
+    maxLevel: '4'
+    minLevel: '1'
+    class: 'bigpink'
+    type: 'list'
+    outline: 'true'
+    include: '.*'
+# replace placeholder with empty text
+'long string to be replaced as example':
+  type: 'static'
+  text: ''
+# replace hint-macro info with info-macro
+'(?ms){{% hint [^%=]*(?!{{% /hint %}})info.*? %}}(.*?){{% /hint %}}':
+  type: 'macro'
+  name: 'info'
+  parameters:
+    icon: 'true'
+    title: ''
+  # additions extend the macro definition as required by some Confluence macros
+  additions:
+    # \1 is replaced with group matched in regex
+    - '<ac:rich-text-body>\1</ac:rich-text-body>'

@@ -5,6 +5,7 @@ import os
 import pprint
 import re
 import sys
+import yaml
 from collections import Counter
 from pathlib import Path
 from typing import List
@@ -104,6 +105,12 @@ def get_parser():
         "--replace-all-labels",
         action="store_true",
         help="replace all labels instead of only adding new ones",
+    )
+    page_group.add_argument(
+        "--replace-placeholders-file",
+        type=Path,
+        help="provide a YAML or JSON file with mapping of placeholders "
+        "in your markdown files and their replacements, e.g. Confluence Macro",
     )
 
     preface_group = page_group.add_mutually_exclusive_group()
@@ -383,12 +390,32 @@ def main():
     if args.password is None and args.token is None:
         args.password = getpass.getpass()
 
+    if args.replace_placeholders_file:
+        try:
+            placeholders = yaml.load(
+                args.replace_placeholders_file.open(), Loader=yaml.SafeLoader
+            )
+        except yaml.YAMLError as error:
+            sys.stderr.write(
+                "Failed to load placeholders from file "
+                f"'{args.replace_placeholders_file}' due to\n{error}"
+            )
+            exit(1)
+        if not isinstance(placeholders, dict):
+            sys.stderr.write(
+                "The content of given placeholders file "
+                f"({args.replace_placeholders_file.open}) is not a valid.\n"
+                "Please check github-link for the syntax."
+            )
+            exit(1)
+
     confluence = api.MinimalConfluence(
         host=args.host,
         username=args.username,
         password=args.password,
         token=args.token,
         verify=not args.insecure,
+        placeholders=placeholders,
     )
 
     if (args.title or args.page_id) and (

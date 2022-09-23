@@ -28,8 +28,9 @@ usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
              [--insecure] [-s SPACE] [-a PARENT_TITLE | -A PARENT_ID]
              [-t TITLE] [-m MESSAGE] [-i PAGE_ID] [--prefix PREFIX]
              [--strip-top-header] [--remove-text-newlines]
-             [--replace-all-labels] [--preface-markdown [PREFACE_MARKDOWN] |
-             --preface-file PREFACE_FILE]
+             [--replace-all-labels]
+             [--replace-placeholders-file REPLACE_PLACEHOLDERS_FILE]
+             [--preface-markdown [PREFACE_MARKDOWN] | --preface-file PREFACE_FILE]
              [--postface-markdown [POSTFACE_MARKDOWN] | --postface-file
              POSTFACE_FILE] [--collapse-single-pages] [--no-gitignore]
              [--beautify-folders | --use-pages-file]
@@ -118,6 +119,51 @@ This is a document with hardcoded newlines in its paragraphs.
 
 It's not that nice to read.
 ```
+
+### Repalcing text before upload
+
+The `--replace-placeholders-file` allows to specify a YAML formated configuration file that defines strings or regular expressions to be replaces by Confluence macros or other strings.
+Example definitions can be found in [sample_placeholders.yaml](https://github.com/iamjackg/md2cf/blob/master/sample_placeholders.yaml).
+
+This configuration file supports the following replacements:
+* replace string with Confluence macro:
+
+   ```yaml
+   'string-to-be-replaced':
+     type: 'macro'
+     name: 'name-of-confluence-macro'
+     parameters:
+       'macro-parameter-name1': 'macro-parameter-value1'
+       'macro-parameter-name2': 'macro-parameter-value2'
+   ```
+
+* repalce string with an other string:
+
+   ```yaml
+   'long string to be replaced':
+     type: 'static'
+     text: 'new string'
+   ```
+
+* replace regular expression with Confluence macro:
+
+   ```yaml
+   # replace hugo-hint-macro with Confluence info-macro
+   '(?ms){{% hint [^%=]*(?!{{% /hint %}})info.*? %}}(.*?){{% /hint %}}':
+     type: 'macro'
+     name: 'info'
+     parameters:
+       icon: 'true'
+     # additions extend the macro definition as required by some Confluence macros
+     additions:
+       # \1 is replaced with group matched in regex
+       - '<ac:rich-text-body>\1</ac:rich-text-body>'
+   ```
+
+The search string is always processed using [python-re](https://docs.python.org/3/library/re.html).
+To test your regular expression you can use [Pythex](https://pythex.org/).
+For syntax of Confluence macros you can check XHTML layout in [Confluence 5.7](https://confluence.atlassian.com/display/CONF57/Macros) documentation.
+For a list of available Confluence macros see [latest Confluence macro list](https://confluence.atlassian.com/doc/macros-139387.html).
 
 ### Adding a preface and/or postface
 
