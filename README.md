@@ -57,7 +57,7 @@ md2cf --host 'https://confluence.example.com/rest/api' --username foo --password
 Or, if using a token:
 
 ```bash
-md2cf --host 'https://confluence.example.com/rest/api' --bearer-token '2104v3ryl0ngt0k3n720' --space TEST document.md
+md2cf --host 'https://confluence.example.com/rest/api' --token '2104v3ryl0ngt0k3n720' --space TEST document.md
 ```
 
 Note that entering the password as a parameter on the command line is
