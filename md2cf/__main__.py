@@ -84,6 +84,9 @@ def get_parser():
         help="a title for the page. Determined from the document if missing",
     )
     page_group.add_argument("-m", "--message", help="update message for the change")
+    page_group.add_argument(
+        "--minor-edit", action="store_true", help="do not notify watchers of change"
+    )
     page_group.add_argument("-i", "--page-id", help="ID of the page to be updated")
     page_group.add_argument(
         "--prefix",
@@ -227,6 +230,7 @@ def upsert_page(
     page: md2cf.document.Page,
     only_changed: bool = False,
     replace_all_labels: bool = False,
+    minor_edit: bool = False,
 ):
     existing_page = confluence.get_page(
         title=page.title,
@@ -303,6 +307,7 @@ def upsert_page(
                 parent_id=page.parent_id,
                 update_message=page_message,
                 labels=page.labels if replace_all_labels else None,
+                minor_edit=minor_edit,
             )
 
         if not replace_all_labels and page.labels:
@@ -477,6 +482,7 @@ def main():
                     page=page,
                     only_changed=args.only_changed,
                     replace_all_labels=args.replace_all_labels,
+                    minor_edit=args.minor_edit,
                 )
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
