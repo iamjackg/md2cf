@@ -83,6 +83,14 @@ def get_parser():
         "--title",
         help="a title for the page. Determined from the document if missing",
     )
+    
+    page_group.add_argument(
+        "-c",
+        "--content-type",
+        help="Content type. Default value: page. Valid values: page, blogpost.",
+        default="page",
+    )
+
     page_group.add_argument("-m", "--message", help="update message for the change")
     page_group.add_argument("-i", "--page-id", help="ID of the page to be updated")
     page_group.add_argument(
@@ -268,6 +276,7 @@ def upsert_page(
             space=page.space,
             title=page.title,
             body=page.body,
+            content_type=page.content_type,
             parent_id=page.parent_id,
             update_message=page_message,
             labels=page.labels,
@@ -444,6 +453,7 @@ def main():
     for page in pages_to_upload:
         page.space = args.space
         page.page_id = args.page_id
+        page.content_type = args.content_type
 
         if page.parent_title is None:  # This only happens for top level pages
             # If the argument is not supplied this leaves
