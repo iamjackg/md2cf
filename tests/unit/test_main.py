@@ -57,6 +57,7 @@ def test_upsert_page(mocker):
         space=page.space,
         title=page.title,
         body=page.body,
+        content_type=page.content_type,
         parent_id=mocker.sentinel.parent_page_id,
         update_message=message,
         labels=None,

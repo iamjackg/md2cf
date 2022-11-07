@@ -16,6 +16,7 @@ class Page(object):
         self,
         title: Optional[str],
         body: str,
+        content_type: Optional[str] = "page",
         attachments: Optional[List[Path]] = None,
         file_path: Optional[Path] = None,
         page_id: str = None,
@@ -26,6 +27,7 @@ class Page(object):
     ):
         self.title = title
         self.body = body
+        self.content_type = content_type
         self.file_path = file_path
         self.attachments = attachments
         if self.attachments is None:
