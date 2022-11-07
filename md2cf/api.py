@@ -106,10 +106,19 @@ class MinimalConfluence:
 
         return self.api.content.post(json=page_structure)
 
-    def update_page(self, page, body, parent_id=None, update_message=None, labels=None):
+    def update_page(
+        self,
+        page,
+        body,
+        parent_id=None,
+        update_message=None,
+        labels=None,
+        minor_edit=False,
+    ):
         update_structure = {
             "version": {
                 "number": page.version.number + 1,
+                "minorEdit": minor_edit,
             },
             "title": page.title,
             "type": "page",
