@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+import urllib.parse
 
 import re
 
@@ -56,7 +57,8 @@ class Page(object):
                 continue
 
             # get the absolute path to the potential file
-            page_file_path = os.path.abspath(os.path.join(file_dir, url))
+            # make sure to unquote the url as relative paths might have escape sequences
+            page_file_path = os.path.abspath(os.path.join(file_dir, urllib.parse.unquote(url)))
 
             # check if the file exists
             if not os.path.exists(page_file_path):
