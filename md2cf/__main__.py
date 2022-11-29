@@ -179,6 +179,12 @@ def get_parser():
         action="store_true",
         help="if a folder doesn't contain documents, skip it",
     )
+    empty_group.add_argument(
+        "--error-on-missing-references",
+        action="store_true",
+        help="if a relative path is encountered that points to a file that is not going the be "
+        "uploaded or missing entirely an error will be raised."
+    )
 
     parser.add_argument(
         "--dry-run",
@@ -462,7 +468,7 @@ def main():
     page_file_map = { os.path.abspath(p.file_path) : p for p in pages_to_upload }
     for page in pages_to_upload:
         # check if any path needed to be replace. Will return true on any change
-        if page.replace_relative_paths(page_file_map):
+        if page.replace_relative_paths(page_file_map, error_on_missing_references=args.error_on_missing_references):
             print(f"Patching relative paths for page: {page.title}")
             try:
                 # re-upload the page, this time with fixed relative paths

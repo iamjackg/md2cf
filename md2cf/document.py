@@ -45,7 +45,7 @@ class Page(object):
         return hashlib.sha1(self.body.encode()).hexdigest()
 
     # This function will use the file_page_map to lookup relative paths for documents that have been uploaded
-    def replace_relative_paths(self, file_page_map):
+    def replace_relative_paths(self, file_page_map, error_on_missing_references=False):
         # match all urls
         urls = re.findall(r'href=[\'"]?([^\'" >]+)', self.body)
         file_dir = os.path.dirname(os.path.abspath(self.file_path))
@@ -60,8 +60,12 @@ class Page(object):
 
             # check if the file exists
             if not os.path.exists(page_file_path):
-                raise ValueError("found relative path '{}' to non existing file '{}'".format(url, page_file_path))
+                if not error_on_missing_references:
+                    continue
+                raise ValueError("found relative path '{}' to non-existing file '{}'".format(url, page_file_path))
             elif page_file_path not in file_page_map:
+                if not error_on_missing_references:
+                    continue
                 raise ValueError("found relative path '{}' to file '{}' which was not marked for uplaod".format(url, page_file_path))
             else:
                 # replace the relative path in the body with the page_url from previous run
