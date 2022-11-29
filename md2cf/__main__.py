@@ -309,7 +309,11 @@ def upsert_page(
             print(f"Adding labels to page: {page.title} {page.labels}")
             confluence.add_labels(page=existing_page, labels=page.labels)
 
-    print(confluence.get_url(existing_page))
+    # update Page details
+    page.page_url = confluence.get_url(existing_page)
+    page.page_id = existing_page.id
+
+    print(page.page_url)
 
     if page.attachments:
         print(f"Uploading attachments for page: {page.title}")
@@ -442,42 +446,8 @@ def main():
         ).body
 
     for page in pages_to_upload:
-        page.space = args.space
-        page.page_id = args.page_id
-
-        if page.parent_title is None:  # This only happens for top level pages
-            # If the argument is not supplied this leaves
-            # the parent_title as None, which is fine
-            page.parent_title = args.parent_title
-        else:
-            if args.prefix:
-                page.parent_title = f"{args.prefix} - {page.parent_title}"
-
-        if page.parent_title is None:
-            page.parent_id = (
-                page.parent_id or args.parent_id
-            )  # This can still end up being None. It's fine.
-
-        if args.prefix:
-            page.title = f"{args.prefix} - {page.title}"
-
-        if preface_markup:
-            page.body = preface_markup + page.body
-
-        if postface_markup:
-            page.body = page.body + postface_markup
-
         try:
-            if args.dry_run:
-                print_page_details(page)
-            else:
-                upsert_page(
-                    confluence=confluence,
-                    message=args.message,
-                    page=page,
-                    only_changed=args.only_changed,
-                    replace_all_labels=args.replace_all_labels,
-                )
+            upload_page(confluence=confluence, page=page, preface_markup=preface_markup, postface_markup=postface_markup, args=args)
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
             something_went_wrong = True
@@ -487,6 +457,63 @@ def main():
 
     if something_went_wrong:
         exit(1)
+
+    # Create a map holding all absolute file paths and their page representation for relative path lookup
+    page_file_map = { os.path.abspath(p.file_path) : p for p in pages_to_upload }
+    for page in pages_to_upload:
+        # check if any path needed to be replace. Will return true on any change
+        if page.replace_relative_paths(page_file_map):
+            print(f"Patching relative paths for page: {page.title}")
+            try:
+                # re-upload the page, this time with fixed relative paths
+                upload_page(confluence=confluence, page=page, preface_markup=preface_markup, postface_markup=postface_markup, args=args)
+            except HTTPError as e:
+                sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
+                something_went_wrong = True
+            except Exception as e:
+                sys.stderr.write("ERROR: {}\n".format(str(e)))
+                something_went_wrong = True
+
+    if something_went_wrong:
+        exit(1)
+
+
+def upload_page(confluence, page: Page, preface_markup: str, postface_markup: str, args):
+    page.space = args.space
+    page.page_id = args.page_id
+
+    if page.parent_title is None:  # This only happens for top level pages
+        # If the argument is not supplied this leaves
+        # the parent_title as None, which is fine
+        page.parent_title = args.parent_title
+    else:
+        if args.prefix:
+            page.parent_title = f"{args.prefix} - {page.parent_title}"
+
+    if page.parent_title is None:
+        page.parent_id = (
+            page.parent_id or args.parent_id
+        )  # This can still end up being None. It's fine.
+
+    if args.prefix:
+        page.title = f"{args.prefix} - {page.title}"
+
+    if preface_markup:
+        page.body = preface_markup + page.body
+
+    if postface_markup:
+        page.body = page.body + postface_markup
+
+    if args.dry_run:
+        print_page_details(page)
+    else:
+        upsert_page(
+            confluence=confluence,
+            message=args.message,
+            page=page,
+            only_changed=args.only_changed,
+            replace_all_labels=args.replace_all_labels,
+        )
 
 
 def collect_pages_to_upload(args):
