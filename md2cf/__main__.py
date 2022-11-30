@@ -179,13 +179,6 @@ def get_parser():
         action="store_true",
         help="if a folder doesn't contain documents, skip it",
     )
-    empty_group.add_argument(
-        "--error-on-missing-references",
-        action="store_true",
-        help="if a relative path is encountered that points to a file that is not going the be "
-        "uploaded or missing entirely an error will be raised."
-    )
-
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -203,6 +196,13 @@ def get_parser():
         help="markdown files or directories to upload to Confluence. Empty for stdin",
         nargs="*",
     )
+    parser.add_argument(
+        "--error-on-missing-references",
+        action="store_true",
+        help="if a relative path is encountered that points to a file that is not going the be "
+        "uploaded or missing entirely an error will be raised."
+    )
+
     return parser
 
 
@@ -465,7 +465,11 @@ def main():
         exit(1)
 
     # Create a map holding all absolute file paths and their page representation for relative path lookup
-    page_file_map = { os.path.abspath(p.file_path) : p for p in pages_to_upload }
+    page_file_map = {}
+    for page in pages_to_upload:
+        if page.file_path:
+            page_file_map[os.path.abspath(page.file_path)] = page
+
     for page in pages_to_upload:
         # check if any path needed to be replace. Will return true on any change
         if page.replace_relative_paths(page_file_map, error_on_missing_references=args.error_on_missing_references):
