@@ -461,9 +461,6 @@ def main():
             sys.stderr.write("ERROR: {}\n".format(str(e)))
             something_went_wrong = True
 
-    if something_went_wrong:
-        exit(1)
-
     # Create a map holding all absolute file paths and their page representation for relative path lookup
     page_file_map = {}
     for page in pages_to_upload:
