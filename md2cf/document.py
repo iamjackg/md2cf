@@ -56,8 +56,8 @@ class Page(object):
         file_dir = os.path.dirname(os.path.abspath(self.file_path))
         changed = False
         for url in urls:
-            # only consider urls that do not start with either http(s) or www.
-            if url.startswith('http') or url.startswith('wwww') or url.startswith('mailto:'):
+            # only consider urls that do not start with either 'http(s)', 'www' or '#'.
+            if url.startswith('http') or url.startswith('wwww') or url.startswith('mailto:') or url.startswith('#'):
                 continue
 
             # get the absolute path to the potential file
