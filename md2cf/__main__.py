@@ -83,7 +83,7 @@ def get_parser():
         "--title",
         help="a title for the page. Determined from the document if missing",
     )
-    
+
     page_group.add_argument(
         "-c",
         "--content-type",
@@ -243,6 +243,7 @@ def upsert_page(
     existing_page = confluence.get_page(
         title=page.title,
         space_key=page.space,
+        content_type=page.content_type,
         page_id=page.page_id,
         additional_expansions=["space", "history", "version", "metadata.labels"],
     )
@@ -314,6 +315,7 @@ def upsert_page(
                 page=existing_page,
                 body=page.body,
                 parent_id=page.parent_id,
+                content_type=page.content_type,
                 update_message=page_message,
                 labels=page.labels if replace_all_labels else None,
                 minor_edit=minor_edit,

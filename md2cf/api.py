@@ -28,7 +28,7 @@ class MinimalConfluence:
             )
 
     def get_page(
-        self, title=None, space_key=None, page_id=None, additional_expansions=None
+        self, title=None, space_key=None, page_id=None, content_type="page", additional_expansions=None
     ):
         """
         Create a new page in a space
@@ -36,6 +36,7 @@ class MinimalConfluence:
         Args:
             title (str): the title for the page
             space_key (str): the Confluence space for the page
+            content_type (str): Content type. Default value: page. Valid values: page, blogpost.
             page_id (str or int): the ID of the page
             additional_expansions (list of str): Additional expansions that should be made when calling the api
 
@@ -50,7 +51,7 @@ class MinimalConfluence:
         if page_id is not None:
             return self.api.content.get(page_id, params=params)
         elif title is not None:
-            params = {"title": title}
+            params = {"title": title, "type": content_type}
             if space_key is not None:
                 params["spaceKey"] = space_key
             response = self.api.content.get(params=params)
@@ -112,6 +113,7 @@ class MinimalConfluence:
         page,
         body,
         parent_id=None,
+        content_type="page",
         update_message=None,
         labels=None,
         minor_edit=False,
@@ -122,7 +124,7 @@ class MinimalConfluence:
                 "minorEdit": minor_edit,
             },
             "title": page.title,
-            "type": "page",
+            "type": content_type,
             "body": {"storage": {"value": body, "representation": "storage"}},
         }
 

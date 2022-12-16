@@ -31,6 +31,7 @@ def test_upsert_page(mocker):
             mocker.call(
                 title=page.title,
                 space_key=page.space,
+                content_type=page.content_type,
                 page_id=None,
                 additional_expansions=[
                     "space",
