@@ -287,3 +287,26 @@ confluence.create_page(space='TEST', title='Test page', body='<p>Nothing</p>', u
 page = confluence.get_page(title='Test page', space_key='TEST')
 confluence.update_page(page=page, body='New content', update_message='Changed page contents')
 ```
+
+## Contribute
+
+Clone this repo, do the following to install and test this project
+
+``` bash
+# Create Virtual Environment
+python -m venv .venv
+pip install --upgrade pip # Update pip
+
+# Activate Virtual Environment
+source .venv/bin/activate
+
+# Install project
+python -m setup install
+
+# Install dev dependencies
+pip install -r requirements-test.txt
+
+# Run the tests
+python -m pytest
+
+```
