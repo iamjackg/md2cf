@@ -28,7 +28,12 @@ class MinimalConfluence:
             )
 
     def get_page(
-        self, title=None, space_key=None, page_id=None, content_type="page", additional_expansions=None
+        self,
+        title=None,
+        space_key=None,
+        page_id=None,
+        content_type="page",
+        additional_expansions=None,
     ):
         """
         Create a new page in a space
@@ -68,7 +73,14 @@ class MinimalConfluence:
             raise ValueError("At least one of title or page_id must not be None")
 
     def create_page(
-        self, space, title, body, content_type="page", parent_id=None, update_message=None, labels=None
+        self,
+        space,
+        title,
+        body,
+        content_type="page",
+        parent_id=None,
+        update_message=None,
+        labels=None,
     ):
         """
         Create a new page in a space
