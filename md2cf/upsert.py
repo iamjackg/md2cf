@@ -48,19 +48,17 @@ def upsert_page(
         additional_expansions=["space", "history", "version", "metadata.labels"],
     )
 
+    # It's not mandatory to have a parent ID -- if there isn't one, the page will be a
+    # top-level page in the Confluence space
     if page.parent_id is None:
         if page.parent_title is not None:
             page.parent_id = get_parent_id_from_title(confluence, page)
 
     page_message = message
     if only_changed:
-        # If the functionality was just enabled, the previous version might not have
-        # the version hash in the message
-        new_page_hash = page.get_content_hash()
+        page_hash = page.get_content_hash()
         page_message = (
-            f"{page_message} [v{new_page_hash}]"
-            if page_message
-            else f"[v{new_page_hash}]"
+            f"{page_message} [v{page_hash}]" if page_message else f"[v{page_hash}]"
         )
 
     if existing_page is None:
@@ -75,29 +73,9 @@ def upsert_page(
             labels=page.labels,
         )
     else:
-        should_update = True
-        if only_changed:
-            if (
-                replace_all_labels
-                and page.labels is not None
-                and sorted(
-                    [label.name for label in existing_page.metadata.labels.results]
-                )
-                != sorted(page.labels)
-            ):
-                print(f"Page labels have changed: {page.title} {page.labels}")
-                should_update = True
-            else:
-                original_page_hash_match = CONTENT_HASH_REGEX.search(
-                    existing_page.version.message
-                )
-                if original_page_hash_match is not None:
-                    original_page_hash = original_page_hash_match.group(1)
-                    if original_page_hash == page.get_content_hash():
-                        should_update = False
-                        print(f"Skipping page that didn't change: {page.title}")
-
-        if should_update:
+        if not only_changed or page_needs_updating(
+            page, existing_page, replace_all_labels
+        ):
             print(f"Updating page: {page.title}")
             existing_page = confluence.update_page(  # TODO: test this
                 page=existing_page,
@@ -108,63 +86,97 @@ def upsert_page(
                 minor_edit=minor_edit,
             )
 
-        if not replace_all_labels and page.labels:
+        if (
+            not replace_all_labels
+            and page.labels
+            and labels_need_updating(page, existing_page)
+        ):
             print(f"Adding labels to page: {page.title} {page.labels}")
             confluence.add_labels(page=existing_page, labels=page.labels)
 
     print(confluence.get_url(existing_page))
 
     if page.attachments:
-        print(f"Uploading attachments for page: {page.title}")
-        for attachment in page.attachments:
-            if page.file_path is not None:
-                attachment_path = page.file_path.parent.joinpath(attachment)
-            else:
-                attachment_path = attachment
-
-            attachment_message = message
-            if only_changed:
-                new_attachment_hash = get_file_sha1(attachment_path)
-                attachment_message = (
-                    f"{attachment_message} [v{new_attachment_hash}]"
-                    if attachment_message
-                    else f"[v{new_attachment_hash}]"
-                )
-
-            existing_attachment = confluence.get_attachment(
-                existing_page, attachment_path.name
-            )
-
-            if existing_attachment is None:
-                print(f"Uploading file: {attachment_path}")
-                with attachment_path.open("rb") as fp:
-                    confluence.create_attachment(
-                        page=existing_page, fp=fp, message=attachment_message
-                    )
-            else:
-                should_update = True
-                if only_changed:
-                    original_attachment_hash_match = CONTENT_HASH_REGEX.search(
-                        existing_attachment.version.message
-                    )
-                    if original_attachment_hash_match is not None:
-                        original_attachment_hash = original_attachment_hash_match.group(
-                            1
-                        )
-                        if original_attachment_hash == new_attachment_hash:
-                            should_update = False
-                            print(
-                                f"Skipping attachment that didn't change: {attachment_path}"
-                            )
-
-                if should_update:
-                    print(f"Updating file: {attachment_path}")
-                    with attachment_path.open("rb") as fp:
-                        confluence.update_attachment(
-                            page=existing_page,
-                            fp=fp,
-                            existing_attachment=existing_attachment,
-                            message=attachment_message,
-                        )
+        upsert_attachments(confluence, existing_page, message, only_changed, page)
 
     return existing_page
+
+
+def labels_need_updating(page, existing_page):
+    if page.labels is None:
+        return False
+
+    if sorted(
+        [label.name for label in existing_page.metadata.labels.results]
+    ) != sorted(page.labels):
+        return True
+
+
+def page_needs_updating(page, existing_page, replace_all_labels):
+    should_update = True
+    if replace_all_labels and labels_need_updating(page, existing_page):
+        print(f"Page labels have changed: {page.title} {page.labels}")
+        should_update = True
+    else:
+        existing_page_hash_match = CONTENT_HASH_REGEX.search(
+            existing_page.version.message
+        )
+        if existing_page_hash_match is not None:
+            original_page_hash = existing_page_hash_match.group(1)
+            if original_page_hash == page.get_content_hash():
+                should_update = False
+                print(f"Skipping page that didn't change: {page.title}")
+
+    return should_update
+
+
+def upsert_attachments(confluence, existing_page, message, only_changed, page):
+    print(f"Uploading attachments for page: {page.title}")
+    for attachment in page.attachments:
+        if page.file_path is not None:
+            attachment_path = page.file_path.parent.joinpath(attachment)
+        else:
+            attachment_path = attachment
+
+        attachment_message = message
+        if only_changed:
+            new_attachment_hash = get_file_sha1(attachment_path)
+            attachment_message = (
+                f"{attachment_message} [v{new_attachment_hash}]"
+                if attachment_message
+                else f"[v{new_attachment_hash}]"
+            )
+
+        existing_attachment = confluence.get_attachment(
+            existing_page, attachment_path.name
+        )
+
+        if existing_attachment is None:
+            print(f"Uploading file: {attachment_path}")
+            with attachment_path.open("rb") as fp:
+                confluence.create_attachment(
+                    page=existing_page, fp=fp, message=attachment_message
+                )
+        else:
+            should_update = True
+            if only_changed:
+                existing_attachment_hash_match = CONTENT_HASH_REGEX.search(
+                    existing_attachment.version.message
+                )
+                if existing_attachment_hash_match is not None:
+                    original_attachment_hash = existing_attachment_hash_match.group(1)
+                    if original_attachment_hash == new_attachment_hash:
+                        should_update = False
+                        print(
+                            f"Skipping attachment that didn't change: {attachment_path}"
+                        )
+
+            if should_update:
+                print(f"Updating file: {attachment_path}")
+                with attachment_path.open("rb") as fp:
+                    confluence.update_attachment(
+                        page=existing_page,
+                        fp=fp,
+                        existing_attachment=existing_attachment,
+                        message=attachment_message,
+                    )
