@@ -33,6 +33,7 @@ def test_upsert_page(mocker):
     confluence.get_page.assert_any_call(
         title=page.title,
         space_key=page.space,
+        content_type=page.content_type,
         page_id=None,
         additional_expansions=[
             "space",
