@@ -84,7 +84,8 @@ def get_parser():
     page_group.add_argument(
         "-c",
         "--content-type",
-        help="Content type. Default value: page. Valid values: page, blogpost.",
+        help="Content type. Default value: page",
+        choices=["page", "blogpost"],
         default="page",
     )
 
