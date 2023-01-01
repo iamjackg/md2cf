@@ -45,6 +45,7 @@ def upsert_page(
         title=page.title,
         space_key=page.space,
         page_id=page.page_id,
+        content_type=page.content_type,
         additional_expansions=["space", "history", "version", "metadata.labels"],
     )
 
