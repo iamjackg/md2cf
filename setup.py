@@ -22,6 +22,7 @@ setup(
     keywords="markdown confluence",
     install_requires=[
         "mistune==0.8.4",
+        "chardet==5.1.0",
         "tortilla==0.5.0",
         "PyYAML==6.0",
         "gitignore_parser==0.0.8",

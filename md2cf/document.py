@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
+from chardet.universaldetector import UniversalDetector
 import mistune
 import yaml
 from yaml.parser import ParserError
@@ -187,8 +188,19 @@ def get_page_data_from_file_path(
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
 
-    with open(file_path) as file_handle:
-        markdown_lines = file_handle.readlines()
+    try:
+        with open(file_path) as file_handle:
+            markdown_lines = file_handle.readlines()
+    except UnicodeDecodeError:
+        detector = UniversalDetector()
+        with open(file_path, "rb") as file_handle:
+            for line in file_handle:
+                detector.feed(line)
+                if detector.done:
+                    break
+
+        with open(file_path, encoding=detector.result["encoding"]):
+            markdown_lines = file_handle.readlines()
 
     page = get_page_data_from_lines(
         markdown_lines,
