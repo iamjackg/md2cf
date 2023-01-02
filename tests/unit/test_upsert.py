@@ -1,7 +1,6 @@
 import pytest
 
 import md2cf.upsert
-import upsert
 from md2cf.api import MinimalConfluence as Confluence
 from md2cf.document import Page
 
@@ -223,7 +222,7 @@ def test_page_needs_updating_page_not_changed(mocker):
     existing_page_mock = mocker.Mock()
     existing_page_mock.version.message = message_hash
 
-    assert not upsert.page_needs_updating(
+    assert not md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=False
     )
 
@@ -239,7 +238,7 @@ def test_page_needs_updating_page_changed(mocker):
     existing_page_mock = mocker.Mock()
     existing_page_mock.version.message = message_hash
 
-    assert upsert.page_needs_updating(
+    assert md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=False
     )
 
@@ -263,7 +262,7 @@ def test_page_needs_updating_content_replace_all_labels_and_labels_not_changed(m
         label_mock.name = label
         existing_page_mock.metadata.labels.results.append(label_mock)
 
-    assert not upsert.page_needs_updating(
+    assert not md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=True
     )
 
@@ -288,7 +287,9 @@ def test_page_needs_updating_content_replace_all_labels_and_labels_changed(mocke
         label_mock.name = label
         existing_page_mock.metadata.labels.results.append(label_mock)
 
-    assert upsert.page_needs_updating(page, existing_page_mock, replace_all_labels=True)
+    assert md2cf.upsert.page_needs_updating(
+        page, existing_page_mock, replace_all_labels=True
+    )
 
 
 def test_page_needs_updating_content_replace_all_labels_but_no_labels_supplied(mocker):
@@ -311,7 +312,7 @@ def test_page_needs_updating_content_replace_all_labels_but_no_labels_supplied(m
         label_mock.name = label
         existing_page_mock.metadata.labels.results.append(label_mock)
 
-    assert not upsert.page_needs_updating(
+    assert not md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=True
     )
 
@@ -339,7 +340,9 @@ def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplie
         label_mock.name = label
         existing_page_mock.metadata.labels.results.append(label_mock)
 
-    assert upsert.page_needs_updating(page, existing_page_mock, replace_all_labels=True)
+    assert md2cf.upsert.page_needs_updating(
+        page, existing_page_mock, replace_all_labels=True
+    )
 
 
 def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplied_not_changed(
@@ -360,6 +363,6 @@ def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplie
 
     existing_page_mock.metadata.labels.results = []
 
-    assert not upsert.page_needs_updating(
+    assert not md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=True
     )
