@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
-- added support for relative links within markdown files
+- Option to mark an edit as minor (@jannismain)
+- Support for blogpost content type (@Bass-03)
+### Fixed
+- Change --bearer-token to --token in README.md (@rtkjbillo)
 
 ## 1.5.1 - 2022-09-01
 ### Fixed

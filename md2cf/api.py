@@ -28,7 +28,12 @@ class MinimalConfluence:
             )
 
     def get_page(
-        self, title=None, space_key=None, page_id=None, additional_expansions=None
+        self,
+        title=None,
+        space_key=None,
+        page_id=None,
+        content_type="page",
+        additional_expansions=None,
     ):
         """
         Create a new page in a space
@@ -36,6 +41,7 @@ class MinimalConfluence:
         Args:
             title (str): the title for the page
             space_key (str): the Confluence space for the page
+            content_type (str): Content type. Default value: page. Valid values: page, blogpost.
             page_id (str or int): the ID of the page
             additional_expansions (list of str): Additional expansions that should be made when calling the api
 
@@ -50,7 +56,7 @@ class MinimalConfluence:
         if page_id is not None:
             return self.api.content.get(page_id, params=params)
         elif title is not None:
-            params = {"title": title}
+            params = {"title": title, "type": content_type}
             if space_key is not None:
                 params["spaceKey"] = space_key
             response = self.api.content.get(params=params)
@@ -67,7 +73,14 @@ class MinimalConfluence:
             raise ValueError("At least one of title or page_id must not be None")
 
     def create_page(
-        self, space, title, body, parent_id=None, update_message=None, labels=None
+        self,
+        space,
+        title,
+        body,
+        content_type="page",
+        parent_id=None,
+        update_message=None,
+        labels=None,
     ):
         """
         Create a new page in a space
@@ -76,6 +89,7 @@ class MinimalConfluence:
             space (str): the Confluence space for the page
             title (str): the title for the page
             body (str): the body of the page, in Confluence Storage Format
+            content_type (str): Content type. Default value: page. Valid values: page, blogpost.
             parent_id (str or int): the ID of the parent page
             update_message (str): optional. A message that will appear in Confluence's history
             labels (list(str)): optional. The set of labels the final page should have. None leaves existing labels unchanged
@@ -86,7 +100,7 @@ class MinimalConfluence:
         """
         page_structure = {
             "title": title,
-            "type": "page",
+            "type": content_type,
             "space": {"key": space},
             "body": {"storage": {"value": body, "representation": "storage"}},
         }
@@ -106,13 +120,23 @@ class MinimalConfluence:
 
         return self.api.content.post(json=page_structure)
 
-    def update_page(self, page, body, parent_id=None, update_message=None, labels=None):
+    def update_page(
+        self,
+        page,
+        body,
+        parent_id=None,
+        content_type="page",
+        update_message=None,
+        labels=None,
+        minor_edit=False,
+    ):
         update_structure = {
             "version": {
                 "number": page.version.number + 1,
+                "minorEdit": minor_edit,
             },
             "title": page.title,
-            "type": "page",
+            "type": content_type,
             "body": {"storage": {"value": body, "representation": "storage"}},
         }
 

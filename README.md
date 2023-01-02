@@ -26,8 +26,8 @@ pip install md2cf
 ```text
 usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
              [--insecure] [-s SPACE] [-a PARENT_TITLE | -A PARENT_ID]
-             [-t TITLE] [-m MESSAGE] [-i PAGE_ID] [--prefix PREFIX]
-             [--strip-top-header] [--remove-text-newlines]
+             [-t TITLE] [-m MESSAGE] [--minor-edit] [-i PAGE_ID]
+             [--prefix PREFIX] [--strip-top-header] [--remove-text-newlines]
              [--replace-all-labels] [--preface-markdown [PREFACE_MARKDOWN] |
              --preface-file PREFACE_FILE]
              [--postface-markdown [POSTFACE_MARKDOWN] | --postface-file
@@ -58,7 +58,7 @@ md2cf --host 'https://confluence.example.com/rest/api' --username foo --password
 Or, if using a token:
 
 ```bash
-md2cf --host 'https://confluence.example.com/rest/api' --bearer-token '2104v3ryl0ngt0k3n720' --space TEST document.md
+md2cf --host 'https://confluence.example.com/rest/api' --token '2104v3ryl0ngt0k3n720' --space TEST document.md
 ```
 
 Note that entering the password as a parameter on the command line is
@@ -159,6 +159,8 @@ change you just made by using the `--message` parameter. Note that if you're usi
 Uploading a page with the same title twice will update the existing one.
 
 If you want to update a page by page ID, use the `--page-id` option. This allows you to change the page's title, or to update a page with a title that is annoying to use as a parameter.
+
+With the `--minor-edit` option you can prevent notifications being sent to watcher of the page. This corresponds to the "Notify watchers" checkbox when editing pages manually.
 
 ### Avoiding uploading content that hasn't changed
 

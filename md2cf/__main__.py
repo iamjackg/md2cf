@@ -3,7 +3,6 @@ import getpass
 import hashlib
 import os
 import pprint
-import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -14,9 +13,7 @@ from requests import HTTPError
 from md2cf import api
 import md2cf.document
 from md2cf.document import Page
-
-
-CONTENT_HASH_REGEX = re.compile(r"\[v([a-f0-9]{40})]$")
+from md2cf.upsert import upsert_page
 
 
 def get_parser():
@@ -83,7 +80,19 @@ def get_parser():
         "--title",
         help="a title for the page. Determined from the document if missing",
     )
+
+    page_group.add_argument(
+        "-c",
+        "--content-type",
+        help="Content type. Default value: page",
+        choices=["page", "blogpost"],
+        default="page",
+    )
+
     page_group.add_argument("-m", "--message", help="update message for the change")
+    page_group.add_argument(
+        "--minor-edit", action="store_true", help="do not notify watchers of change"
+    )
     page_group.add_argument("-i", "--page-id", help="ID of the page to be updated")
     page_group.add_argument(
         "--prefix",
@@ -218,163 +227,6 @@ def print_page_details(page: Page):
     pprint.pprint(page.__dict__)
 
 
-# Adapted from https://stackoverflow.com/a/3431838
-def get_file_sha1(file_path: Path):
-    hash_sha1 = hashlib.sha1()
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_sha1.update(chunk)
-    return hash_sha1.hexdigest()
-
-
-def upsert_page(
-    confluence: api.MinimalConfluence,
-    message: str,
-    page: md2cf.document.Page,
-    only_changed: bool = False,
-    replace_all_labels: bool = False,
-):
-    existing_page = confluence.get_page(
-        title=page.title,
-        space_key=page.space,
-        page_id=page.page_id,
-        additional_expansions=["space", "history", "version", "metadata.labels"],
-    )
-
-    if page.parent_id is None:
-        if page.parent_title is not None:
-            parent_page = confluence.get_page(
-                title=page.parent_title,
-                space_key=page.space,
-                additional_expansions=[
-                    "space",
-                    "history",
-                    "version",
-                    "metadata.labels",
-                ],
-            )
-            if parent_page is None:
-                raise KeyError("The parent page could not be found")
-            page.parent_id = parent_page.id
-
-    page_message = message
-    if only_changed:
-        # If the functionality was just enabled, the previous version might not have
-        # the version hash in the message
-        new_page_hash = page.get_content_hash()
-        page_message = (
-            f"{page_message} [v{new_page_hash}]"
-            if page_message
-            else f"[v{new_page_hash}]"
-        )
-
-    if existing_page is None:
-        print(f"Creating new page: {page.title}")
-        existing_page = confluence.create_page(
-            space=page.space,
-            title=page.title,
-            body=page.body,
-            parent_id=page.parent_id,
-            update_message=page_message,
-            labels=page.labels,
-        )
-    else:
-        should_update = True
-        if only_changed:
-            if (
-                replace_all_labels
-                and page.labels is not None
-                and sorted(
-                    [label.name for label in existing_page.metadata.labels.results]
-                )
-                != sorted(page.labels)
-            ):
-                print(f"Page labels have changed: {page.title} {page.labels}")
-                should_update = True
-            else:
-                original_page_hash_match = CONTENT_HASH_REGEX.search(
-                    existing_page.version.message
-                )
-                if original_page_hash_match is not None:
-                    original_page_hash = original_page_hash_match.group(1)
-                    if original_page_hash == page.get_content_hash():
-                        should_update = False
-                        print(f"Skipping page that didn't change: {page.title}")
-
-        if should_update:
-            print(f"Updating page: {page.title}")
-            confluence.update_page(
-                page=existing_page,
-                body=page.body,
-                parent_id=page.parent_id,
-                update_message=page_message,
-                labels=page.labels if replace_all_labels else None,
-            )
-
-        if not replace_all_labels and page.labels:
-            print(f"Adding labels to page: {page.title} {page.labels}")
-            confluence.add_labels(page=existing_page, labels=page.labels)
-
-    # update Page details
-    page.page_url = confluence.get_url(existing_page)
-    page.page_id = existing_page.id
-
-    print(page.page_url)
-
-    if page.attachments:
-        print(f"Uploading attachments for page: {page.title}")
-        for attachment in page.attachments:
-            if page.file_path is not None:
-                attachment_path = page.file_path.parent.joinpath(attachment)
-            else:
-                attachment_path = attachment
-
-            attachment_message = message
-            if only_changed:
-                new_attachment_hash = get_file_sha1(attachment_path)
-                attachment_message = (
-                    f"{attachment_message} [v{new_attachment_hash}]"
-                    if attachment_message
-                    else f"[v{new_attachment_hash}]"
-                )
-
-            existing_attachment = confluence.get_attachment(
-                existing_page, attachment_path.name
-            )
-
-            if existing_attachment is None:
-                print(f"Uploading file: {attachment_path}")
-                with attachment_path.open("rb") as fp:
-                    confluence.create_attachment(
-                        page=existing_page, fp=fp, message=attachment_message
-                    )
-            else:
-                should_update = True
-                if only_changed:
-                    original_attachment_hash_match = CONTENT_HASH_REGEX.search(
-                        existing_attachment.version.message
-                    )
-                    if original_attachment_hash_match is not None:
-                        original_attachment_hash = original_attachment_hash_match.group(
-                            1
-                        )
-                        if original_attachment_hash == new_attachment_hash:
-                            should_update = False
-                            print(
-                                f"Skipping attachment that didn't change: {attachment_path}"
-                            )
-
-                if should_update:
-                    print(f"Updating file: {attachment_path}")
-                    with attachment_path.open("rb") as fp:
-                        confluence.update_attachment(
-                            page=existing_page,
-                            fp=fp,
-                            existing_attachment=existing_attachment,
-                            message=attachment_message,
-                        )
-
-
 def main():
     args = get_parser().parse_args()
 
@@ -452,8 +304,45 @@ def main():
         ).body
 
     for page in pages_to_upload:
+        page.space = args.space
+        page.page_id = args.page_id
+        page.content_type = args.content_type
+
+        if page.parent_title is None:  # This only happens for top level pages
+            # If the argument is not supplied this leaves
+            # the parent_title as None, which is fine
+            page.parent_title = args.parent_title
+        else:
+            if args.prefix:
+                page.parent_title = f"{args.prefix} - {page.parent_title}"
+
+        if page.parent_title is None:
+            page.parent_id = (
+                page.parent_id or args.parent_id
+            )  # This can still end up being None.
+            # It's fine -- it means it's a top level page.
+
+        if args.prefix:
+            page.title = f"{args.prefix} - {page.title}"
+
+        if preface_markup:
+            page.body = preface_markup + page.body
+
+        if postface_markup:
+            page.body = page.body + postface_markup
+
         try:
-            upload_page(confluence=confluence, page=page, preface_markup=preface_markup, postface_markup=postface_markup, args=args)
+            if args.dry_run:
+                print_page_details(page)
+            else:
+                upsert_page(
+                    confluence=confluence,
+                    message=args.message,
+                    page=page,
+                    only_changed=args.only_changed,
+                    replace_all_labels=args.replace_all_labels,
+                    minor_edit=args.minor_edit,
+                )
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
             something_went_wrong = True

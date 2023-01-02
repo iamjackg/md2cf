@@ -260,9 +260,7 @@ def test_update_page(confluence):
     test_new_body = "<p>This is my new body</p>"
 
     update_structure = {
-        "version": {
-            "number": test_page_version + 1,
-        },
+        "version": {"number": test_page_version + 1, "minorEdit": False},
         "title": test_page_title,
         "type": "page",
         "body": {"storage": {"value": test_new_body, "representation": "storage"}},
@@ -292,7 +290,11 @@ def test_update_page_with_message(confluence):
     test_new_body = "<p>This is my new body</p>"
 
     update_structure = {
-        "version": {"number": test_page_version + 1, "message": test_page_message},
+        "version": {
+            "number": test_page_version + 1,
+            "message": test_page_message,
+            "minorEdit": False,
+        },
         "title": test_page_title,
         "type": "page",
         "body": {"storage": {"value": test_new_body, "representation": "storage"}},

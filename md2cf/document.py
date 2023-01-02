@@ -7,6 +7,7 @@ import urllib.parse
 
 import re
 
+import chardet
 import mistune
 import yaml
 from yaml.parser import ParserError
@@ -20,6 +21,7 @@ class Page(object):
         self,
         title: Optional[str],
         body: str,
+        content_type: Optional[str] = "page",
         attachments: Optional[List[Path]] = None,
         file_path: Optional[Path] = None,
         page_id: str = None,
@@ -31,6 +33,7 @@ class Page(object):
     ):
         self.title = title
         self.body = body
+        self.content_type = content_type
         self.file_path = file_path
         self.attachments = attachments
         if self.attachments is None:
@@ -229,8 +232,14 @@ def get_page_data_from_file_path(
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
 
-    with open(file_path) as file_handle:
-        markdown_lines = file_handle.readlines()
+    try:
+        with open(file_path) as file_handle:
+            markdown_lines = file_handle.readlines()
+    except UnicodeDecodeError:
+        with open(file_path, "rb") as file_handle:
+            detected_encoding = chardet.detect(file_handle.read())
+        with open(file_path, encoding=detected_encoding["encoding"]) as file_handle:
+            markdown_lines = file_handle.readlines()
 
     page = get_page_data_from_lines(
         markdown_lines,
