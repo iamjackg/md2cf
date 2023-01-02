@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
-from chardet.universaldetector import UniversalDetector
+import chardet
 import mistune
 import yaml
 from yaml.parser import ParserError
@@ -192,14 +192,9 @@ def get_page_data_from_file_path(
         with open(file_path) as file_handle:
             markdown_lines = file_handle.readlines()
     except UnicodeDecodeError:
-        detector = UniversalDetector()
         with open(file_path, "rb") as file_handle:
-            for line in file_handle:
-                detector.feed(line)
-                if detector.done:
-                    break
-
-        with open(file_path, encoding=detector.result["encoding"]):
+            detected_encoding = chardet.detect(file_handle.read())
+        with open(file_path, encoding=detected_encoding["encoding"]) as file_handle:
             markdown_lines = file_handle.readlines()
 
     page = get_page_data_from_lines(
