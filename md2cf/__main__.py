@@ -188,7 +188,6 @@ def get_parser():
         action="store_true",
         help="if a folder doesn't contain documents, skip it",
     )
-
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -206,6 +205,13 @@ def get_parser():
         help="markdown files or directories to upload to Confluence. Empty for stdin",
         nargs="*",
     )
+    parser.add_argument(
+        "--error-on-missing-references",
+        action="store_true",
+        help="if a relative path is encountered that points to a file that is not going the be "
+        "uploaded or missing entirely an error will be raised."
+    )
+
     return parser
 
 
@@ -344,8 +350,66 @@ def main():
             sys.stderr.write("ERROR: {}\n".format(str(e)))
             something_went_wrong = True
 
+    # Create a map holding all absolute file paths and their page representation for relative path lookup
+    page_file_map = {}
+    for page in pages_to_upload:
+        if page.file_path:
+            page_file_map[os.path.abspath(page.file_path)] = page
+
+    for page in pages_to_upload:
+        # check if any path needed to be replace. Will return true on any change
+        if page.replace_relative_paths(page_file_map, error_on_missing_references=args.error_on_missing_references):
+            print(f"Patching relative paths for page: {page.title}")
+            try:
+                # re-upload the page, this time with fixed relative paths
+                upload_page(confluence=confluence, page=page, preface_markup=preface_markup, postface_markup=postface_markup, args=args)
+            except HTTPError as e:
+                sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
+                something_went_wrong = True
+            except Exception as e:
+                sys.stderr.write("ERROR: {}\n".format(str(e)))
+                something_went_wrong = True
+
     if something_went_wrong:
         exit(1)
+
+
+def upload_page(confluence, page: Page, preface_markup: str, postface_markup: str, args):
+    page.space = args.space
+    page.page_id = args.page_id
+
+    if page.parent_title is None:  # This only happens for top level pages
+        # If the argument is not supplied this leaves
+        # the parent_title as None, which is fine
+        page.parent_title = args.parent_title
+    else:
+        if args.prefix:
+            page.parent_title = f"{args.prefix} - {page.parent_title}"
+
+    if page.parent_title is None:
+        page.parent_id = (
+            page.parent_id or args.parent_id
+        )  # This can still end up being None. It's fine.
+
+    if args.prefix:
+        page.title = f"{args.prefix} - {page.title}"
+
+    if preface_markup:
+        page.body = preface_markup + page.body
+
+    if postface_markup:
+        page.body = page.body + postface_markup
+
+    if args.dry_run:
+        print_page_details(page)
+    else:
+        upsert_page(
+            confluence=confluence,
+            message=args.message,
+            page=page,
+            only_changed=args.only_changed,
+            replace_all_labels=args.replace_all_labels,
+        )
 
 
 def collect_pages_to_upload(args):

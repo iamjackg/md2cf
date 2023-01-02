@@ -1,7 +1,11 @@
 import hashlib
 import os
+import sys
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+import urllib.parse
+
+import re
 
 import chardet
 import mistune
@@ -21,6 +25,7 @@ class Page(object):
         attachments: Optional[List[Path]] = None,
         file_path: Optional[Path] = None,
         page_id: str = None,
+        page_url: Optional[str] = None,
         parent_id: str = None,
         parent_title: str = None,
         space: str = None,
@@ -34,6 +39,7 @@ class Page(object):
         if self.attachments is None:
             self.attachments = list()
         self.page_id = page_id
+        self.page_id = page_url
         self.parent_id = parent_id
         self.parent_title = parent_title
         self.space = space
@@ -41,6 +47,45 @@ class Page(object):
 
     def get_content_hash(self):
         return hashlib.sha1(self.body.encode()).hexdigest()
+
+    # This function will use the file_page_map to lookup relative paths for documents that have been uploaded
+    def replace_relative_paths(self, file_page_map, error_on_missing_references=False):
+        # This is obviously a directly leaf
+        if not self.file_path:
+            return False
+
+        # match all urls
+        urls = re.findall(r'href=[\'"]?([^\'" >]+)', self.body)
+        file_dir = os.path.dirname(os.path.abspath(self.file_path))
+        changed = False
+        for url in urls:
+            # only consider urls that do not start with either 'http(s)', 'www' or '#'.
+            if url.startswith('http') or url.startswith('wwww') or url.startswith('mailto:') or url.startswith('#'):
+                continue
+
+            # get the absolute path to the potential file
+            # make sure to unquote the url as relative paths might have escape sequences
+            page_file_path = os.path.abspath(os.path.join(file_dir, urllib.parse.unquote(url)))
+
+            # check if the file exists
+            if not os.path.exists(page_file_path):
+                message = f"found relative path '{url}' to non-existing file '{page_file_path}'"
+                if not error_on_missing_references:
+                    sys.stderr.write(f"WARNING: {message}\n")
+                    continue
+                raise ValueError(message)
+            elif page_file_path not in file_page_map:
+                message = f"found relative path '{url}' to file '{page_file_path}' which was not marked for upload'"
+                if not error_on_missing_references:
+                    sys.stderr.write(f"WARNING: {message}\n")
+                    continue
+                raise ValueError(message)
+            else:
+                # replace the relative path in the body with the page_url from previous run
+                self.body = self.body.replace(url, file_page_map[page_file_path].page_url)
+                changed = True
+        return changed
+
 
     def __repr__(self):
         return "Page({})".format(
@@ -58,7 +103,6 @@ class Page(object):
                 ]
             )
         )
-
 
 def find_non_empty_parent_path(
     current_dir: Path, folder_data: Dict[Path, Dict[str, Any]], default: Path

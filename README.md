@@ -33,7 +33,8 @@ usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
              [--postface-markdown [POSTFACE_MARKDOWN] | --postface-file
              POSTFACE_FILE] [--collapse-single-pages] [--no-gitignore]
              [--beautify-folders | --use-pages-file]
-             [--collapse-empty | --skip-empty] [--dry-run] [--only-changed]
+             [--collapse-empty | --skip-empty | --error-on-missing-references]
+             [--dry-run] [--only-changed]
              [file_list [file_list ...]]
 ```
 
