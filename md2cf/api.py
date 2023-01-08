@@ -61,8 +61,10 @@ class MinimalConfluence:
                 params["spaceKey"] = space_key
             response = self.api.content.get(params=params)
             try:
-                # A search by title/space doesn't return full page objects, and since we don't support expansion in this implementation
-                # just yet, we just retrieve the "full" page data using the page ID for the first search result
+                # A search by title/space doesn't return full page objects,
+                # and since we don't support expansion in this implementation
+                # just yet, we just retrieve the "full" page data using the page
+                # ID for the first search result
                 return self.get_page(
                     page_id=response.results[0].id,
                     additional_expansions=additional_expansions,

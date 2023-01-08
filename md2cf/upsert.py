@@ -78,7 +78,7 @@ def upsert_page(
             page, existing_page, replace_all_labels
         ):
             print(f"Updating page: {page.title}")
-            existing_page = confluence.update_page(  # TODO: test this
+            existing_page = confluence.update_page(
                 page=existing_page,
                 body=page.body,
                 parent_id=page.parent_id,
@@ -86,6 +86,8 @@ def upsert_page(
                 labels=page.labels if replace_all_labels else None,
                 minor_edit=minor_edit,
             )
+        else:
+            print(f"Skipping page that didn't change: {page.title}")
 
         if (
             not replace_all_labels
@@ -126,7 +128,6 @@ def page_needs_updating(page, existing_page, replace_all_labels):
             original_page_hash = existing_page_hash_match.group(1)
             if original_page_hash == page.get_content_hash():
                 should_update = False
-                print(f"Skipping page that didn't change: {page.title}")
 
     return should_update
 

@@ -1,4 +1,5 @@
 import argparse
+import copy
 import getpass
 import hashlib
 import os
@@ -188,6 +189,22 @@ def get_parser():
         action="store_true",
         help="if a folder doesn't contain documents, skip it",
     )
+
+    relative_links_group = parser.add_argument_group("relative links arguments")
+    relative_links_group.add_argument(
+        "--enable-relative-links",
+        action="store_true",
+        help="enable parsing of relative links to other markdown files. "
+        "Requires two passes for pages with relative links, and will cause them "
+        "to always be updated regardless of the --only-changed flag",
+    )
+    relative_links_group.add_argument(
+        "--ignore-relative-link-errors",
+        action="store_true",
+        help="when relative links are enabled and a link doesn't point to an "
+        "existing and uploaded file, leave the link as-is instead of exiting.",
+    )
+
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -205,12 +222,6 @@ def get_parser():
         help="markdown files or directories to upload to Confluence. Empty for stdin",
         nargs="*",
     )
-    parser.add_argument(
-        "--error-on-missing-references",
-        action="store_true",
-        help="if a relative path is encountered that points to a file that is not going the be "
-        "uploaded or missing entirely an error will be raised."
-    )
 
     return parser
 
@@ -223,8 +234,9 @@ def print_missing_parameter(parameter_name: str):
 
 
 def print_page_details(page: Page):
-    page.body = page.body[:40] + ("..." if page.body else "")
-    pprint.pprint(page.__dict__)
+    page_copy = copy.copy(page)
+    page_copy.body = page_copy.body[:40] + ("..." if page_copy.body else "")
+    pprint.pprint(page_copy.__dict__)
 
 
 def main():
@@ -303,39 +315,20 @@ def main():
             args.postface_file
         ).body
 
+    map_document_path_to_page = dict()
+    if args.enable_relative_links:
+        map_document_path_to_page = build_document_path_to_page_map(pages_to_upload)
+
+        validate_relative_links(pages_to_upload, map_document_path_to_page)
+
     for page in pages_to_upload:
-        page.space = args.space
-        page.page_id = args.page_id
-        page.content_type = args.content_type
-
-        if page.parent_title is None:  # This only happens for top level pages
-            # If the argument is not supplied this leaves
-            # the parent_title as None, which is fine
-            page.parent_title = args.parent_title
-        else:
-            if args.prefix:
-                page.parent_title = f"{args.prefix} - {page.parent_title}"
-
-        if page.parent_title is None:
-            page.parent_id = (
-                page.parent_id or args.parent_id
-            )  # This can still end up being None.
-            # It's fine -- it means it's a top level page.
-
-        if args.prefix:
-            page.title = f"{args.prefix} - {page.title}"
-
-        if preface_markup:
-            page.body = preface_markup + page.body
-
-        if postface_markup:
-            page.body = page.body + postface_markup
+        pre_process_page(page, args, postface_markup, preface_markup)
 
         try:
             if args.dry_run:
                 print_page_details(page)
             else:
-                upsert_page(
+                final_page = upsert_page(
                     confluence=confluence,
                     message=args.message,
                     page=page,
@@ -343,6 +336,10 @@ def main():
                     replace_all_labels=args.replace_all_labels,
                     minor_edit=args.minor_edit,
                 )
+                if page.file_path is not None and args.enable_relative_links:
+                    # Skip pages without a file_path
+                    # (e.g. section pages representing directories)
+                    map_document_path_to_page[page.file_path.resolve()] = final_page
         except HTTPError as e:
             sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
             something_went_wrong = True
@@ -350,33 +347,21 @@ def main():
             sys.stderr.write("ERROR: {}\n".format(str(e)))
             something_went_wrong = True
 
-    # Create a map holding all absolute file paths and their page representation for relative path lookup
-    page_file_map = {}
-    for page in pages_to_upload:
-        if page.file_path:
-            page_file_map[os.path.abspath(page.file_path)] = page
-
-    for page in pages_to_upload:
-        # check if any path needed to be replace. Will return true on any change
-        if page.replace_relative_paths(page_file_map, error_on_missing_references=args.error_on_missing_references):
-            print(f"Patching relative paths for page: {page.title}")
-            try:
-                # re-upload the page, this time with fixed relative paths
-                upload_page(confluence=confluence, page=page, preface_markup=preface_markup, postface_markup=postface_markup, args=args)
-            except HTTPError as e:
-                sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
-                something_went_wrong = True
-            except Exception as e:
-                sys.stderr.write("ERROR: {}\n".format(str(e)))
-                something_went_wrong = True
-
     if something_went_wrong:
         exit(1)
 
+    print()
 
-def upload_page(confluence, page: Page, preface_markup: str, postface_markup: str, args):
+    if args.enable_relative_links:
+        update_pages_with_relative_links(
+            args, confluence, pages_to_upload, map_document_path_to_page
+        )
+
+
+def pre_process_page(page, args, postface_markup, preface_markup):
     page.space = args.space
     page.page_id = args.page_id
+    page.content_type = args.content_type
 
     if page.parent_title is None:  # This only happens for top level pages
         # If the argument is not supplied this leaves
@@ -389,7 +374,8 @@ def upload_page(confluence, page: Page, preface_markup: str, postface_markup: st
     if page.parent_title is None:
         page.parent_id = (
             page.parent_id or args.parent_id
-        )  # This can still end up being None. It's fine.
+        )  # This can still end up being None.
+        # It's fine -- it means it's a top level page.
 
     if args.prefix:
         page.title = f"{args.prefix} - {page.title}"
@@ -400,16 +386,95 @@ def upload_page(confluence, page: Page, preface_markup: str, postface_markup: st
     if postface_markup:
         page.body = page.body + postface_markup
 
-    if args.dry_run:
-        print_page_details(page)
-    else:
-        upsert_page(
-            confluence=confluence,
-            message=args.message,
-            page=page,
-            only_changed=args.only_changed,
-            replace_all_labels=args.replace_all_labels,
+
+def validate_relative_links(pages_to_upload, path_to_page):
+    invalid_links = False
+    for page in pages_to_upload:
+        for link_data in page.relative_links:
+            link_absolute_path = (
+                page.file_path.parent / Path(link_data.path)
+            ).resolve()
+            if link_absolute_path not in path_to_page:
+                sys.stderr.write(
+                    f"Page {page.file_path} has a relative link to {link_data.path}"
+                    ", which is not in the list of pages to be uploaded.\n"
+                )
+                invalid_links = True
+    if invalid_links:
+        sys.stderr.write(
+            "\nSome of the pages to be uploaded have invalid relative links.\n"
         )
+        sys.exit(1)
+
+
+def build_document_path_to_page_map(pages_to_upload):
+    path_to_page = dict()
+    for page in pages_to_upload:
+        try:
+            # Will be filled in later with the page returned by upsert
+            path_to_page[page.file_path.resolve()] = None
+        except AttributeError:
+            # A page might not have a file_path
+            # (for example if it's representing a directory)
+            continue
+    return path_to_page
+
+
+def update_pages_with_relative_links(args, confluence, pages_to_upload, path_to_page):
+    something_went_wrong = False
+    for page in pages_to_upload:
+        if page.file_path is None:
+            # Skip pages without a file_path
+            # (e.g. section pages representing directories)
+            continue
+
+        if args.dry_run and page.relative_links:
+            sys.stderr.write(
+                f"Dry run: skipping relative link replacement for {page.file_path}"
+            )
+            continue
+
+        page_modified = False
+        for link_data in page.relative_links:
+            try:
+                link_absolute_path = (
+                    page.file_path.parent / Path(link_data.path)
+                ).resolve()
+                page_on_confluence = path_to_page[link_absolute_path]
+            except KeyError:
+                sys.stderr.write(
+                    f"Page {page.file_path} has a relative link to {link_data.path}"
+                    ", which was not uploaded correctly.\n"
+                )
+                break
+
+            page.body = page.body.replace(
+                link_data.replacement, confluence.get_url(page_on_confluence)
+            )
+            page_modified = True
+
+        if page_modified:
+            try:
+                print(
+                    f"Page {page.file_path} has updated relative links. " "Reuploading."
+                )
+                upsert_page(
+                    confluence=confluence,
+                    message=args.message,
+                    page=page,
+                    only_changed=args.only_changed,
+                    replace_all_labels=args.replace_all_labels,
+                    minor_edit=True,
+                )
+            except HTTPError as e:
+                sys.stderr.write("{} - {}\n".format(str(e), e.response.content))
+                something_went_wrong = True
+            except Exception as e:
+                sys.stderr.write("ERROR: {}\n".format(str(e)))
+                something_went_wrong = True
+
+        if something_went_wrong:
+            exit(1)
 
 
 def collect_pages_to_upload(args):
@@ -420,6 +485,7 @@ def collect_pages_to_upload(args):
                 sys.stdin.readlines(),
                 strip_header=args.strip_top_header,
                 remove_text_newlines=args.remove_text_newlines,
+                enable_relative_links=False,
             )
         )
 
@@ -445,22 +511,44 @@ def collect_pages_to_upload(args):
                     strip_header=args.strip_top_header,
                     use_pages_file=args.use_pages_file,
                     use_gitignore=args.use_gitignore,
+                    enable_relative_links=args.enable_relative_links,
                 )
             else:
                 try:
+                    enable_relative_links = (
+                        len(args.file_list) > 1 and args.enable_relative_links
+                    )
                     pages_to_upload.append(
                         md2cf.document.get_page_data_from_file_path(
                             file_name,
                             strip_header=args.strip_top_header,
                             remove_text_newlines=args.remove_text_newlines,
+                            enable_relative_links=enable_relative_links,
                         )
                     )
                 except FileNotFoundError:
                     sys.stderr.write(f"File {file_name} does not exist\n")
 
         if len(pages_to_upload) == 1:
+            only_page = pages_to_upload[0]
+
             if args.title:
-                pages_to_upload[0].title = args.title
+                only_page.title = args.title
+
+            # This is implicitly only here if relative link processing is active
+            if only_page.relative_links:
+                # This covers the last edge case where directory processing leaves us
+                # with only one page, which we can't anticipate.
+                # In this case, we have to restore all the links to their original
+                # values.
+                sys.stderr.write(
+                    "Relative links are ignored when there's a single page\n"
+                )
+                for link_data in only_page.relative_links:
+                    only_page.body.replace(
+                        link_data.replacement, link_data.escaped_original
+                    )
+
     return pages_to_upload
 
 

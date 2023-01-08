@@ -1,11 +1,7 @@
 import hashlib
 import os
-import sys
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-import urllib.parse
-
-import re
 
 import chardet
 import mistune
@@ -13,7 +9,7 @@ import yaml
 from yaml.parser import ParserError
 
 from md2cf.ignored_files import GitRepository
-from md2cf.confluence_renderer import ConfluenceRenderer
+from md2cf.confluence_renderer import ConfluenceRenderer, RelativeLink
 
 
 class Page(object):
@@ -25,11 +21,11 @@ class Page(object):
         attachments: Optional[List[Path]] = None,
         file_path: Optional[Path] = None,
         page_id: str = None,
-        page_url: Optional[str] = None,
         parent_id: str = None,
         parent_title: str = None,
         space: str = None,
         labels: Optional[List[str]] = None,
+        relative_links: Optional[List[RelativeLink]] = None,
     ):
         self.title = title
         self.body = body
@@ -37,9 +33,11 @@ class Page(object):
         self.file_path = file_path
         self.attachments = attachments
         if self.attachments is None:
-            self.attachments = list()
+            self.attachments: List[Path] = list()
+        self.relative_links = relative_links
+        if self.relative_links is None:
+            self.relative_links: List[RelativeLink] = list()
         self.page_id = page_id
-        self.page_id = page_url
         self.parent_id = parent_id
         self.parent_title = parent_title
         self.space = space
@@ -47,45 +45,6 @@ class Page(object):
 
     def get_content_hash(self):
         return hashlib.sha1(self.body.encode()).hexdigest()
-
-    # This function will use the file_page_map to lookup relative paths for documents that have been uploaded
-    def replace_relative_paths(self, file_page_map, error_on_missing_references=False):
-        # This is obviously a directly leaf
-        if not self.file_path:
-            return False
-
-        # match all urls
-        urls = re.findall(r'href=[\'"]?([^\'" >]+)', self.body)
-        file_dir = os.path.dirname(os.path.abspath(self.file_path))
-        changed = False
-        for url in urls:
-            # only consider urls that do not start with either 'http(s)', 'www' or '#'.
-            if url.startswith('http') or url.startswith('wwww') or url.startswith('mailto:') or url.startswith('#'):
-                continue
-
-            # get the absolute path to the potential file
-            # make sure to unquote the url as relative paths might have escape sequences
-            page_file_path = os.path.abspath(os.path.join(file_dir, urllib.parse.unquote(url)))
-
-            # check if the file exists
-            if not os.path.exists(page_file_path):
-                message = f"found relative path '{url}' to non-existing file '{page_file_path}'"
-                if not error_on_missing_references:
-                    sys.stderr.write(f"WARNING: {message}\n")
-                    continue
-                raise ValueError(message)
-            elif page_file_path not in file_page_map:
-                message = f"found relative path '{url}' to file '{page_file_path}' which was not marked for upload'"
-                if not error_on_missing_references:
-                    sys.stderr.write(f"WARNING: {message}\n")
-                    continue
-                raise ValueError(message)
-            else:
-                # replace the relative path in the body with the page_url from previous run
-                self.body = self.body.replace(url, file_page_map[page_file_path].page_url)
-                changed = True
-        return changed
-
 
     def __repr__(self):
         return "Page({})".format(
@@ -103,6 +62,7 @@ class Page(object):
                 ]
             )
         )
+
 
 def find_non_empty_parent_path(
     current_dir: Path, folder_data: Dict[Path, Dict[str, Any]], default: Path
@@ -123,6 +83,7 @@ def get_pages_from_directory(
     strip_header: bool = False,
     remove_text_newlines: bool = False,
     use_gitignore: bool = True,
+    enable_relative_links: bool = False,
 ) -> List[Page]:
     """
     Collect a list of markdown files recursively under the file_path directory.
@@ -136,6 +97,7 @@ def get_pages_from_directory(
     :param strip_header:
     :param remove_text_newlines:
     :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory search
+    :param enable_relative_links: extract all relative links and replace them with placeholders
     :return: A list of paths to the markdown files to upload.
     """
     processed_pages = list()
@@ -213,6 +175,7 @@ def get_pages_from_directory(
                 markdown_file,
                 strip_header=strip_header,
                 remove_text_newlines=remove_text_newlines,
+                enable_relative_links=enable_relative_links,
             )
             processed_page.parent_title = parent_page_title
             processed_pages.append(processed_page)
@@ -227,7 +190,10 @@ def get_pages_from_directory(
 
 
 def get_page_data_from_file_path(
-    file_path: Path, strip_header: bool = False, remove_text_newlines: bool = False
+    file_path: Path,
+    strip_header: bool = False,
+    remove_text_newlines: bool = False,
+    enable_relative_links: bool = False,
 ) -> Page:
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
@@ -245,6 +211,7 @@ def get_page_data_from_file_path(
         markdown_lines,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
+        enable_relative_links=enable_relative_links,
     )
 
     if not page.title:
@@ -259,6 +226,7 @@ def get_page_data_from_lines(
     markdown_lines: List[str],
     strip_header: bool = False,
     remove_text_newlines: bool = False,
+    enable_relative_links: bool = False,
 ) -> Page:
     frontmatter = get_document_frontmatter(markdown_lines)
     if "frontmatter_end_line" in frontmatter:
@@ -268,6 +236,7 @@ def get_page_data_from_lines(
         markdown_lines,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
+        enable_relative_links=enable_relative_links,
     )
 
     if "title" in frontmatter:
@@ -287,17 +256,22 @@ def parse_page(
     markdown_lines: List[str],
     strip_header: bool = False,
     remove_text_newlines: bool = False,
+    enable_relative_links: bool = False,
 ) -> Page:
     renderer = ConfluenceRenderer(
         use_xhtml=True,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
+        enable_relative_links=enable_relative_links,
     )
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune("".join(markdown_lines))
 
     page = Page(
-        title=renderer.title, body=confluence_content, attachments=renderer.attachments
+        title=renderer.title,
+        body=confluence_content,
+        attachments=renderer.attachments,
+        relative_links=renderer.relative_links,
     )
 
     return page
