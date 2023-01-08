@@ -318,8 +318,8 @@ def main():
     map_document_path_to_page = dict()
     if args.enable_relative_links:
         map_document_path_to_page = build_document_path_to_page_map(pages_to_upload)
-
-        validate_relative_links(pages_to_upload, map_document_path_to_page)
+        if not args.ignore_relative_link_errors:
+            validate_relative_links(pages_to_upload, map_document_path_to_page)
 
     for page in pages_to_upload:
         pre_process_page(page, args, postface_markup, preface_markup)
@@ -442,11 +442,17 @@ def update_pages_with_relative_links(args, confluence, pages_to_upload, path_to_
                 ).resolve()
                 page_on_confluence = path_to_page[link_absolute_path]
             except KeyError:
-                sys.stderr.write(
-                    f"Page {page.file_path} has a relative link to {link_data.path}"
-                    ", which was not uploaded correctly.\n"
-                )
-                break
+                if args.ignore_relative_link_errors:
+                    page.body = page.body.replace(
+                        link_data.replacement, link_data.escaped_original
+                    )
+                    continue
+                else:
+                    sys.stderr.write(
+                        f"Page {page.file_path} has a relative link to {link_data.path}"
+                        ", which was not uploaded correctly.\n"
+                    )
+                    break
 
             page.body = page.body.replace(
                 link_data.replacement, confluence.get_url(page_on_confluence)
@@ -456,7 +462,7 @@ def update_pages_with_relative_links(args, confluence, pages_to_upload, path_to_
         if page_modified:
             try:
                 print(
-                    f"Page {page.file_path} has updated relative links. " "Reuploading."
+                    f"Page {page.file_path} has updated relative links. Re-uploading."
                 )
                 upsert_page(
                     confluence=confluence,
