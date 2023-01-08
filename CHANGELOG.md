@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Support for relative links (@mschmieder)
 - Option to mark an edit as minor (@jannismain)
 - Support for blogpost content type (@Bass-03)
 ### Fixed

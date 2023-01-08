@@ -45,7 +45,7 @@ class GitRepository:
         """
         Collect all .gitignore files from start location to the root of the
         repository. Filepath is assumed to be a subdirectory of the git root.
-        If not, an error is printed a an empty list is returned.
+        If not, an error is printed and an empty list is returned.
 
         :param filepath: The path to start searching for .gitignore files
         :return: List of paths to .gitignore files relevant for start_path

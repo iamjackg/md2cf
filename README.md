@@ -1,7 +1,6 @@
 # md2cf
 
-A tool and library to convert documents written in Markdown to Confluence Storage
-format and upload them to a Confluence instance.
+A tool and library to convert documents written in Markdown to Confluence Storage format and upload them to a Confluence instance.
 
 ## Features
 
@@ -21,25 +20,11 @@ format and upload them to a Confluence instance.
 pip install md2cf
 ```
 
-## Upload script
+## Getting started
 
-```text
-usage: md2cf [-h] [-o HOST] [-u USERNAME] [-p PASSWORD] [--token TOKEN]
-             [--insecure] [-s SPACE] [-a PARENT_TITLE | -A PARENT_ID]
-             [-t TITLE] [-m MESSAGE] [--minor-edit] [-i PAGE_ID]
-             [--prefix PREFIX] [--strip-top-header] [--remove-text-newlines]
-             [--replace-all-labels] [--preface-markdown [PREFACE_MARKDOWN] |
-             --preface-file PREFACE_FILE]
-             [--postface-markdown [POSTFACE_MARKDOWN] | --postface-file
-             POSTFACE_FILE] [--collapse-single-pages] [--no-gitignore]
-             [--beautify-folders | --use-pages-file]
-             [--collapse-empty | --skip-empty | --error-on-missing-references]
-             [--dry-run] [--only-changed]
-             [file_list [file_list ...]]
-```
+Run `md2cf --help` to see all the options and parameters.
 
-In order to upload a document, you'll need to supply at least the
-following five parameters:
+In order to upload a document, you will need to supply at least the following five parameters:
 
   - The **URL** of your Confluence instance, including the path to
     the REST API (e.g. `http://confluence.example.com/rest/api`)
@@ -61,21 +46,23 @@ Or, if using a token:
 md2cf --host 'https://confluence.example.com/rest/api' --token '2104v3ryl0ngt0k3n720' --space TEST document.md
 ```
 
-Note that entering the password as a parameter on the command line is
-generally a bad idea. If you're running the script interactively, you
-can omit the `--password` parameter and the script will prompt for it.
+> :warning: Entering your password as a parameter on the command line is [generally a bad idea](https://unix.stackexchange.com/q/78734). If you're running the script interactively, you can omit the `--password` parameter and the script will securely ask you to type it.
 
-For the security conscious out there or those who plan on
-using this as part of a pipeline, you can also supply the hostname,
-username, password, token, and space as **environment variables**:
-`CONFLUENCE_HOST`, `CONFLUENCE_USERNAME`, `CONFLUENCE_PASSWORD`,
-`CONFLUENCE_TOKEN`, and `CONFLUENCE_SPACE`.
+You can also supply the hostname, username, password, token, and space as **environment variables**:
 
-If you're using self-signed certificates and/or want to ignore SSL errors, add the `--insecure` option.
+- `CONFLUENCE_HOST`
+- `CONFLUENCE_USERNAME`
+- `CONFLUENCE_PASSWORD`
+- `CONFLUENCE_TOKEN`
+- `CONFLUENCE_SPACE`.
 
-You can specify multiple files and/or entire folders. If you specify a folder, it will be traversed recursively and all files ending in `.md` will be uploaded. See [Uploading folders](#uploading-folders) for more information.
+If you're using self-signed certificates and/or want to **ignore SSL errors**, add the `--insecure` option.
+
+You can specify **multiple files and/or entire folders**. If you specify a folder, it will be traversed recursively and all files ending in `.md` will be uploaded. See [Uploading folders](#uploading-folders) for more information.
 
 If you just want to get a preview of what `md2cf` would do, the `--dry-run` option will print a list of page data but leave Confluence untouched.
+
+## Page information arguments
 
 ### Page title
 
@@ -101,6 +88,8 @@ If you're uploading entire folders, you might want to add a prefix to each page 
 
 If your document uses single newlines to break lines, for example if it was typeset with a fixed column width, Confluence Cloud might respect those newlines and produce a document that's difficult to read. Use the `--remove-text-newlines` parameter to replace every newline within a paragraph with a space.
 
+<details>
+<summary>Example</summary>
 For example, this will turn
 
 ```text
@@ -119,28 +108,31 @@ This is a document with hardcoded newlines in its paragraphs.
 
 It's not that nice to read.
 ```
+</details>
 
 ### Adding a preface and/or postface
 
 The `--preface-markdown`, `--preface-file`, `--postface-markdown`, and `--postface-file` commands allow you to add some text at the top or bottom of each page. This is useful  if you're mirroring documentation to Confluence and want people to know that it's going to be overwritten in an automated fashion.
 
-The first option allows you to specify Markdown text right on the command line. If you don't specify anything, it defaults to a paragraph saying
+`--preface-markdown` and `--postface-markdown` allow you to specify Markdown text right on the command line. If you don't specify anything, it defaults to a paragraph saying
 
-**Contents are auto-generated, do not edit.**
+> **Contents are auto-generated, do not edit.**
 
-The second option takes a path to a markdown file and will prepend or append its contents to every page. Note that this is parsed separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page contents, such as title or front matter detection.
+`--preface-file` and `--postface-file` take a path to a markdown file and will prepend or append the contents to every page.
+
+> :warning: Preface and postface Markdown is parsed separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page contents, such as title or front matter detection.
 
 ### Page labels
 
 You can specify labels for your page by adding a `labels` entry in your document's front matter, i.e. a YAML block delimited by `---` lines at the top of the file
 
 ```yaml
-  ---
-  labels:
-    - first label
-    - second label
-  ---
-  # Rest of the document here
+---
+labels:
+- first label
+- second label
+---
+# Rest of the document here
 ```
 
 By default, labels will only be added. If you want the final set of labels to _exactly_ match what you listed in the front matter, pass the `--replace-all-labels` option.
@@ -166,11 +158,21 @@ With the `--minor-edit` option you can prevent notifications being sent to watch
 
 If you want to avoid redundant uploads (and the corresponding update emails) when your content hasn't changed, you can add the `--only-changed` option. Note that this will store a hash of the page/attachment contents at the end of the version update message.
 
-### Uploading folders
+## Linking to other documents (relative links)
 
-`md2cf` can upload entire folders for you. This can be useful if you want to mirror some in-repo documentation to Confluence.
+Relative link support is disabled by default. You can enable it by passing `--enable-relative-links`. They work similarly to [GitHub relative links](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes#relative-links-and-image-paths-in-readme-files), with the difference that links starting with `/` are **not supported** and will be left as they are.
 
-When uploading entire folders, `md2cf` will recursively traverse all subdirectories and upload any `.md` file it encounters.
+> :warning: This function requires two uploads for every page containing relative links, since a page needs to be uploaded to Confluence first before we can know which URL it's assigned.
+>
+> The first upload will replace all internal links with placeholders, and once we know where all the pages ended up, the placeholders will be replaced with the final Confluence link.
+
+By default, relative links that point to a file that doesn't exist (or is not being uploaded in the current batch) will result in an error. If you want to ignore this and keep them as they are, pass `--ignore-relative-link-errors`.
+
+## Directory arguments
+
+### Uploading folders recursively
+
+`md2cf` can upload entire folders for you. This can be useful if you want to mirror some in-repo documentation to Confluence. When uploading entire folders, `md2cf` will recursively traverse all subdirectories and upload any `.md` file it encounters.
 
 By default, `md2cf` will honour your `.gitignore` and skip any files or folders it defines. If you want to avoid this, add the `--no-gitignore` option.
 
@@ -191,7 +193,11 @@ title: "This is a fantastic title!"
 
 #### Collapse single pages
 
-You can collapse directories that only contain one document by passing the `--collapse-single-pages` parameter. This means that a folder layout like this:
+You can collapse directories that only contain one document by passing the `--collapse-single-pages` parameter.
+
+<details>
+<summary>Example</summary>
+This means that a folder layout like this:
 
 ```text
 document.md
@@ -211,11 +217,14 @@ folder1/
   documentB
 other-document
 ```
+</details>
 
 #### Dealing with empty folders
 
-You can also modify the behaviour for empty folders. If you specify `--skip-empty`, this tree layout:
+Passing `--skip-empty` will not create pages for empty folders.
 
+<details>
+<summary>Example</summary>
 ```text
 document.md
 folder1/
@@ -240,8 +249,26 @@ folderA/
   folderC/
     lonely-document
 ```
+</details>
 
-Alternatively, you can specify `--collapse-empty` to merge empty folders together, producing the following result:
+Alternatively, you can specify `--collapse-empty` to merge empty folders together.
+
+<details>
+<summary>Example</summary>
+```text
+document.md
+folder1/
+  folder2/
+    folder3/
+      other-document.md
+folderA/
+  interesting-document.md
+    folderB/
+      folderC/
+        lonely-document.md
+```
+
+will be uploaded as:
 
 ```text
 document
@@ -252,6 +279,7 @@ folderA/
   folderB/folderC/
     lonely-document
 ```
+</details>
 
 ## Library usage
 
