@@ -1,11 +1,26 @@
 import hashlib
 import re
 from pathlib import Path
+from typing import NamedTuple
+from enum import Enum
+
+import tortilla.utils
 
 import md2cf.document
 from md2cf import api
 
 CONTENT_HASH_REGEX = re.compile(r"\[v([a-f0-9]{40})]$")
+
+
+class UpsertAction(Enum):
+    CREATED = 1
+    UPDATED = 2
+    SKIPPED = 3
+
+
+class UpsertResult(NamedTuple):
+    action: UpsertAction
+    response: tortilla.utils.Bunch
 
 
 # Adapted from https://stackoverflow.com/a/3431838
@@ -46,7 +61,13 @@ def upsert_page(
         space_key=page.space,
         page_id=page.page_id,
         content_type=page.content_type,
-        additional_expansions=["space", "history", "version", "metadata.labels"],
+        additional_expansions=[
+            "space",
+            "ancestors",
+            "history",
+            "version",
+            "metadata.labels",
+        ],
     )
 
     # It's not mandatory to have a parent ID -- if there isn't one, the page will be a
@@ -62,8 +83,8 @@ def upsert_page(
             f"{page_message} [v{page_hash}]" if page_message else f"[v{page_hash}]"
         )
 
+    action = None
     if existing_page is None:
-        print(f"Creating new page: {page.title}")
         existing_page = confluence.create_page(
             space=page.space,
             title=page.title,
@@ -73,11 +94,11 @@ def upsert_page(
             update_message=page_message,
             labels=page.labels,
         )
+        action = UpsertAction.CREATED
     else:
         if not only_changed or page_needs_updating(
             page, existing_page, replace_all_labels
         ):
-            print(f"Updating page: {page.title}")
             existing_page = confluence.update_page(
                 page=existing_page,
                 body=page.body,
@@ -86,23 +107,22 @@ def upsert_page(
                 labels=page.labels if replace_all_labels else None,
                 minor_edit=minor_edit,
             )
+            action = UpsertAction.UPDATED
         else:
-            print(f"Skipping page that didn't change: {page.title}")
+            action = UpsertAction.SKIPPED
 
         if (
             not replace_all_labels
             and page.labels
             and labels_need_updating(page, existing_page)
         ):
-            print(f"Adding labels to page: {page.title} {page.labels}")
+            # print(f"Adding labels to page: {page.title} {page.labels}")
             confluence.add_labels(page=existing_page, labels=page.labels)
 
-    print(confluence.get_url(existing_page))
+    # print(confluence.get_url(existing_page))
+    # TODO: redo
 
-    if page.attachments:
-        upsert_attachments(confluence, existing_page, message, only_changed, page)
-
-    return existing_page
+    return UpsertResult(action=action, response=existing_page)
 
 
 def labels_need_updating(page, existing_page):
@@ -116,10 +136,18 @@ def labels_need_updating(page, existing_page):
 
 
 def page_needs_updating(page, existing_page, replace_all_labels):
-    should_update = True
+    if page.parent_id is None and len(existing_page.ancestors) > 1:
+        # page wants to become a top level page and was not one before
+        # (top level pages only have one ancestor: the space's home page)
+        return True
+
+    if page.parent_id is not None and page.parent_id != existing_page.ancestors[-1].id:
+        # page wants to change parent
+        return True
+
     if replace_all_labels and labels_need_updating(page, existing_page):
-        print(f"Page labels have changed: {page.title} {page.labels}")
-        should_update = True
+        # print(f"Page labels have changed: {page.title} {page.labels}")
+        return True
     else:
         existing_page_hash_match = CONTENT_HASH_REGEX.search(
             existing_page.version.message
@@ -127,58 +155,60 @@ def page_needs_updating(page, existing_page, replace_all_labels):
         if existing_page_hash_match is not None:
             original_page_hash = existing_page_hash_match.group(1)
             if original_page_hash == page.get_content_hash():
-                should_update = False
+                return False
 
-    return should_update
+    return True
 
 
-def upsert_attachments(confluence, existing_page, message, only_changed, page):
-    print(f"Uploading attachments for page: {page.title}")
-    for attachment in page.attachments:
-        if page.file_path is not None:
-            attachment_path = page.file_path.parent.joinpath(attachment)
-        else:
-            attachment_path = attachment
+def upsert_attachment(
+    confluence, attachment, existing_page, message, only_changed, page
+):
+    if page.file_path is not None:
+        attachment_path = page.file_path.parent.joinpath(attachment)
+    else:
+        attachment_path = attachment
 
-        attachment_message = message
-        if only_changed:
-            new_attachment_hash = get_file_sha1(attachment_path)
-            attachment_message = (
-                f"{attachment_message} [v{new_attachment_hash}]"
-                if attachment_message
-                else f"[v{new_attachment_hash}]"
-            )
-
-        existing_attachment = confluence.get_attachment(
-            existing_page, attachment_path.name
+    attachment_message = message
+    if only_changed:
+        new_attachment_hash = get_file_sha1(attachment_path)
+        attachment_message = (
+            f"{attachment_message} [v{new_attachment_hash}]"
+            if attachment_message
+            else f"[v{new_attachment_hash}]"
         )
 
-        if existing_attachment is None:
-            print(f"Uploading file: {attachment_path}")
-            with attachment_path.open("rb") as fp:
-                confluence.create_attachment(
-                    page=existing_page, fp=fp, message=attachment_message
-                )
-        else:
-            should_update = True
-            if only_changed:
-                existing_attachment_hash_match = CONTENT_HASH_REGEX.search(
-                    existing_attachment.version.message
-                )
-                if existing_attachment_hash_match is not None:
-                    original_attachment_hash = existing_attachment_hash_match.group(1)
-                    if original_attachment_hash == new_attachment_hash:
-                        should_update = False
-                        print(
-                            f"Skipping attachment that didn't change: {attachment_path}"
-                        )
+    existing_attachment = confluence.get_attachment(existing_page, attachment_path.name)
 
-            if should_update:
-                print(f"Updating file: {attachment_path}")
-                with attachment_path.open("rb") as fp:
-                    confluence.update_attachment(
-                        page=existing_page,
-                        fp=fp,
-                        existing_attachment=existing_attachment,
-                        message=attachment_message,
-                    )
+    action = None
+    if existing_attachment is None:
+        # print(f"Uploading file: {attachment_path}")
+        action = UpsertAction.CREATED
+        with attachment_path.open("rb") as fp:
+            existing_attachment = confluence.create_attachment(
+                page=existing_page, fp=fp, message=attachment_message
+            )
+    else:
+        should_update = True
+        if only_changed:
+            existing_attachment_hash_match = CONTENT_HASH_REGEX.search(
+                existing_attachment.version.message
+            )
+            if existing_attachment_hash_match is not None:
+                original_attachment_hash = existing_attachment_hash_match.group(1)
+                if original_attachment_hash == new_attachment_hash:
+                    should_update = False
+                    # print(f"Skipping attachment that didn't change: {attachment_path}")
+                    action = UpsertAction.SKIPPED
+
+        if should_update:
+            # print(f"Updating file: {attachment_path}")
+            with attachment_path.open("rb") as fp:
+                existing_attachment = confluence.update_attachment(
+                    page=existing_page,
+                    fp=fp,
+                    existing_attachment=existing_attachment,
+                    message=attachment_message,
+                )
+            action = UpsertAction.UPDATED
+
+    return UpsertResult(action=action, response=existing_attachment)

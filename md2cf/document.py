@@ -58,6 +58,12 @@ class Page(object):
                         ["parent_id", self.parent_id],
                         ["parent_title", self.parent_title],
                         ["space", self.space],
+                        [
+                            "body",
+                            f"{self.body[:40]} [...]"
+                            if len(self.body) > 40
+                            else self.body,
+                        ],
                     ]
                 ]
             )

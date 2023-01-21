@@ -197,3 +197,6 @@ class MinimalConfluence:
 
     def get_url(self, page):
         return f"{page._links.base}{page._links.webui}"
+
+    def get_parent_id(self, page):
+        return page.ancestors[-1].id

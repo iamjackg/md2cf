@@ -21,13 +21,14 @@ def test_upsert_page(mocker):
 
     message = mocker.sentinel.message
 
-    upserted_page = md2cf.upsert.upsert_page(
+    upsert_result = md2cf.upsert.upsert_page(
         confluence=confluence,
         page=page,
         message=message,
     )
 
-    assert upserted_page == mocker.sentinel.upserted_page
+    assert upsert_result.response == mocker.sentinel.upserted_page
+    assert upsert_result.action == upsert_result.action.CREATED
 
     confluence.get_page.assert_any_call(
         title=page.title,
@@ -36,6 +37,7 @@ def test_upsert_page(mocker):
         page_id=None,
         additional_expansions=[
             "space",
+            "ancestors",
             "history",
             "version",
             "metadata.labels",
@@ -73,7 +75,7 @@ def test_upsert_page_get_parent_by_title(mocker):
 
     message = mocker.sentinel.message
 
-    md2cf.upsert.upsert_page(
+    upsert_result = md2cf.upsert.upsert_page(
         confluence=confluence,
         page=page,
         message=message,
@@ -88,6 +90,9 @@ def test_upsert_page_get_parent_by_title(mocker):
         update_message=message,
         labels=None,
     )
+
+    assert upsert_result.response == mocker.sentinel.upserted_page
+    assert upsert_result.action == upsert_result.action.CREATED
 
 
 def test_upsert_page_parent_not_found(mocker):
@@ -133,7 +138,7 @@ def test_upsert_page_only_changed_new_page(mocker):
         body="hello there",
     )
 
-    returned_page = md2cf.upsert.upsert_page(
+    upsert_result = md2cf.upsert.upsert_page(
         confluence=confluence, page=page, message="", only_changed=True
     )
 
@@ -147,7 +152,8 @@ def test_upsert_page_only_changed_new_page(mocker):
         labels=None,
     )
 
-    assert returned_page == mocker.sentinel.created_page
+    assert upsert_result.response == mocker.sentinel.created_page
+    assert upsert_result.action == upsert_result.action.CREATED
 
 
 def test_upsert_page_only_changed_modified_page(mocker):
@@ -158,6 +164,7 @@ def test_upsert_page_only_changed_modified_page(mocker):
     original_message_hash = "[vdeadbeefc15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
     existing_page_mock.version.message = original_message_hash
+    existing_page_mock.ancestors = [mocker.Mock()]
     confluence.get_page.side_effect = [existing_page_mock, None]
     confluence.update_page.return_value = mocker.sentinel.updated_page
 
@@ -169,7 +176,7 @@ def test_upsert_page_only_changed_modified_page(mocker):
         body="hello there",
     )
 
-    returned_page = md2cf.upsert.upsert_page(
+    upsert_result = md2cf.upsert.upsert_page(
         confluence=confluence, page=page, message="", only_changed=True
     )
 
@@ -182,7 +189,8 @@ def test_upsert_page_only_changed_modified_page(mocker):
         labels=None,
     )
 
-    assert returned_page == mocker.sentinel.updated_page
+    assert upsert_result.response == mocker.sentinel.updated_page
+    assert upsert_result.action == upsert_result.action.UPDATED
 
 
 def test_upsert_page_only_changed_no_changes(mocker):
@@ -193,6 +201,7 @@ def test_upsert_page_only_changed_no_changes(mocker):
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
     existing_page_mock.version.message = message_hash
+    existing_page_mock.ancestors = [mocker.Mock()]
     confluence.get_page.side_effect = [existing_page_mock, None]
     confluence.update_page.return_value = mocker.sentinel.updated_page
 
@@ -202,13 +211,14 @@ def test_upsert_page_only_changed_no_changes(mocker):
         body="hello there",
     )
 
-    returned_page = md2cf.upsert.upsert_page(
+    upsert_result = md2cf.upsert.upsert_page(
         confluence=confluence, page=page, message="", only_changed=True
     )
 
     confluence.update_page.assert_not_called()
 
-    assert returned_page == existing_page_mock
+    assert upsert_result.response == existing_page_mock
+    assert upsert_result.action == upsert_result.action.SKIPPED
 
 
 def test_page_needs_updating_page_not_changed(mocker):
@@ -220,6 +230,7 @@ def test_page_needs_updating_page_not_changed(mocker):
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
+    existing_page_mock.ancestors = [mocker.Mock()]
     existing_page_mock.version.message = message_hash
 
     assert not md2cf.upsert.page_needs_updating(
@@ -236,6 +247,7 @@ def test_page_needs_updating_page_changed(mocker):
 
     message_hash = "[vdeadbeefc15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
+    existing_page_mock.ancestors = [mocker.Mock()]
     existing_page_mock.version.message = message_hash
 
     assert md2cf.upsert.page_needs_updating(
@@ -255,6 +267,7 @@ def test_page_needs_updating_content_replace_all_labels_and_labels_not_changed(m
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
+    existing_page_mock.ancestors = [mocker.Mock()]
     existing_page_mock.version.message = message_hash
     existing_page_mock.metadata.labels.results = []
     for label in labels:
@@ -279,6 +292,7 @@ def test_page_needs_updating_content_replace_all_labels_and_labels_changed(mocke
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
+    existing_page_mock.ancestors = [mocker.Mock()]
     existing_page_mock.version.message = message_hash
     existing_page_mock.metadata.labels.results = []
     existing_page_labels = ["label2", "label3"]
@@ -303,6 +317,7 @@ def test_page_needs_updating_content_replace_all_labels_but_no_labels_supplied(m
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
+    existing_page_mock.ancestors = [mocker.Mock()]
     existing_page_mock.version.message = message_hash
 
     labels = ["label1", "label2"]
@@ -331,6 +346,7 @@ def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplie
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
+    existing_page_mock.ancestors = [mocker.Mock()]
     existing_page_mock.version.message = message_hash
 
     labels = ["label1", "label2"]
@@ -359,6 +375,7 @@ def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplie
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
     existing_page_mock = mocker.Mock()
+    existing_page_mock.ancestors = [mocker.Mock()]
     existing_page_mock.version.message = message_hash
 
     existing_page_mock.metadata.labels.results = []
