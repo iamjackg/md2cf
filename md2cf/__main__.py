@@ -14,7 +14,12 @@ from rich_argparse import RichHelpFormatter
 import rich.table
 import rich.text
 
-from md2cf.console_output import console, error_console
+from md2cf.console_output import (
+    console,
+    error_console,
+    minimal_output_console,
+    json_output_console,
+)
 from md2cf import api
 import md2cf.document
 from md2cf.document import Page
@@ -269,6 +274,13 @@ def main():
     if args.password is None and args.token is None:
         args.password = getpass.getpass()
 
+    if args.output == "minimal":
+        console.quiet = True
+        minimal_output_console.quiet = False
+    elif args.output == "json":
+        console.quiet = True
+        json_output_console.quiet = False
+
     confluence = api.MinimalConfluence(
         host=args.host,
         username=args.username,
@@ -375,6 +387,8 @@ def main():
                         minor_edit=args.minor_edit,
                     )
                     final_page = upsert_page_result.response
+                    minimal_output_console.log(confluence.get_url(final_page))
+                    json_output_console.print_json(data=final_page, indent=None)
                 if page.attachments:
                     tui.set_item_progress_label(
                         page.original_title, "Processing attachments"
