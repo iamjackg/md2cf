@@ -119,9 +119,6 @@ def upsert_page(
             # print(f"Adding labels to page: {page.title} {page.labels}")
             confluence.add_labels(page=existing_page, labels=page.labels)
 
-    # print(confluence.get_url(existing_page))
-    # TODO: redo
-
     return UpsertResult(action=action, response=existing_page)
 
 

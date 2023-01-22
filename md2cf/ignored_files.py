@@ -6,6 +6,8 @@ from typing import List
 
 from gitignore_parser import parse_gitignore
 
+from md2cf.console_output import error_console
+
 
 class GitRepository:
     """
@@ -38,7 +40,10 @@ class GitRepository:
             if git_dir.exists() and git_dir.is_dir():
                 return p
             p = p.parent
-        print(f"No git root found, gitignore checking disabled.")
+        error_console.log(
+            f":warning-emoji: Directory {start_path} is not part of a git "
+            f"repository: gitignore checking disabled."
+        )
         return None
 
     def collect_gitignores(self, filepath: Path) -> List[Path]:

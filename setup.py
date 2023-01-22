@@ -21,6 +21,8 @@ setup(
     ],
     keywords="markdown confluence",
     install_requires=[
+        "rich-argparse==1.0.0",
+        "rich==13.0.1",
         "mistune==0.8.4",
         "chardet==5.1.0",
         "tortilla==0.5.0",

@@ -28,6 +28,7 @@ class Page(object):
         relative_links: Optional[List[RelativeLink]] = None,
     ):
         self.title = title
+        self.original_title = None
         self.body = body
         self.content_type = content_type
         self.file_path = file_path
