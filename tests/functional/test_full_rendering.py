@@ -1,7 +1,6 @@
 import pytest
 
 from md2cf import document
-import mistune
 
 
 @pytest.fixture(scope="module")

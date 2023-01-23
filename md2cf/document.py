@@ -1,15 +1,15 @@
 import hashlib
 import os
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 import chardet
 import mistune
 import yaml
 from yaml.parser import ParserError
 
-from md2cf.ignored_files import GitRepository
 from md2cf.confluence_renderer import ConfluenceRenderer, RelativeLink
+from md2cf.ignored_files import GitRepository
 
 
 class Page(object):
@@ -103,8 +103,10 @@ def get_pages_from_directory(
     :param use_pages_file:
     :param strip_header:
     :param remove_text_newlines:
-    :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory search
-    :param enable_relative_links: extract all relative links and replace them with placeholders
+    :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory
+      search
+    :param enable_relative_links: extract all relative links and replace them with
+      placeholders
     :return: A list of paths to the markdown files to upload.
     """
     processed_pages = list()

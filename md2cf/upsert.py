@@ -1,8 +1,8 @@
 import hashlib
 import re
+from enum import Enum
 from pathlib import Path
 from typing import NamedTuple
-from enum import Enum
 
 import tortilla.utils
 
@@ -194,7 +194,6 @@ def upsert_attachment(
                 original_attachment_hash = existing_attachment_hash_match.group(1)
                 if original_attachment_hash == new_attachment_hash:
                     should_update = False
-                    # print(f"Skipping attachment that didn't change: {attachment_path}")
                     action = UpsertAction.SKIPPED
 
         if should_update:

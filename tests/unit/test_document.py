@@ -1,6 +1,6 @@
-import md2cf.document as doc
 from pathlib import Path
 
+import md2cf.document as doc
 from tests.utils import FakePage
 
 

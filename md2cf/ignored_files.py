@@ -69,8 +69,8 @@ class GitRepository:
                 return ret
             p = p.parent
 
-        # if not .git directory found, we're not in a git repo and gitignore files cannot
-        # be trusted.
+        # if not .git directory found, we're not in a git repo and gitignore files
+        # cannot be trusted.
         return list()
 
     def is_ignored(self, filepath: Path) -> bool:

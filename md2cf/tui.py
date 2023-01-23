@@ -1,10 +1,10 @@
 from typing import Dict
 
 import rich.live
+import rich.progress
+import rich.table
 import rich.text
 import rich.tree
-import rich.table
-import rich.progress
 
 from md2cf.console_output import console
 
@@ -60,7 +60,7 @@ class Md2cfTUI(object):
                     f"{page.title} {attachment}"
                 ] = attachment_progress
         self.overall_progress = rich.progress.Progress(console=console)
-        overall_task = self.overall_progress.add_task(
+        self.overall_progress.add_task(
             "Total progress",
             start=True,
             total=len(pages_to_upload)

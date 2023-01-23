@@ -361,7 +361,7 @@ def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplie
     )
 
 
-def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplied_not_changed(
+def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplied_not_changed(  # noqa: E501
     mocker,
 ):
     """We want to replace all the labels, and an empty list was supplied:

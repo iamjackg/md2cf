@@ -1,6 +1,6 @@
+import requests.packages
 import tortilla
 from requests.auth import HTTPBasicAuth
-import requests.packages
 
 
 class MinimalConfluence:
@@ -41,9 +41,11 @@ class MinimalConfluence:
         Args:
             title (str): the title for the page
             space_key (str): the Confluence space for the page
-            content_type (str): Content type. Default value: page. Valid values: page, blogpost.
+            content_type (str): Content type. Default value: page.
+              Valid values: page, blogpost.
             page_id (str or int): the ID of the page
-            additional_expansions (list of str): Additional expansions that should be made when calling the api
+            additional_expansions (list of str): Additional expansions that should be
+              made when calling the api
 
         Returns:
             The response from the API
@@ -91,10 +93,13 @@ class MinimalConfluence:
             space (str): the Confluence space for the page
             title (str): the title for the page
             body (str): the body of the page, in Confluence Storage Format
-            content_type (str): Content type. Default value: page. Valid values: page, blogpost.
+            content_type (str): Content type. Default value: page.
+              Valid values: page, blogpost.
             parent_id (str or int): the ID of the parent page
-            update_message (str): optional. A message that will appear in Confluence's history
-            labels (list(str)): optional. The set of labels the final page should have. None leaves existing labels unchanged
+            update_message (str): optional. A message that will appear in Confluence's
+              history
+            labels (list(str)): optional. The set of labels the final page should have.
+              None leaves existing labels unchanged
 
         Returns:
             The response from the API

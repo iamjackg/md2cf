@@ -1,8 +1,8 @@
-from typing import NamedTuple, List
-
-import mistune
 import urllib.parse as urlparse
 from pathlib import Path
+from typing import List, NamedTuple
+
+import mistune
 
 
 class RelativeLink(NamedTuple):

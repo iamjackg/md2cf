@@ -7,24 +7,24 @@ from collections import Counter
 from pathlib import Path
 from typing import List
 
+import rich.table
+import rich.text
 import rich.tree
 from requests import HTTPError
 from rich import box
 from rich_argparse import RichHelpFormatter
-import rich.table
-import rich.text
 
+import md2cf.document
+from md2cf import api
 from md2cf.console_output import (
     console,
     error_console,
-    minimal_output_console,
     json_output_console,
+    minimal_output_console,
 )
-from md2cf import api
-import md2cf.document
 from md2cf.document import Page
-from md2cf.upsert import upsert_page, upsert_attachment
 from md2cf.tui import Md2cfTUI
+from md2cf.upsert import upsert_attachment, upsert_page
 
 
 def get_parser():
@@ -332,7 +332,8 @@ def main():
 
             if not attachment_path.is_file():
                 error_console.log(
-                    f"[bold red]:x: ERROR:[default] attachment {attachment_path} for page {page.title} does not exist"
+                    f"[bold red]:x: ERROR:[default] attachment {attachment_path} "
+                    f"for page {page.title} does not exist"
                 )
                 sys.exit(1)
 
@@ -596,7 +597,8 @@ def update_pages_with_relative_links(
                     tui.set_item_finished_text(
                         page.original_title,
                         rich.text.Text.from_markup(
-                            "[green]:heavy_check_mark-emoji: Updated (updated relative links)"
+                            "[green]:heavy_check_mark-emoji: Updated "
+                            "(updated relative links)"
                         ),
                     )
                 else:
