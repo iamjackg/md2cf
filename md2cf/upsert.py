@@ -4,8 +4,6 @@ from enum import Enum
 from pathlib import Path
 from typing import NamedTuple
 
-import tortilla.utils
-
 import md2cf.document
 from md2cf import api
 
@@ -20,7 +18,7 @@ class UpsertAction(Enum):
 
 class UpsertResult(NamedTuple):
     action: UpsertAction
-    response: tortilla.utils.Bunch
+    response: api.Bunch
 
 
 # Adapted from https://stackoverflow.com/a/3431838

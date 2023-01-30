@@ -19,13 +19,16 @@ class Bunch(dict):
         self.__dict__ = self
 
 
+TEST_HOST = "http://example.com/api/"
+
+
 @pytest.fixture()
-def confluence(mocker):
+def confluence():
     from md2cf.api import MinimalConfluence
 
-    mocker.patch("md2cf.api.tortilla", mocker.Mock())
+    c = MinimalConfluence(host=TEST_HOST, username="foo", password="bar")
 
-    return MinimalConfluence(host="http://example.com/", username="foo", password="bar")
+    return c
 
 
 def test_user_pass_auth():
@@ -35,11 +38,9 @@ def test_user_pass_auth():
         host="http://example.com/", username="foo", password="bar"
     )
 
-    auth = c.api._parent.defaults["auth"]
+    auth = c.api.auth
 
-    assert auth is not None
-    assert auth.username == "foo"
-    assert auth.password == "bar"
+    assert auth == ("foo", "bar")
 
 
 def test_token_auth():
@@ -47,95 +48,95 @@ def test_token_auth():
 
     c = api.MinimalConfluence(host="http://example.com/", token="hello")
 
-    assert "auth" not in c.api._parent.defaults
-    assert c.api.config.headers.Authorization == "Bearer hello"
+    assert c.api.auth is None
+    assert c.api.headers["Authorization"] == "Bearer hello"
 
 
-def test_object_properly_initialized(confluence, mocker):
-    assert isinstance(confluence.api, mocker.Mock)
-
-
-def test_get_page_with_page_id(confluence):
+def test_get_page_with_page_id(confluence, requests_mock):
     test_page_id = 12345
-    test_return_value = "some_stuff"
-    confluence.api.content.get.return_value = test_return_value
+    test_return_value = {"some_stuff": 1}
 
+    requests_mock.get(TEST_HOST + f"content/{test_page_id}", json=test_return_value)
     page = confluence.get_page(page_id=test_page_id)
 
-    confluence.api.content.get.assert_called_once_with(test_page_id, params=None)
-    assert page == test_return_value
+    assert page == bunchify(test_return_value)
 
 
-def test_get_page_with_page_id_and_one_expansion(confluence):
+def test_get_page_with_page_id_and_one_expansion(confluence, requests_mock):
     test_page_id = 12345
-    test_return_value = "some_stuff"
-    confluence.api.content.get.return_value = test_return_value
+    test_return_value = {"some_stuff": 1}
 
+    requests_mock.get(
+        TEST_HOST + f"content/{test_page_id}?expand=history",
+        complete_qs=True,
+        json=test_return_value,
+    )
     page = confluence.get_page(page_id=test_page_id, additional_expansions=["history"])
 
-    confluence.api.content.get.assert_called_once_with(
-        test_page_id, params={"expand": "history"}
-    )
     assert page == test_return_value
 
 
-def test_get_page_with_page_id_and_multiple_expansions(confluence):
+def test_get_page_with_page_id_and_multiple_expansions(confluence, requests_mock):
     test_page_id = 12345
-    test_return_value = "some_stuff"
-    confluence.api.content.get.return_value = test_return_value
+    test_return_value = {"some_stuff": 1}
 
+    requests_mock.get(
+        TEST_HOST + f"content/{test_page_id}?expand=history,version",
+        complete_qs=True,
+        json=test_return_value,
+    )
     page = confluence.get_page(
         page_id=test_page_id, additional_expansions=["history", "version"]
     )
 
-    confluence.api.content.get.assert_called_once_with(
-        test_page_id, params={"expand": "history,version"}
-    )
     assert page == test_return_value
 
 
-def test_get_page_with_title(confluence, mocker):
+def test_get_page_with_title(confluence, mocker, requests_mock):
     test_page_title = "hellothere"
     test_page_id = 12345
-    test_return_value = bunchify({"results": [{"id": test_page_id}]})
+    test_return_value = {"results": [{"id": test_page_id}]}
 
-    confluence.api.content.get.return_value = test_return_value
-
+    requests_mock.get(
+        TEST_HOST + f"content?title={test_page_title}&type=page",
+        complete_qs=True,
+        json=test_return_value,
+    )
+    requests_mock.get(TEST_HOST + f"content/{test_page_id}", json=test_return_value)
     page = confluence.get_page(title=test_page_title)
 
-    confluence.api.content.get.has_calls(
-        mocker.call(params={"title": test_page_title}),
-        mocker.call(test_page_id, params=None),
-    )
-
-    assert page == test_return_value
+    assert page == bunchify(test_return_value)
 
 
-def test_get_page_with_title_and_space(confluence, mocker):
+def test_get_page_with_title_and_space(confluence, mocker, requests_mock):
     test_page_title = "hellothere"
     test_page_id = 12345
     test_page_space = "ABC"
-    test_return_value = bunchify({"results": [{"id": test_page_id}]})
+    test_return_value = {"results": [{"id": test_page_id}]}
 
-    confluence.api.content.get.return_value = test_return_value
-
+    requests_mock.get(
+        TEST_HOST
+        + f"content?title={test_page_title}&type=page&spaceKey={test_page_space}",
+        complete_qs=True,
+        json=test_return_value,
+    )
+    requests_mock.get(TEST_HOST + f"content/{test_page_id}", json=test_return_value)
     page = confluence.get_page(title=test_page_title, space_key=test_page_space)
 
-    confluence.api.content.get.has_calls(
-        mocker.call(params={"title": test_page_title, "spaceKey": test_page_space}),
-        mocker.call(test_page_id),
-    )
-
-    assert page == test_return_value
+    assert page == bunchify(test_return_value)
 
 
-def test_get_page_with_all_parameters(confluence, mocker):
+def test_get_page_with_all_parameters(confluence, mocker, requests_mock):
     test_page_title = "hellothere"
     test_page_id = 12345
     test_page_space = "ABC"
-    test_return_value = bunchify({"results": [{"id": test_page_id}]})
+    test_return_value = {"results": [{"id": test_page_id}]}
 
-    confluence.api.content.get.return_value = test_return_value
+    requests_mock.get(
+        TEST_HOST + f"content/{test_page_id}?expand=history",
+        complete_qs=True,
+        json=test_return_value,
+    )
 
     page = confluence.get_page(
         page_id=test_page_id,
@@ -144,24 +145,20 @@ def test_get_page_with_all_parameters(confluence, mocker):
         additional_expansions=["history"],
     )
 
-    confluence.api.content.get.assert_called_once_with(
-        test_page_id, params={"expand": "history"}
-    )
-
     assert page == test_return_value
 
 
-def test_get_page_without_any_parameters(confluence):
+def test_get_page_without_any_parameters(confluence, requests_mock):
     with pytest.raises(ValueError):
         confluence.get_page()
 
 
-def test_get_page_without_title_or_id(confluence):
+def test_get_page_without_title_or_id(confluence, requests_mock):
     with pytest.raises(ValueError):
         confluence.get_page(space_key="ABC")
 
 
-def test_create_page(confluence):
+def test_create_page(confluence, requests_mock):
     test_title = "This is a title"
     test_space = "ABC"
     test_body = "<p>This is some content</p>"
@@ -173,12 +170,20 @@ def test_create_page(confluence):
         "body": {"storage": {"value": test_body, "representation": "storage"}},
     }
 
-    confluence.create_page(space=test_space, title=test_title, body=test_body)
+    created_page = {"test": 1}
 
-    confluence.api.content.post.assert_called_once_with(json=page_structure)
+    requests_mock.post(
+        TEST_HOST + "content",
+        complete_qs=True,
+        json=created_page,
+        additional_matcher=lambda x: x.json() == page_structure,
+    )
+    page = confluence.create_page(space=test_space, title=test_title, body=test_body)
+
+    assert page == created_page
 
 
-def test_create_page_with_parent(confluence):
+def test_create_page_with_parent(confluence, requests_mock):
     test_title = "This is a title"
     test_space = "ABC"
     test_body = "<p>This is some content</p>"
@@ -192,14 +197,22 @@ def test_create_page_with_parent(confluence):
         "ancestors": [{"id": test_parent_id}],
     }
 
-    confluence.create_page(
+    created_page = {"test": 1}
+    requests_mock.post(
+        TEST_HOST + "content",
+        complete_qs=True,
+        json=created_page,
+        additional_matcher=lambda x: x.json() == page_structure,
+    )
+
+    page = confluence.create_page(
         space=test_space, title=test_title, body=test_body, parent_id=test_parent_id
     )
 
-    confluence.api.content.post.assert_called_once_with(json=page_structure)
+    assert page == created_page
 
 
-def test_create_page_with_string_parent(confluence):
+def test_create_page_with_string_parent(confluence, requests_mock):
     test_title = "This is a title"
     test_space = "ABC"
     test_body = "<p>This is some content</p>"
@@ -213,14 +226,22 @@ def test_create_page_with_string_parent(confluence):
         "ancestors": [{"id": int(test_parent_id)}],
     }
 
-    confluence.create_page(
+    created_page = {"test": 1}
+    requests_mock.post(
+        TEST_HOST + "content",
+        complete_qs=True,
+        json=created_page,
+        additional_matcher=lambda x: x.json() == page_structure,
+    )
+
+    page = confluence.create_page(
         space=test_space, title=test_title, body=test_body, parent_id=test_parent_id
     )
 
-    confluence.api.content.post.assert_called_once_with(json=page_structure)
+    assert page == created_page
 
 
-def test_create_page_with_message(confluence):
+def test_create_page_with_message(confluence, requests_mock):
     test_title = "This is a title"
     test_space = "ABC"
     test_body = "<p>This is some content</p>"
@@ -234,17 +255,25 @@ def test_create_page_with_message(confluence):
         "version": {"message": test_update_message},
     }
 
-    confluence.create_page(
+    created_page = {"test": 1}
+    requests_mock.post(
+        TEST_HOST + "content",
+        complete_qs=True,
+        json=created_page,
+        additional_matcher=lambda x: x.json() == page_structure,
+    )
+
+    page = confluence.create_page(
         space=test_space,
         title=test_title,
         body=test_body,
         update_message=test_update_message,
     )
 
-    confluence.api.content.post.assert_called_once_with(json=page_structure)
+    assert page == created_page
 
 
-def test_update_page(confluence):
+def test_update_page(confluence, requests_mock):
     test_page_id = 12345
     test_page_title = "This is a title"
     test_page_version = 1
@@ -266,14 +295,20 @@ def test_update_page(confluence):
         "body": {"storage": {"value": test_new_body, "representation": "storage"}},
     }
 
-    confluence.update_page(test_page_object, body=test_new_body)
-
-    confluence.api.content.put.assert_called_once_with(
-        test_page_id, json=update_structure
+    updated_page = {"test": 1}
+    requests_mock.put(
+        TEST_HOST + f"content/{test_page_id}",
+        complete_qs=True,
+        json=updated_page,
+        additional_matcher=lambda x: x.json() == update_structure,
     )
 
+    page = confluence.update_page(test_page_object, body=test_new_body)
 
-def test_update_page_with_message(confluence):
+    assert page == updated_page
+
+
+def test_update_page_with_message(confluence, requests_mock):
     test_page_id = 12345
     test_page_title = "This is a title"
     test_page_version = 1
@@ -300,10 +335,16 @@ def test_update_page_with_message(confluence):
         "body": {"storage": {"value": test_new_body, "representation": "storage"}},
     }
 
-    confluence.update_page(
+    updated_page = {"test": 1}
+    requests_mock.put(
+        TEST_HOST + f"content/{test_page_id}",
+        complete_qs=True,
+        json=updated_page,
+        additional_matcher=lambda x: x.json() == update_structure,
+    )
+
+    page = confluence.update_page(
         test_page_object, body=test_new_body, update_message=test_page_message
     )
 
-    confluence.api.content.put.assert_called_once_with(
-        test_page_id, json=update_structure
-    )
+    assert page == updated_page

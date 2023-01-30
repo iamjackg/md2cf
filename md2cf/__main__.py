@@ -228,6 +228,11 @@ def get_parser():
         help="print information on all the pages instead of uploading to Confluence",
     )
     parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="print full stack traces for exceptions",
+    )
+    parser.add_argument(
         "--only-changed",
         action="store_true",
         help="only upload pages and attachments that have changed. "
@@ -424,9 +429,13 @@ def main():
                         page.file_path.resolve()
                     ] = final_page
             except HTTPError as e:
+                if args.debug:
+                    console.print_exception(show_locals=True)
                 error = "{} - {}".format(str(e), e.response.content)
                 something_went_wrong = True
             except Exception as e:
+                if args.debug:
+                    console.print_exception(show_locals=True)
                 error = "[red]ERROR:[default] {}".format(str(e))
                 something_went_wrong = True
 
@@ -462,11 +471,16 @@ def main():
                     tui,
                 )
             except HTTPError as e:
+                if args.debug:
+                    console.print_exception(show_locals=True)
                 error = "{} - {}".format(str(e), e.response.content)
                 something_went_wrong = True
             except Exception as e:
+                if args.debug:
+                    console.print_exception(show_locals=True)
                 error = "[red]ERROR:[default] {}".format(str(e))
                 something_went_wrong = True
+                error_console.set_live()
 
     if something_went_wrong:
         error_console.log(error)

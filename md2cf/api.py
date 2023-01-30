@@ -1,31 +1,79 @@
+from urllib.parse import urljoin
+
+import requests
+import requests.adapters
 import requests.packages
-import tortilla
-from requests.auth import HTTPBasicAuth
+import urllib3
+
+
+def bunchify(obj):
+    if isinstance(obj, (list, tuple)):
+        return [bunchify(item) for item in obj]
+    if isinstance(obj, dict):
+        return Bunch(obj)
+    return obj
+
+
+class Bunch(dict):
+    def __init__(self, kwargs=None):
+        if kwargs is None:
+            kwargs = {}
+        for key, value in kwargs.items():
+            kwargs[key] = bunchify(value)
+        super(Bunch, self).__init__(kwargs)
+        self.__dict__ = self
 
 
 class MinimalConfluence:
     def __init__(self, host, username=None, password=None, token=None, verify=True):
-        if token is not None:
-            self.api = tortilla.wrap(
-                host,
-                verify=verify,
-            )
-            self.api.config.headers.Authorization = f"Bearer {token}"
-        elif username is not None and password is not None:
-            self.api = tortilla.wrap(
-                host,
-                auth=HTTPBasicAuth(username, password),
-                verify=verify,
-            )
+        if token is None:
+            if username is None and password is None:
+                raise ValueError(
+                    "Either a personal access token, "
+                    "or username and password are required"
+                )
+
+        if not host.endswith("/"):
+            self.host = host + "/"
         else:
-            raise ValueError(
-                "Either a personal access token, or username and password are required"
+            self.host = host
+        self.api = requests.Session()
+        self.api.verify = verify
+
+        if token is not None:
+            self.api.headers.update({"Authorization": f"Bearer {token}"})
+        elif username is not None and password is not None:
+            self.api.auth = (username, password)
+
+        adapter = requests.adapters.HTTPAdapter(
+            max_retries=urllib3.Retry(
+                total=4,
+                backoff_factor=1,
+                respect_retry_after_header=True,
+                status_forcelist=[429],
             )
+        )
+        self.api.mount("http://", adapter)
+        self.api.mount("https://", adapter)
 
         if not verify:
             requests.packages.urllib3.disable_warnings(
                 requests.packages.urllib3.exceptions.InsecureRequestWarning
             )
+
+    def _request(self, method, path, **kwargs):
+        r = self.api.request(method, urljoin(self.host, path), **kwargs)
+        r.raise_for_status()
+        return bunchify(r.json())
+
+    def _get(self, path, **kwargs):
+        return self._request("GET", path, **kwargs)
+
+    def _post(self, path, **kwargs):
+        return self._request("POST", path, **kwargs)
+
+    def _put(self, path, **kwargs):
+        return self._request("PUT", path, **kwargs)
 
     def get_page(
         self,
@@ -56,12 +104,12 @@ class MinimalConfluence:
             params = {"expand": ",".join(additional_expansions)}
 
         if page_id is not None:
-            return self.api.content.get(page_id, params=params)
+            return self._get(f"content/{page_id}", params=params)
         elif title is not None:
             params = {"title": title, "type": content_type}
             if space_key is not None:
                 params["spaceKey"] = space_key
-            response = self.api.content.get(params=params)
+            response = self._get("content", params=params)
             try:
                 # A search by title/space doesn't return full page objects,
                 # and since we don't support expansion in this implementation
@@ -125,7 +173,7 @@ class MinimalConfluence:
                 "labels": [{"name": label, "prefix": "global"} for label in labels]
             }
 
-        return self.api.content.post(json=page_structure)
+        return self._post("content", json=page_structure)
 
     def update_page(
         self,
@@ -160,11 +208,12 @@ class MinimalConfluence:
                 "labels": [{"name": label, "prefix": "global"} for label in labels]
             }
 
-        return self.api.content.put(page.id, json=update_structure)
+        return self._put(f"content/{page.id}", json=update_structure)
 
     def get_attachment(self, page, name):
-        existing_attachments = self.api.content(page.id).child.get(
-            "attachment",
+        # existing_attachments = self.api.content(page.id).child.get(
+        existing_attachments = self._get(
+            f"content/{page.id}/child/attachment",
             headers={"X-Atlassian-Token": "nocheck", "Accept": "application/json"},
             params={"filename": name, "expand": "version"},
         )
@@ -174,10 +223,10 @@ class MinimalConfluence:
 
     def update_attachment(self, page, fp, existing_attachment, message=""):
         return (
-            self.api.content(page.id)
-            .child.attachment(existing_attachment.id)
-            .post(
-                "data",
+            # self.api.content(page.id)
+            # .child.attachment(existing_attachment.id)
+            self._post(
+                f"content/{page.id}/child/attachment/{existing_attachment.id}/data",
                 data={"comment": message} if message else None,
                 format=(None, "json"),
                 headers={"X-Atlassian-Token": "nocheck"},
@@ -186,8 +235,8 @@ class MinimalConfluence:
         )
 
     def create_attachment(self, page, fp, message=""):
-        return self.api.content(page.id).child.post(
-            "attachment",
+        return self._post(
+            f"content/{page.id}/child/attachment",
             data={"comment": message} if message else None,
             format=(None, "json"),
             headers={"X-Atlassian-Token": "nocheck"},
@@ -196,8 +245,10 @@ class MinimalConfluence:
         )
 
     def add_labels(self, page, labels):
-        return self.api.content(page.id).post(
-            "label", data=[{"name": label, "type": "global"} for label in labels]
+        # return self.api.content(page.id).post(
+        return self._post(
+            f"content/{page.id}/label",
+            data=[{"name": label, "type": "global"} for label in labels],
         )
 
     def get_url(self, page):
