@@ -54,6 +54,8 @@ Example basic usage:
 md2cf --host 'https://confluence.example.com/rest/api' --username foo --password bar --space TEST document.md
 ```
 
+_Note that if you generate an [API token in confluence](https://id.atlassian.com/manage-profile/security/api-tokens) that counts as a password and you still have to provide your username (e-mail in many cases)._
+
 Or, if using a token:
 
 ```bash
