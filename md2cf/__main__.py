@@ -480,7 +480,6 @@ def main():
                     console.print_exception(show_locals=True)
                 error = "[red]ERROR:[default] {}".format(str(e))
                 something_went_wrong = True
-                error_console.set_live()
 
     if something_went_wrong:
         error_console.log(error)
