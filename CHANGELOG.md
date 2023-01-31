@@ -6,11 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Colourful, user-friendly output
+- JSON and minimal output modes
+- Automatic detection of document encoding
 - Support for relative links (@mschmieder)
 - Option to mark an edit as minor (@jannismain)
 - Support for blogpost content type (@Bass-03)
 ### Fixed
 - Change --bearer-token to --token in README.md (@rtkjbillo)
+- Always update pages when requesting parent changes
+### Changed
+- Error messages are nicely formatted and printed to standard error
 
 ## 1.5.1 - 2022-09-01
 ### Fixed

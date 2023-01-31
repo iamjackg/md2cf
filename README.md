@@ -20,6 +20,12 @@ A tool and library to convert documents written in Markdown to Confluence Storag
 pip install md2cf
 ```
 
+If you're only planning on using `md2cf` as a command to upload documents to Confluence, it's highly recommended to install it via [pipx](https://pypa.github.io/pipx/).
+
+```bash
+pipx install md2cf
+```
+
 ## Getting started
 
 Run `md2cf --help` to see all the options and parameters.
@@ -280,6 +286,24 @@ folderA/
     lonely-document
 ```
 </details>
+
+## Terminal output format
+
+By default, `md2cf` produces rich output with animated progress bars that is meant for human consumption. If the output is piped to a file, no animations will be played and only the final result will be printed. All error messages are printed to standard error.
+
+`md2cf` supports two other output formats.
+
+### JSON output
+
+Passing `--output json` will make `md2cf` print the JSON output for each page as returned by Confluence. Normal progress output will not be printed.
+
+> :warning: JSON entries will only be printed for page creation/updates. They will not be printed for attachment creation/updates and will not be printed for second-pass updates for [relative links](#linking-to-other-documents--relative-links-).
+
+### Minimal output
+
+Passing `--output minimal` will make `md2cf` print the final Confluence URL for each page, similarly to versions prior to `2.0.0`. Normal progress output will not be printed.
+
+> :warning: URLs will only be printed for page creation/updates. They will not be printed for attachment creation/updates and will not be printed for second-pass updates for [relative links](#linking-to-other-documents--relative-links-).
 
 ## Library usage
 
