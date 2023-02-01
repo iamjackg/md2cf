@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v1
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v3
         with:
-          python-version: 3.6
+          python-version: 3.7
       - name: install build deps
         run: pip install wheel
       - name: Build a binary wheel and a source tarball
@@ -48,4 +48,4 @@ jobs:
           release_name: ${{ steps.get_version.outputs.version-without-v }}
           body: ${{ steps.get-release-notes.outputs.release-notes }}
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.get-release-notes.outputs.is-prerelease }}
