@@ -54,7 +54,7 @@ md2cf --host 'https://confluence.example.com/rest/api' --token '2104v3ryl0ngt0k3
 
 > :warning: Entering your password (or your token) as a parameter on the command line is [generally a bad idea](https://unix.stackexchange.com/q/78734). If you're running the script interactively, you can omit the `--password` parameter and the script will securely ask you to type it.
 
-> :warning: Tokens work differently [Confluence Cloud](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/) and [self-hosted instances](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html). With Confluence Cloud, you have to use your token **as your password** with the `--username` and `--password` parameters. With self-hosted instances, you should use the `--token` parameter.
+> :warning: Tokens work differently between [Confluence Cloud](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/) and [self-hosted instances](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html). With Confluence Cloud, you have to use your token **as your password** with the `--username` and `--password` parameters. With self-hosted instances, you should use the `--token` parameter.
 
 You can also supply the hostname, username, password, token, and space as **environment variables**:
 
