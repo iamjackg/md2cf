@@ -4,7 +4,7 @@ Allow checking files for ignored status in gitignore files in the repo.
 from pathlib import Path
 from typing import List
 
-from gitignore_parser import parse_gitignore
+import gitignorefile
 
 from md2cf.console_output import error_console
 
@@ -86,5 +86,5 @@ class GitRepository:
         if self.root_dir is None:
             return False
         gitignores = self.collect_gitignores(filepath)
-        matchers = [parse_gitignore(str(g)) for g in gitignores]
-        return any([m(filepath) for m in matchers])
+        matchers = [gitignorefile.parse(str(g)) for g in gitignores]
+        return any([m(str(filepath)) for m in matchers])
