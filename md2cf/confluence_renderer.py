@@ -1,6 +1,15 @@
-import mistune
 import urllib.parse as urlparse
 from pathlib import Path
+from typing import List, NamedTuple
+
+import mistune
+
+
+class RelativeLink(NamedTuple):
+    path: str
+    replacement: str
+    original: str
+    escaped_original: str
 
 
 class ConfluenceTag(object):
@@ -50,15 +59,26 @@ class ConfluenceTag(object):
 
 
 class ConfluenceRenderer(mistune.Renderer):
-    def __init__(self, strip_header=False, remove_text_newlines=False, **kwargs):
+    def __init__(
+        self,
+        strip_header=False,
+        remove_text_newlines=False,
+        enable_relative_links=False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.strip_header = strip_header
         self.remove_text_newlines = remove_text_newlines
         self.attachments = list()
         self.title = None
+        self.enable_relative_links = enable_relative_links
+        self.relative_links: List[RelativeLink] = list()
+        self._relative_link_replacement_counter = 0
 
     def reinit(self):
         self.attachments = list()
+        self.relative_links = list()
+        self._relative_link_replacement_counter = 0
         self.title = None
 
     def header(self, text, level, raw=None):
@@ -82,6 +102,29 @@ class ConfluenceRenderer(mistune.Renderer):
         body_tag = ConfluenceTag("plain-text-body", cdata=True)
         body_tag.text = text
         return body_tag
+
+    def link(self, link, title, text):
+        parsed_link = urlparse.urlparse(link)
+        if self.enable_relative_links and (
+            not parsed_link.scheme
+            and not parsed_link.netloc
+            and not parsed_link.fragment
+        ):
+            self._relative_link_replacement_counter += 1
+            # relative link
+            replacement_link = (
+                f"md2cf-internal-link-{self._relative_link_replacement_counter}"
+            )
+            self.relative_links.append(
+                RelativeLink(
+                    path=parsed_link.path,
+                    replacement=replacement_link,
+                    original=link,
+                    escaped_original=mistune.escape_link(link),
+                )
+            )
+            link = replacement_link
+        return super(ConfluenceRenderer, self).link(link, title, text)
 
     def text(self, text):
         if self.remove_text_newlines:

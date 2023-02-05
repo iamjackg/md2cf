@@ -149,3 +149,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Project Specifics
+.vscode

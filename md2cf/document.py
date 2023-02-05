@@ -1,14 +1,15 @@
 import hashlib
 import os
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
+import chardet
 import mistune
 import yaml
 from yaml.parser import ParserError
 
+from md2cf.confluence_renderer import ConfluenceRenderer, RelativeLink
 from md2cf.ignored_files import GitRepository
-from md2cf.confluence_renderer import ConfluenceRenderer
 
 
 class Page(object):
@@ -16,6 +17,7 @@ class Page(object):
         self,
         title: Optional[str],
         body: str,
+        content_type: Optional[str] = "page",
         attachments: Optional[List[Path]] = None,
         file_path: Optional[Path] = None,
         page_id: str = None,
@@ -23,13 +25,19 @@ class Page(object):
         parent_title: str = None,
         space: str = None,
         labels: Optional[List[str]] = None,
+        relative_links: Optional[List[RelativeLink]] = None,
     ):
         self.title = title
+        self.original_title = None
         self.body = body
+        self.content_type = content_type
         self.file_path = file_path
         self.attachments = attachments
         if self.attachments is None:
-            self.attachments = list()
+            self.attachments: List[Path] = list()
+        self.relative_links = relative_links
+        if self.relative_links is None:
+            self.relative_links: List[RelativeLink] = list()
         self.page_id = page_id
         self.parent_id = parent_id
         self.parent_title = parent_title
@@ -51,6 +59,12 @@ class Page(object):
                         ["parent_id", self.parent_id],
                         ["parent_title", self.parent_title],
                         ["space", self.space],
+                        [
+                            "body",
+                            f"{self.body[:40]} [...]"
+                            if len(self.body) > 40
+                            else self.body,
+                        ],
                     ]
                 ]
             )
@@ -76,6 +90,7 @@ def get_pages_from_directory(
     strip_header: bool = False,
     remove_text_newlines: bool = False,
     use_gitignore: bool = True,
+    enable_relative_links: bool = False,
 ) -> List[Page]:
     """
     Collect a list of markdown files recursively under the file_path directory.
@@ -88,7 +103,10 @@ def get_pages_from_directory(
     :param use_pages_file:
     :param strip_header:
     :param remove_text_newlines:
-    :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory search
+    :param use_gitignore: Use .gitignore files to skip unwanted markdown in directory
+      search
+    :param enable_relative_links: extract all relative links and replace them with
+      placeholders
     :return: A list of paths to the markdown files to upload.
     """
     processed_pages = list()
@@ -166,6 +184,7 @@ def get_pages_from_directory(
                 markdown_file,
                 strip_header=strip_header,
                 remove_text_newlines=remove_text_newlines,
+                enable_relative_links=enable_relative_links,
             )
             processed_page.parent_title = parent_page_title
             processed_pages.append(processed_page)
@@ -180,18 +199,28 @@ def get_pages_from_directory(
 
 
 def get_page_data_from_file_path(
-    file_path: Path, strip_header: bool = False, remove_text_newlines: bool = False
+    file_path: Path,
+    strip_header: bool = False,
+    remove_text_newlines: bool = False,
+    enable_relative_links: bool = False,
 ) -> Page:
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
 
-    with open(file_path) as file_handle:
-        markdown_lines = file_handle.readlines()
+    try:
+        with open(file_path) as file_handle:
+            markdown_lines = file_handle.readlines()
+    except UnicodeDecodeError:
+        with open(file_path, "rb") as file_handle:
+            detected_encoding = chardet.detect(file_handle.read())
+        with open(file_path, encoding=detected_encoding["encoding"]) as file_handle:
+            markdown_lines = file_handle.readlines()
 
     page = get_page_data_from_lines(
         markdown_lines,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
+        enable_relative_links=enable_relative_links,
     )
 
     if not page.title:
@@ -206,6 +235,7 @@ def get_page_data_from_lines(
     markdown_lines: List[str],
     strip_header: bool = False,
     remove_text_newlines: bool = False,
+    enable_relative_links: bool = False,
 ) -> Page:
     frontmatter = get_document_frontmatter(markdown_lines)
     if "frontmatter_end_line" in frontmatter:
@@ -215,6 +245,7 @@ def get_page_data_from_lines(
         markdown_lines,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
+        enable_relative_links=enable_relative_links,
     )
 
     if "title" in frontmatter:
@@ -234,17 +265,22 @@ def parse_page(
     markdown_lines: List[str],
     strip_header: bool = False,
     remove_text_newlines: bool = False,
+    enable_relative_links: bool = False,
 ) -> Page:
     renderer = ConfluenceRenderer(
         use_xhtml=True,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
+        enable_relative_links=enable_relative_links,
     )
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune("".join(markdown_lines))
 
     page = Page(
-        title=renderer.title, body=confluence_content, attachments=renderer.attachments
+        title=renderer.title,
+        body=confluence_content,
+        attachments=renderer.attachments,
+        relative_links=renderer.relative_links,
     )
 
     return page

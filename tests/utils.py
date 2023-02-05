@@ -13,6 +13,7 @@ class FakePage(object):
             "parent_title",
             "space",
             "labels",
+            "relative_links",
         ]:
             param_value = kwargs.get(parameter, None)
             if param_value:

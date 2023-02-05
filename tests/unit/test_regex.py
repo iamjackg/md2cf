@@ -1,4 +1,4 @@
-from md2cf.__main__ import CONTENT_HASH_REGEX
+from md2cf.upsert import CONTENT_HASH_REGEX
 
 
 def test_hash_messge(mocker):

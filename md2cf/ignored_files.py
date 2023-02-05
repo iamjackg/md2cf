@@ -4,7 +4,9 @@ Allow checking files for ignored status in gitignore files in the repo.
 from pathlib import Path
 from typing import List
 
-from gitignore_parser import parse_gitignore
+import gitignorefile
+
+from md2cf.console_output import error_console
 
 
 class GitRepository:
@@ -38,14 +40,17 @@ class GitRepository:
             if git_dir.exists() and git_dir.is_dir():
                 return p
             p = p.parent
-        print(f"No git root found, gitignore checking disabled.")
+        error_console.log(
+            f":warning-emoji: Directory {start_path} is not part of a git "
+            f"repository: gitignore checking disabled."
+        )
         return None
 
     def collect_gitignores(self, filepath: Path) -> List[Path]:
         """
         Collect all .gitignore files from start location to the root of the
         repository. Filepath is assumed to be a subdirectory of the git root.
-        If not, an error is printed a an empty list is returned.
+        If not, an error is printed and an empty list is returned.
 
         :param filepath: The path to start searching for .gitignore files
         :return: List of paths to .gitignore files relevant for start_path
@@ -64,8 +69,8 @@ class GitRepository:
                 return ret
             p = p.parent
 
-        # if not .git directory found, we're not in a git repo and gitignore files cannot
-        # be trusted.
+        # if not .git directory found, we're not in a git repo and gitignore files
+        # cannot be trusted.
         return list()
 
     def is_ignored(self, filepath: Path) -> bool:
@@ -81,5 +86,5 @@ class GitRepository:
         if self.root_dir is None:
             return False
         gitignores = self.collect_gitignores(filepath)
-        matchers = [parse_gitignore(str(g)) for g in gitignores]
-        return any([m(filepath) for m in matchers])
+        matchers = [gitignorefile.parse(str(g)) for g in gitignores]
+        return any([m(str(filepath)) for m in matchers])
