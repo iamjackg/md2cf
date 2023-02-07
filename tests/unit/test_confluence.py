@@ -1,3 +1,5 @@
+import io
+
 import pytest
 
 
@@ -348,3 +350,41 @@ def test_update_page_with_message(confluence, requests_mock):
     )
 
     assert page == updated_page
+
+
+def test_create_attachment(mocker, confluence, requests_mock):
+    test_page = bunchify({"id": 123})
+    file_contents = b"12345"
+    test_fp = io.BytesIO(file_contents)
+
+    test_response = {"test": 1}
+    r = requests_mock.post(
+        TEST_HOST + f"content/{test_page.id}/child/attachment?allowDuplicated=true",
+        complete_qs=True,
+        json=test_response,
+        headers={"X-Atlassian-Token": "nocheck"},
+    )
+    response = confluence.create_attachment(test_page, test_fp)
+    print(r)
+
+    assert response == test_response
+
+
+def test_update_attachment(mocker, confluence, requests_mock):
+    test_page = bunchify({"id": 123})
+    test_attachment = bunchify({"id": 3241})
+    file_contents = b"12345"
+    test_fp = io.BytesIO(file_contents)
+
+    test_response = {"test": 1}
+    r = requests_mock.post(
+        TEST_HOST
+        + f"content/{test_page.id}/child/attachment/{test_attachment.id}/data",
+        complete_qs=True,
+        json=test_response,
+        headers={"X-Atlassian-Token": "nocheck"},
+    )
+    response = confluence.update_attachment(test_page, test_fp, test_attachment)
+    print(r)
+
+    assert response == test_response

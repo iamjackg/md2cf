@@ -180,7 +180,7 @@ def upsert_attachment(
         action = UpsertAction.CREATED
         with attachment_path.open("rb") as fp:
             existing_attachment = confluence.create_attachment(
-                page=existing_page, fp=fp, message=attachment_message
+                confluence_page=existing_page, fp=fp, message=attachment_message
             )
     else:
         should_update = True
@@ -195,10 +195,9 @@ def upsert_attachment(
                     action = UpsertAction.SKIPPED
 
         if should_update:
-            # print(f"Updating file: {attachment_path}")
             with attachment_path.open("rb") as fp:
                 existing_attachment = confluence.update_attachment(
-                    page=existing_page,
+                    confluence_page=existing_page,
                     fp=fp,
                     existing_attachment=existing_attachment,
                     message=attachment_message,

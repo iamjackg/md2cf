@@ -210,10 +210,9 @@ class MinimalConfluence:
 
         return self._put(f"content/{page.id}", json=update_structure)
 
-    def get_attachment(self, page, name):
-        # existing_attachments = self.api.content(page.id).child.get(
+    def get_attachment(self, confluence_page, name):
         existing_attachments = self._get(
-            f"content/{page.id}/child/attachment",
+            f"content/{confluence_page.id}/child/attachment",
             headers={"X-Atlassian-Token": "nocheck", "Accept": "application/json"},
             params={"filename": name, "expand": "version"},
         )
@@ -221,24 +220,19 @@ class MinimalConfluence:
         if existing_attachments.size:
             return existing_attachments.results[0]
 
-    def update_attachment(self, page, fp, existing_attachment, message=""):
-        return (
-            # self.api.content(page.id)
-            # .child.attachment(existing_attachment.id)
-            self._post(
-                f"content/{page.id}/child/attachment/{existing_attachment.id}/data",
-                data={"comment": message} if message else None,
-                format=(None, "json"),
-                headers={"X-Atlassian-Token": "nocheck"},
-                files={"file": fp},
-            )
+    def update_attachment(self, confluence_page, fp, existing_attachment, message=""):
+        return self._post(
+            f"content/{confluence_page.id}/child/attachment/{existing_attachment.id}/"
+            f"data",
+            json={"comment": message} if message else None,
+            headers={"X-Atlassian-Token": "nocheck"},
+            files={"file": fp},
         )
 
-    def create_attachment(self, page, fp, message=""):
+    def create_attachment(self, confluence_page, fp, message=""):
         return self._post(
-            f"content/{page.id}/child/attachment",
-            data={"comment": message} if message else None,
-            format=(None, "json"),
+            f"content/{confluence_page.id}/child/attachment",
+            json={"comment": message} if message else None,
             headers={"X-Atlassian-Token": "nocheck"},
             params={"allowDuplicated": "true"},
             files={"file": fp},
