@@ -1,4 +1,5 @@
 import urllib.parse as urlparse
+import uuid
 from pathlib import Path
 from typing import List, NamedTuple
 
@@ -73,12 +74,10 @@ class ConfluenceRenderer(mistune.Renderer):
         self.title = None
         self.enable_relative_links = enable_relative_links
         self.relative_links: List[RelativeLink] = list()
-        self._relative_link_replacement_counter = 0
 
     def reinit(self):
         self.attachments = list()
         self.relative_links = list()
-        self._relative_link_replacement_counter = 0
         self.title = None
 
     def header(self, text, level, raw=None):
@@ -110,11 +109,8 @@ class ConfluenceRenderer(mistune.Renderer):
             and not parsed_link.netloc
             and not parsed_link.fragment
         ):
-            self._relative_link_replacement_counter += 1
             # relative link
-            replacement_link = (
-                f"md2cf-internal-link-{self._relative_link_replacement_counter}"
-            )
+            replacement_link = f"md2cf-internal-link-{uuid.uuid4()}"
             self.relative_links.append(
                 RelativeLink(
                     path=parsed_link.path,
