@@ -122,7 +122,7 @@ The `--preface-markdown` and `--postface-markdown` options allow you to specify 
 
 Alternatively, the `--preface-file` and `--postface-file` options allow you to specify a path to a markdown file which will be prepended or appended to every page.
 
-:warning: Note that preface and postface Markdown is parsed separately and added to the body after the main page has been parsed. Therefore, it will not affect behavior tied to the page contents, such as title or front matter detection.
+> :warning: Note that preface and postface Markdown is parsed separately and added to the body after the main page has been parsed. Therefore, it will not affect behavior tied to the page contents, such as title or front matter detection.
 
 ### Page labels
 
