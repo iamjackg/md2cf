@@ -1,44 +1,37 @@
 # md2cf
 
-A tool and library to convert documents written in Markdown to Confluence Storage format and upload them to a Confluence instance.
+`md2cf` is a tool and library that allows you to convert Markdown documents to Confluence Storage format and upload them to a Confluence instance.
 
 ## Features
 
-  - **Convert Markdown documents:** a library implementing a
-    [Mistune](https://github.com/lepture/mistune) renderer that outputs
-    Confluence Storage Format.
-  - **Talk to the Confluence API:** an embedded micro-implementation of
-    the [Confluence Server REST
-    API](https://developer.atlassian.com/server/confluence/confluence-server-rest-api/)
-    with basic support for creating and updating pages.
-  - **Upload your documents automatically:** a full-featured command line utility that can automate the
-    upload process for you.
+- **Convert Markdown documents:** `md2cf` includes a library that implements a [Mistune](https://github.com/lepture/mistune) renderer, which outputs Confluence Storage Format.
+- **Talk to the Confluence API:** `md2cf` also features an embedded micro-implementation of the [Confluence Server REST API](https://developer.atlassian.com/server/confluence/confluence-server-rest-api/) with basic support for creating and updating pages and attachments.
+- **Automate the upload process:** You can use `md2cf`'s full-featured command line utility to automate the upload process for you.
+
 
 ## Installation
 
 ```bash
+# Install md2cf via pip
 pip install md2cf
-```
 
-If you're only planning on using `md2cf` as a command to upload documents to Confluence, it's highly recommended to install it via [pipx](https://pypa.github.io/pipx/).
-
-```bash
+# If you only need to use md2cf for uploading documents to Confluence,
+# it's recommended to use pipx:
 pipx install md2cf
 ```
 
 ## Getting started
 
-Run `md2cf --help` to see all the options and parameters.
+To see all available options and parameters, run `md2cf --help`.
 
-In order to upload a document, you will need to supply at least the following five parameters:
+To upload a document, you need to provide at least the following five parameters:
 
-  - The **URL** of your Confluence instance, including the path to
-    the REST API (e.g. `http://confluence.example.com/rest/api`)
-  - Either
-    - The **username** and **password** to log into the instance, or
-    - a **personal access token**
-  - The **space** in which to publish the page
-  - The **files or directories** to be uploaded -- if none are specified, the contents will be read from the standard input
+- The **URL** of your Confluence instance, including the path to the REST API (e.g., `http://confluence.example.com/rest/api`)
+- Either:
+    - The **username** and **password** to log in to the instance
+    - A **personal access token**
+- The **space** in which to publish the page
+- The **files or directories** to be uploaded. If none are specified, the contents will be read from standard input.
 
 Example basic usage:
 
@@ -52,9 +45,9 @@ Or, if using a token:
 md2cf --host 'https://confluence.example.com/rest/api' --token '2104v3ryl0ngt0k3n720' --space TEST document.md
 ```
 
-> :warning: Entering your password (or your token) as a parameter on the command line is [generally a bad idea](https://unix.stackexchange.com/q/78734). If you're running the script interactively, you can omit the `--password` parameter and the script will securely ask you to type it.
+> :warning: Avoid entering your password (or token) as a command line parameter, as this is [generally a bad practice](https://unix.stackexchange.com/q/78734). Instead, when running the script interactively, omit the `--password` parameter and securely enter the password when prompted.
 
-> :warning: Tokens work differently between [Confluence Cloud](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/) and [self-hosted instances](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html). With Confluence Cloud, you have to use your token **as your password** with the `--username` and `--password` parameters. With self-hosted instances, you should use the `--token` parameter.
+> :warning: Note that tokens function differently between [Confluence Cloud](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/) and [self-hosted instances](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html). When using Confluence Cloud, you should use your token **as your password** with the `--username` and `--password` parameters. With self-hosted instances, use the `--token` parameter instead.
 
 You can also supply the hostname, username, password, token, and space as **environment variables**:
 
@@ -62,39 +55,40 @@ You can also supply the hostname, username, password, token, and space as **envi
 - `CONFLUENCE_USERNAME`
 - `CONFLUENCE_PASSWORD`
 - `CONFLUENCE_TOKEN`
-- `CONFLUENCE_SPACE`.
+- `CONFLUENCE_SPACE`
 
-If you're using self-signed certificates and/or want to **ignore SSL errors**, add the `--insecure` option.
+If you are using self-signed certificates or want to **ignore SSL errors**, use the `--insecure` option.
 
-You can specify **multiple files and/or entire folders**. If you specify a folder, it will be traversed recursively and all files ending in `.md` will be uploaded. See [Uploading folders](#uploading-folders) for more information.
+You can **upload multiple files** or entire folders. If you specify a folder, `md2cf` will traverse it recursively and upload all files that end in `.md`. For more information, see [Uploading Folders](#uploading-folders).
 
-If you just want to get a preview of what `md2cf` would do, the `--dry-run` option will print a list of page data but leave Confluence untouched.
+If you would like to preview `md2cf`'s actions without modifying Confluence, use the `--dry-run` option. This will print a list of page data without making any changes.
 
 ## Page information arguments
 
 ### Page title
 
-The **title** of the page can come from a few sources, in order of priority from highest to lowest:
-* the `--title` command line parameter
-* a `title` entry in your document's front matter, i.e. a YAML block delimited by `---` lines at the top of the file
+The title of the page can be sourced from multiple places, in the following order of priority:
+* The `--title` command-line parameter
+* A `title` entry in the document's front matter, which is a YAML block delimited by `---` lines at the top of the file:
+
   ```yaml
   ---
   title: This is a title
   ---
-  # Rest of the document here
   ```
-* the first top-level header found in the document (i.e. the first `#` header)
-* the filename if there are no top-level headers.
+* The first top-level header found in the document (i.e., the first `#` header)
+* The filename, if there are no top-level headers.
 
-Note that if you're reading from standard input, you must either specify the title through the command line or have a title in the content as a header or in the front matter.
+Note that if you are reading from standard input, you must either specify the title through the command line or include a title as a header or in the front matter within the content.
 
-If you want to strip the top level header from the document, so the title isn't repeated in the body of the page, pass the `--strip-top-header` parameter.
+To avoid repeating the top level header in the body of the page, pass the `--strip-top-header` parameter to strip it from the document.
 
-If you're uploading entire folders, you might want to add a prefix to each page title in order to avoid collisions. You can do this using the `--prefix` parameter.
+When uploading entire folders, consider adding a prefix to each page title to prevent collisions. You can do this by using the `--prefix` parameter.
 
 ### Removing extra newlines
 
-If your document uses single newlines to break lines, for example if it was typeset with a fixed column width, Confluence Cloud might respect those newlines and produce a document that's difficult to read. Use the `--remove-text-newlines` parameter to replace every newline within a paragraph with a space.
+If your document uses single newlines to break lines (for example, if it was typeset with a fixed column width), Confluence Cloud might preserve those newlines, resulting in a document that's difficult to read. To fix this, use the `--remove-text-newlines` parameter, which replaces every newline within a paragraph with a space.
+
 
 <details>
 <summary>Example</summary>
@@ -120,19 +114,19 @@ It's not that nice to read.
 
 ### Adding a preface and/or postface
 
-The `--preface-markdown`, `--preface-file`, `--postface-markdown`, and `--postface-file` commands allow you to add some text at the top or bottom of each page. This is useful  if you're mirroring documentation to Confluence and want people to know that it's going to be overwritten in an automated fashion.
+The `--preface-markdown`, `--preface-file`, `--postface-markdown`, and `--postface-file` commands enable you to add text at the beginning or end of each page. This is especially helpful if you're mirroring documentation to Confluence and want to notify users that it will be automatically updated.
 
-`--preface-markdown` and `--postface-markdown` allow you to specify Markdown text right on the command line. If you don't specify anything, it defaults to a paragraph saying
+The `--preface-markdown` and `--postface-markdown` options allow you to specify Markdown text directly in the command line. If no text is specified, a default paragraph will be used stating:
 
 > **Contents are auto-generated, do not edit.**
 
-`--preface-file` and `--postface-file` take a path to a markdown file and will prepend or append the contents to every page.
+Alternatively, the `--preface-file` and `--postface-file` options allow you to specify a path to a markdown file which will be prepended or appended to every page.
 
-> :warning: Preface and postface Markdown is parsed separately and added to the body after the main page has been parsed, so it won't influence behaviour tied to the page contents, such as title or front matter detection.
+:warning: Note that preface and postface Markdown is parsed separately and added to the body after the main page has been parsed. Therefore, it will not affect behavior tied to the page contents, such as title or front matter detection.
 
 ### Page labels
 
-You can specify labels for your page by adding a `labels` entry in your document's front matter, i.e. a YAML block delimited by `---` lines at the top of the file
+To add labels to your page, include a `labels` entry in your document's front matter. The front matter is a YAML block delimited by `---` lines at the top of the file. Here's an example:
 
 ```yaml
 ---
@@ -140,60 +134,59 @@ labels:
 - first label
 - second label
 ---
-# Rest of the document here
+# Rest of the Markdown document
 ```
 
-By default, labels will only be added. If you want the final set of labels to _exactly_ match what you listed in the front matter, pass the `--replace-all-labels` option.
+Note that by default, the labels you specify will be added to any existing labels. If you want to replace all existing labels with only the ones you specified, use the `--replace-all-labels` option.
 
 ### Parent page
 
-If you want to upload the page under **a specific parent**, you can supply the parent's page ID as the `--parent-id` parameter, or its title through the `--parent-title` parameter.
+To upload the page under **a specific parent**, you can provide the parent's page ID using the `--parent-id` parameter, or its title using the `--parent-title` parameter.
 
 ### Update message
 
-You can also optionally specify an **update message** to describe the
-change you just made by using the `--message` parameter. Note that if you're using the `--only-changed` option there will also be a hash of the page/attachment contents at the end of the version update message.
+Optionally, you can provide an **update message** using the `--message` parameter to describe the change you made. If you're using the `--only-changed` option at the same time, the version update message will also include a hash of the page or attachment contents at the end.
 
 ### Updating an existing page
 
-Uploading a page with the same title twice will update the existing one.
+If you upload a page with the same title twice, it will update the existing page.
 
-If you want to update a page by page ID, use the `--page-id` option. This allows you to change the page's title, or to update a page with a title that is annoying to use as a parameter.
+To update a page using its ID, use the `--page-id` option. This allows you to modify the page's title or update a page with a title that is difficult to use as a parameter.
 
-With the `--minor-edit` option you can prevent notifications being sent to watcher of the page. This corresponds to the "Notify watchers" checkbox when editing pages manually.
+To avoid sending notifications to page watchers, use the `--minor-edit` option. This corresponds to the "Notify watchers" checkbox when editing pages manually.
 
 ### Avoiding uploading content that hasn't changed
 
-If you want to avoid redundant uploads (and the corresponding update emails) when your content hasn't changed, you can add the `--only-changed` option. Note that this will store a hash of the page/attachment contents at the end of the version update message.
+To avoid re-uploading unchanged content and receiving update emails when there are no changes, consider using the `--only-changed` option. Keep in mind that this option will include a hash of the page or attachment contents in the version update message.
 
 ## Linking to other documents (relative links)
 
-Relative link support is disabled by default. You can enable it by passing `--enable-relative-links`. They work similarly to [GitHub relative links](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes#relative-links-and-image-paths-in-readme-files), with the difference that links starting with `/` are **not supported** and will be left as they are.
+By default, support for relative links is disabled. To enable it, pass the `--enable-relative-links` flag. The behavior of relative links is similar to [GitHub relative links](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes#relative-links-and-image-paths-in-readme-files), with the exception that links starting with `/` are **not supported** and will be left unchanged.
 
-> :warning: This function requires two uploads for every page containing relative links, since a page needs to be uploaded to Confluence first before we can know which URL it's assigned.
->
-> The first upload will replace all internal links with placeholders, and once we know where all the pages ended up, the placeholders will be replaced with the final Confluence link.
+> :warning: Enabling this function requires two uploads for every page containing relative links. First, a page must be uploaded to Confluence with all internal links replaced by placeholders. Then, once the final Confluence link is known, the placeholders will be replaced with the appropriate links.
 
-By default, relative links that point to a file that doesn't exist (or is not being uploaded in the current batch) will result in an error. If you want to ignore this and keep them as they are, pass `--ignore-relative-link-errors`.
+By default, relative links that point to non-existent files (or files that are not being uploaded in the current batch) will result in an error. To ignore these errors and keep the links as they are, use the `--ignore-relative-link-errors` flag.
 
 ## Directory arguments
 
-### Uploading folders recursively
+### Uploading Folders Recursively
 
-`md2cf` can upload entire folders for you. This can be useful if you want to mirror some in-repo documentation to Confluence. When uploading entire folders, `md2cf` will recursively traverse all subdirectories and upload any `.md` file it encounters.
+To help you mirror large documentation to Confluence, `md2cf` allows you to upload entire folders. When using this feature, `md2cf` will recursively traverse all subdirectories and upload any `.md` files it encounters.
 
-By default, `md2cf` will honour your `.gitignore` and skip any files or folders it defines. If you want to avoid this, add the `--no-gitignore` option.
+By default, `md2cf` will respect your `.gitignore` file and skip any files or folders it defines. If you prefer to upload everything in the folder, use the `--no-gitignore` option.
 
-Folders will be represented by empty pages in the final upload, since Confluence can only nest pages under other pages. You can modify this behaviour through three command line parameters.
+Please note that Confluence can only nest pages under other pages. As a result, folders will be represented by empty pages with the same title as the folder in the final upload. You can customize this behavior using one of the three command line parameters defined in the next sections.
 
 #### Customizing folder names
 
-Folder names like `interesting-subsection` or `dir1` are not particularly nice. If you pass the `--beautify-folders` option,
-all spaces and hyphens in folder names will be replaced with spaces and the first letter will be capitalized, producing
-`Interesting subsection` and `Dir1`.
+Folder names like `interesting-subsection` or `dir1` are not particularly nice. If you pass the `--beautify-folders` option, all spaces and hyphens in folder names will be replaced with spaces and the first letter will be capitalized, producing `Interesting subsection` and `Dir1`.
 
 Alternatively, you can create a YAML file called `.pages` with the following format in every folder you wish to rename.
 If you pass the `--use-pages-file`, the folder will be given that title.
+
+Folder names like `interesting-subsection` or `dir1` may not be aesthetically pleasing. If you use the `--beautify-folders` option, spaces and hyphens in folder names will be replaced with spaces, and the first letter of each word will be capitalized, resulting in `Interesting Subsection` and `Dir1`.
+
+Alternatively, you can create a YAML file called `.pages` in every folder you want to rename, using the following format, and if you use the `--use-pages-file` option, the folder will be renamed using the title specified in the `.pages` file.
 
 ```yaml
 title: "This is a fantastic title!"
@@ -291,21 +284,23 @@ folderA/
 
 ## Terminal output format
 
-By default, `md2cf` produces rich output with animated progress bars that is meant for human consumption. If the output is piped to a file, no animations will be played and only the final result will be printed. All error messages are printed to standard error.
+By default, `md2cf` produces rich output with animated progress bars that are meant for human consumption. If the output is redirected to a file, the progress bars will not be displayed and only the final result will be written to the file. Error messages are always printed to standard error.
 
-`md2cf` supports two other output formats.
+In addition to the default format, `md2cf` also supports two other output formats.
 
 ### JSON output
 
-Passing `--output json` will make `md2cf` print the JSON output for each page as returned by Confluence. Normal progress output will not be printed.
+When `--output json` is passed to `md2cf`, the JSON output for each page as returned by Confluence will be printed. Note that normal progress output will not be displayed.
 
-> :warning: JSON entries will only be printed for page creation/updates. They will not be printed for attachment creation/updates and will not be printed for second-pass updates for [relative links](#linking-to-other-documents-relative-links).
+> :warning: Please note that JSON entries will only be printed for page creation/updates. They will not be printed for attachment creation/updates and will not be printed for second-pass updates for [relative links](#linking-to-other-documents-relative-links).
+
 
 ### Minimal output
 
-Passing `--output minimal` will make `md2cf` print the final Confluence URL for each page, similarly to versions prior to `2.0.0`. Normal progress output will not be printed.
+When passing the `--output minimal` option to `md2cf`, the tool will only print the final Confluence URL for each page, as in versions prior to `2.0.0`. The normal progress output will be omitted.
 
-> :warning: URLs will only be printed for page creation/updates. They will not be printed for attachment creation/updates and will not be printed for second-pass updates for [relative links](#linking-to-other-documents-relative-links).
+> :warning: Note that URLs will only be printed for page creation/updates. They will not be printed for attachment creation/updates and will not be printed for second-pass updates for [relative links](#linking-to-other-documents-relative-links).
+
 
 ## Library usage
 
