@@ -250,3 +250,9 @@ class MinimalConfluence:
 
     def get_parent_id(self, page):
         return page.ancestors[-1].id
+
+    def get_space(self, space, additional_expansions=None):
+        params = None
+        if additional_expansions is not None:
+            params = {"expand": ",".join(additional_expansions)}
+        return self._get(f"space/{space}", params=params)

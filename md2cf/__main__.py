@@ -92,6 +92,11 @@ def get_parser():
         "--parent-id",
         help="ID of the parent page under which the new page will be uploaded",
     )
+    parent_group.add_argument(
+        "--top-level",
+        action="store_true",
+        help="upload the page tree starting from the top level (no top level parent)",
+    )
 
     page_group.add_argument(
         "-t",
@@ -376,8 +381,12 @@ def main():
     error = None
     tui = Md2cfTUI(pages_to_upload)
     with tui:
+        space_info = confluence.get_space(
+            args.space, additional_expansions=["homepage"]
+        )
+
         for page in pages_to_upload:
-            pre_process_page(page, args, postface_markup, preface_markup)
+            pre_process_page(page, args, postface_markup, preface_markup, space_info)
             tui.start_item_task(page.original_title)
             upsert_page_result = None
             try:
@@ -486,7 +495,7 @@ def main():
         sys.exit(1)
 
 
-def pre_process_page(page, args, postface_markup, preface_markup):
+def pre_process_page(page, args, postface_markup, preface_markup, space_info):
     page.original_title = page.title
     page.space = args.space
     page.page_id = args.page_id
@@ -505,6 +514,11 @@ def pre_process_page(page, args, postface_markup, preface_markup):
             page.parent_id or args.parent_id
         )  # This can still end up being None.
         # It's fine -- it means it's a top level page.
+
+    # If we want to *move* a page back to the top space, we need to make it
+    # a child of the space's home page
+    if args.top_level and page.parent_title is None and page.parent_id is None:
+        page.parent_id = space_info.homepage.id
 
     if args.prefix:
         page.title = f"{args.prefix} - {page.title}"

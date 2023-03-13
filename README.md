@@ -143,6 +143,8 @@ Note that by default, the labels you specify will be added to any existing label
 
 To upload the page under **a specific parent**, you can provide the parent's page ID using the `--parent-id` parameter, or its title using the `--parent-title` parameter.
 
+To move a page to a **top-level page** (i.e. directly under the space's Home Page), use the `--top-level` flag.
+
 ### Update message
 
 Optionally, you can provide an **update message** using the `--message` parameter to describe the change you made. If you're using the `--only-changed` option at the same time, the version update message will also include a hash of the page or attachment contents at the end.
