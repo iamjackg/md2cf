@@ -131,12 +131,15 @@ def labels_need_updating(page, existing_page):
 
 
 def page_needs_updating(page, existing_page, replace_all_labels):
-    if page.parent_id is None and len(existing_page.ancestors) > 1:
+    if page.parent_id is None and existing_page.ancestors:
         # page wants to become a top level page and was not one before
         # (top level pages only have one ancestor: the space's home page)
         return True
 
-    if page.parent_id is not None and page.parent_id != existing_page.ancestors[-1].id:
+    if page.parent_id is not None and (
+        existing_page.ancestors == []
+        or page.parent_id != existing_page.ancestors[-1].id
+    ):
         # page wants to change parent
         return True
 
