@@ -249,6 +249,11 @@ def get_parser():
         help="markdown files or directories to upload to Confluence. Empty for stdin",
         nargs="*",
     )
+    parser.add_argument(
+        "--clean-install",
+        action="store_true",
+        help="Deletes all pages in confluence with the specified parent that is not the file or in the folder specified. If no parent then parent will be set to the space homepage",
+    )
 
     return parser
 
@@ -308,6 +313,11 @@ def main():
         )
         sys.exit(1)
 
+    if args.parent_title is not None and args.parent_id is not None:
+        error_console.log(
+            ":x: Parent Title and Parent page ID cannot both be specified on the command line "
+        )
+
     pages_to_upload = collect_pages_to_upload(args)
 
     page_title_counts = Counter([page.title for page in pages_to_upload])
@@ -346,6 +356,10 @@ def main():
                     f"for page {page.title} does not exist"
                 )
                 sys.exit(1)
+
+    if args.clean_install:
+        # This runs even though that there are no files found, i.e. len(pages_to_upload) == 0
+       perform_clean_install(confluence, pages_to_upload,  args)
 
     preface_markup = ""
     if args.preface_markdown:
@@ -722,6 +736,29 @@ def collect_pages_to_upload(args):
 
     return pages_to_upload
 
+def perform_clean_install(confluence, pages_to_upload, args):
+    page_descendants = get_page_descendants(confluence, args)
+
+    pages_to_purge = [page for page in page_descendants if page['title'] not in [p.title for p in pages_to_upload]]
+
+    if not args.dry_run:
+        console.log("Number of pages set to be purged before deployment: ", len(pages_to_purge))
+        for page_to_purge in pages_to_purge:
+            confluence.purge_page(page_to_purge)
+            console.log("-", page_to_purge.title, "- has been purged")
+    else:
+        console.log("Number of pages set to be purged before deployment: ", len(pages_to_purge))
+        console.log("Pages to be purged: ", ", ".join([page['title'] for page in pages_to_purge]))
+
+def get_page_descendants(confluence, args):
+    if args.parent_title is not None:
+        return confluence.get_content_descendant(
+            title=args.parent_title, space_key=args.space)
+    elif args.parent_id is not None:
+        return confluence.get_content_descendant(
+            page_id=args.parent_id, space_key=args.space)
+    else:
+        return confluence.get_content_descendant(space_key=args.space)
 
 if __name__ == "__main__":
     main()
