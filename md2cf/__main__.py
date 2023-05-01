@@ -584,7 +584,9 @@ def update_pages_with_relative_links(
             except KeyError:
                 if args.ignore_relative_link_errors:
                     page.body = page.body.replace(
-                        link_data.replacement, link_data.escaped_original
+                        link_data.replacement,
+                        link_data.escaped_original
+                        + (("#" + link_data.fragment) if link_data.fragment else ""),
                     )
                     continue
                 else:
@@ -598,7 +600,9 @@ def update_pages_with_relative_links(
             # anything
             if not args.dry_run:
                 page.body = page.body.replace(
-                    link_data.replacement, confluence.get_url(page_on_confluence)
+                    link_data.replacement,
+                    confluence.get_url(page_on_confluence)
+                    + (("#" + link_data.fragment) if link_data.fragment else ""),
                 )
             page_modified = True
 
@@ -717,7 +721,9 @@ def collect_pages_to_upload(args):
                 )
                 for link_data in only_page.relative_links:
                     only_page.body.replace(
-                        link_data.replacement, link_data.escaped_original
+                        link_data.replacement,
+                        link_data.escaped_original
+                        + (("#" + link_data.fragment) if link_data.fragment else ""),
                     )
 
     return pages_to_upload
