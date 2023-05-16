@@ -268,7 +268,6 @@ def parse_page(
     enable_relative_links: bool = False,
 ) -> Page:
     renderer = ConfluenceRenderer(
-        use_xhtml=True,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
         enable_relative_links=enable_relative_links,
