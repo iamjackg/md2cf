@@ -47,7 +47,8 @@ significantly from most other text-to-HTML formatters (including Movable
 Type's &quot;Convert Line Breaks&quot; option) which translate every line break
 character in a paragraph into a <code>&lt;br /&gt;</code> tag.</p>
 <p>When you <em>do</em> want to insert a <code>&lt;br /&gt;</code> break tag using Markdown, you
-end a line with two or more spaces, then type return.</p>
+end a line with two or more spaces, then type return, like...<br />
+this.</p>
 <h3>Headers</h3>
 <p>Markdown supports two styles of headers, [Setext] [1] and [atx] [2].</p>
 <p>Optionally, you may &quot;close&quot; atx-style headers. This is purely

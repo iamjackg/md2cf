@@ -52,7 +52,8 @@ Type's "Convert Line Breaks" option) which translate every line break
 character in a paragraph into a `<br />` tag.
 
 When you *do* want to insert a `<br />` break tag using Markdown, you
-end a line with two or more spaces, then type return.
+end a line with two or more spaces, then type return, like...  
+this.
 
 ### Headers
 
