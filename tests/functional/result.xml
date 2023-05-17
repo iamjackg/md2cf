@@ -129,22 +129,21 @@ Quote Level from the Text menu.</p>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
-<p>It's important to note that the actual numbers you use to mark the
-list have no effect on the HTML output Markdown produces. The HTML
-Markdown produces from the above list is:</p>
-<p>If you instead wrote the list in Markdown like this:</p>
+<p>Only the first number in a list has any effect.</p>
+<p>You can therefore write the same list in Markdown like this:</p>
 <ol>
 <li>Bird</li>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
-<p>or even:</p>
-<ol>
+<p>You specify a different start number, but the numbers you use for
+subsequent items will be ignored:</p>
+<ol start="3">
 <li>Bird</li>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
-<p>you'd get the exact same HTML output. The point is, if you want to,
+<p>The point is, if you want to,
 you can use ordinal numbers in your ordered Markdown lists, so that
 the numbers in your source match the numbers in your published HTML.
 But if you want to be lazy, you don't have to.</p>
