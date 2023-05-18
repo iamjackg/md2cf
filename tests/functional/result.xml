@@ -96,7 +96,8 @@ and code blocks:</p>
 </ol>
 <p>Here's some example code:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
-<ac:plain-text-body><![CDATA[return shell_exec("echo $input | $markdown_script");]]></ac:plain-text-body>
+<ac:plain-text-body><![CDATA[return shell_exec("echo $input | $markdown_script");
+]]></ac:plain-text-body>
 </ac:structured-macro>
 </blockquote>
 <p>Any decent text editor should make email-style quoting easy. For
@@ -204,7 +205,8 @@ to be indented <em>twice</em> -- 8 spaces or two tabs:</p>
 <ul>
 <li><p>A list item with a code block:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
-<ac:plain-text-body><![CDATA[<code goes here>]]></ac:plain-text-body>
+<ac:plain-text-body><![CDATA[<code goes here>
+]]></ac:plain-text-body>
 </ac:structured-macro>
 </li>
 </ul>
@@ -218,7 +220,6 @@ block by at least 4 spaces or 1 tab.</p>
 <p>This is a normal paragraph:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
 <ac:plain-text-body><![CDATA[This is a code block.
-
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>Here is an example of AppleScript:</p>
@@ -226,7 +227,6 @@ block by at least 4 spaces or 1 tab.</p>
 <ac:plain-text-body><![CDATA[tell application "Foo"
     beep
 end tell
-
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>A code block continues until it reaches a line that is not indented
@@ -240,7 +240,6 @@ ampersands and angle brackets. For example, this:</p>
 <ac:plain-text-body><![CDATA[<div class="footer">
     &copy; 2004 Foo Corporation
 </div>
-
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>Regular Markdown syntax is not processed within code blocks. E.g.,
@@ -249,7 +248,8 @@ it's also easy to use Markdown to write about Markdown's own syntax.</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
 <ac:plain-text-body><![CDATA[tell application "Foo"
     beep
-end tell]]></ac:plain-text-body>
+end tell
+]]></ac:plain-text-body>
 </ac:structured-macro>
 <h2>Span Elements</h2>
 <h3>Links</h3>
