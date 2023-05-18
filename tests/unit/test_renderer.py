@@ -146,7 +146,7 @@ def test_renderer_block_code_with_language():
 
     renderer = ConfluenceRenderer()
 
-    assert renderer.block_code(test_code, lang=test_language) == test_markup
+    assert renderer.block_code(test_code, info=test_language) == test_markup
 
 
 def test_renderer_header_sets_title():

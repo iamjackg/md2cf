@@ -251,6 +251,12 @@ it's also easy to use Markdown to write about Markdown's own syntax.</p>
 end tell
 ]]></ac:plain-text-body>
 </ac:structured-macro>
+<p>Indicate the language thus:</p>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">python</ac:parameter>
+<ac:parameter ac:name="linenumbers">true</ac:parameter>
+<ac:plain-text-body><![CDATA[hello = "hello"
+]]></ac:plain-text-body>
+</ac:structured-macro>
 <h2>Span Elements</h2>
 <h3>Links</h3>
 <p>Markdown supports two style of links: <em>inline</em> and <em>reference</em>.</p>

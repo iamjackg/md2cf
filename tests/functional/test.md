@@ -265,6 +265,12 @@ tell application "Foo"
 end tell
 ```
 
+Indicate the language thus:
+
+```python
+hello = "hello"
+```
+
 ## Span Elements
 
 ### Links

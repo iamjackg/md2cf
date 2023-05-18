@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, NamedTuple
 
 import mistune
+from mistune.util import safe_entity
 
 
 class RelativeLink(NamedTuple):
@@ -130,7 +131,10 @@ class ConfluenceRenderer(mistune.HTMLRenderer):
     def block_code(self, code, info=None):
         root_element = self.structured_macro("code")
         if info is not None:
-            lang_parameter = self.parameter(name="language", value=info)
+            info = safe_entity(info.strip())
+        if info:
+            lang = info.split(None, 1)[0]
+            lang_parameter = self.parameter(name="language", value=lang)
             root_element.append(lang_parameter)
         root_element.append(self.parameter(name="linenumbers", value="true"))
         if code and code[-1] != "\n":
