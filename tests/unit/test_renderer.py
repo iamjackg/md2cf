@@ -207,7 +207,7 @@ def test_renderer_image_external():
 
     renderer = ConfluenceRenderer()
 
-    assert renderer.image(test_image_src, "", "") == test_image_markup
+    assert renderer.image("", test_image_src, "") == test_image_markup
     assert not renderer.attachments
 
 
@@ -223,7 +223,7 @@ def test_renderer_image_external_alt_and_title():
     renderer = ConfluenceRenderer()
 
     assert (
-        renderer.image(test_image_src, test_image_title, test_image_alt)
+        renderer.image(test_image_alt, test_image_src, test_image_title)
         == test_image_markup
     )
 
@@ -238,7 +238,7 @@ def test_renderer_image_internal_absolute():
 
     renderer = ConfluenceRenderer()
 
-    assert renderer.image(test_image_src, "", "") == test_image_markup
+    assert renderer.image("", test_image_src, "") == test_image_markup
     assert renderer.attachments == [test_image_src]
 
 
@@ -252,7 +252,7 @@ def test_renderer_image_internal_relative():
 
     renderer = ConfluenceRenderer()
 
-    assert renderer.image(test_image_src, "", "") == test_image_markup
+    assert renderer.image("", test_image_src, "") == test_image_markup
     assert renderer.attachments == [test_image_src]
 
 
