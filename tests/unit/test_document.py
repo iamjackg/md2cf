@@ -1,3 +1,4 @@
+from io import StringIO
 from pathlib import Path
 
 import md2cf.document as doc
@@ -244,3 +245,26 @@ Yep.
 """
 
     assert doc.get_document_frontmatter(source_markdown.splitlines(keepends=True)) == {}
+
+
+def test_parse_page_with_newlines():
+    source_markdown = """
+Line1
+Line2
+"""
+    lines = StringIO(source_markdown).readlines()
+    assert (
+        doc.parse_page(lines, remove_text_newlines=False).body
+        == "<p>Line1\nLine2</p>\n"
+    )
+
+
+def test_parse_page_with_newlines_removed():
+    source_markdown = """
+Line1
+Line2
+"""
+    lines = StringIO(source_markdown).readlines()
+    assert (
+        doc.parse_page(lines, remove_text_newlines=True).body == "<p>Line1 Line2</p>\n"
+    )
