@@ -112,7 +112,7 @@ def test_tag_render_with_child_and_text():
 
 def test_renderer_reinit():
     renderer = ConfluenceRenderer()
-    renderer.header("this is a title", 1)
+    renderer.heading("this is a title", 1)
     assert renderer.title is not None
 
     renderer.reinit()
@@ -153,7 +153,7 @@ def test_renderer_header_sets_title():
     test_header = "this is a header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_header, 1)
+    renderer.heading(test_header, 1)
 
     assert renderer.title == test_header
 
@@ -162,7 +162,7 @@ def test_renderer_strips_header():
     test_header = "this is a header"
     renderer = ConfluenceRenderer(strip_header=True)
 
-    result = renderer.header(test_header, 1)
+    result = renderer.heading(test_header, 1)
 
     assert result == ""
 
@@ -171,7 +171,7 @@ def test_renderer_header_lower_level_does_not_set_title():
     test_header = "this is a header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_header, 2)
+    renderer.heading(test_header, 2)
 
     assert renderer.title is None
 
@@ -181,8 +181,8 @@ def test_renderer_header_later_level_sets_title():
     test_header = "this is a header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_lower_header, 2)
-    renderer.header(test_header, 1)
+    renderer.heading(test_lower_header, 2)
+    renderer.heading(test_header, 1)
 
     assert renderer.title is test_header
 
@@ -192,8 +192,8 @@ def test_renderer_header_only_sets_first_title():
     test_second_header = "this is another header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_header, 1)
-    renderer.header(test_second_header, 1)
+    renderer.heading(test_header, 1)
+    renderer.heading(test_second_header, 1)
 
     assert renderer.title is test_header
 
