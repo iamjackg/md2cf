@@ -64,13 +64,11 @@ class ConfluenceRenderer(mistune.HTMLRenderer):
     def __init__(
         self,
         strip_header=False,
-        remove_text_newlines=False,
         enable_relative_links=False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.strip_header = strip_header
-        self.remove_text_newlines = remove_text_newlines
         self.attachments = list()
         self.title = None
         self.enable_relative_links = enable_relative_links
@@ -122,11 +120,6 @@ class ConfluenceRenderer(mistune.HTMLRenderer):
             )
             url = replacement_link
         return super(ConfluenceRenderer, self).link(text, url, title)
-
-    def text(self, text):
-        if self.remove_text_newlines:
-            text = text.replace("\n", " ")
-        return super().text(text)
 
     def block_code(self, code, info=None):
         root_element = self.structured_macro("code")
