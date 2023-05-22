@@ -706,10 +706,10 @@ def collect_pages_to_upload(args):
             if args.title:
                 only_page.title = args.title
 
-            # This is implicitly only here if relative link processing is active
+            # This is implicitly only truthy if relative link processing is active
             if only_page.relative_links:
                 # This covers the last edge case where directory processing leaves us
-                # with only one page, which we can't anticipate.
+                # with only one page, which we can't anticipate at startup time.
                 # In this case, we have to restore all the links to their original
                 # values.
                 error_console.log(
@@ -719,6 +719,7 @@ def collect_pages_to_upload(args):
                     only_page.body.replace(
                         link_data.replacement, link_data.escaped_original
                     )
+                only_page.relative_links = []
 
     return pages_to_upload
 
