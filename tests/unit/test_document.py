@@ -173,6 +173,50 @@ def test_get_pages_from_directory_beautify_folders(fs):
     ]
 
 
+def test_get_pages_from_directory_with_pages_file_multi_level(fs):
+    fs.create_file("/root-folder/sub-folder-a/some-page.md")
+    fs.create_file("/root-folder/sub-folder-b/some-page.md")
+    fs.create_file("/root-folder/sub-folder-a/.pages", contents='title: "Folder A"')
+    fs.create_file("/root-folder/sub-folder-b/.pages", contents='title: "Folder B"')
+
+    result = doc.get_pages_from_directory(Path("/root-folder"), use_pages_file=True)
+    assert result == [
+        FakePage(
+            title="Folder A",
+        ),
+        FakePage(
+            title="some-page",
+            file_path=Path("/root-folder/sub-folder-a/some-page.md"),
+            parent_title="Folder A",
+        ),
+        FakePage(
+            title="Folder B",
+        ),
+        FakePage(
+            title="some-page",
+            file_path=Path("/root-folder/sub-folder-b/some-page.md"),
+            parent_title="Folder B",
+        ),
+    ]
+
+
+def test_get_pages_from_directory_with_pages_file_single_level(fs):
+    fs.create_file("/root-folder/some-page.md")
+    fs.create_file("/root-folder/.pages", contents='title: "Root folder"')
+
+    result = doc.get_pages_from_directory(Path("/root-folder"), use_pages_file=True)
+    assert result == [
+        FakePage(
+            title="Root folder",
+        ),
+        FakePage(
+            title="some-page",
+            file_path=Path("/root-folder/some-page.md"),
+            parent_title="Root folder",
+        ),
+    ]
+
+
 def test_get_document_frontmatter():
     source_markdown = """---
 title: This is a title
