@@ -129,8 +129,15 @@ def get_pages_from_directory(
 
         folder_data[current_path] = {"n_files": len(markdown_files)}
 
+        # we'll capture title and path of the parent folder for this folder:
         folder_parent_title = None
         folder_parent_path = None
+
+        # title for this folder's page (as parent of its children):
+        parent_page_title = None
+        # title for the folder (same as above except when collapsing):
+        folder_title = None
+
         if current_path != base_path:
             if skip_empty or collapse_empty:
                 folder_parent_path = find_non_empty_parent_path(
@@ -141,9 +148,6 @@ def get_pages_from_directory(
 
             folder_parent_title = folder_data[folder_parent_path]["title"]
 
-        parent_page_title = None
-        folder_title = None
-        if current_path != base_path:
             parent_page_title = current_path.name
             if len(markdown_files) == 1 and collapse_single_pages:
                 parent_page_title = folder_parent_title
