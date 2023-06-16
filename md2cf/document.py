@@ -111,7 +111,6 @@ def get_pages_from_directory(
     """
     processed_pages = list()
     base_path = file_path.resolve()
-    parent_page_title = None
     folder_data = dict()
     git_repo = GitRepository(file_path, use_gitignore=use_gitignore)
 
