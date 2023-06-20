@@ -173,13 +173,9 @@ def get_pages_from_directory(
 
         folder_data[current_path]["title"] = folder_title
 
-        if not markdown_files and not directories:
-            continue
-
-        if not markdown_files and (skip_empty or collapse_empty):
-            continue
-
-        if folder_title is not None:
+        if folder_title is not None and (
+            markdown_files or (directories and not skip_empty and not collapse_empty)
+        ):
             processed_pages.append(
                 Page(
                     title=folder_title,
