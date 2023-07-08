@@ -41,16 +41,17 @@ inspiration for Markdown's syntax is the format of plain text email.</p>
 by one or more blank lines. (A blank line is any line that looks like a
 blank line -- a line containing nothing but spaces or tabs is considered
 blank.) Normal paragraphs should not be indented with spaces or tabs.</p>
-<p>The implication of the "one or more consecutive lines of text" rule is
-that Markdown supports "hard-wrapped" text paragraphs. This differs
+<p>The implication of the &quot;one or more consecutive lines of text&quot; rule is
+that Markdown supports &quot;hard-wrapped&quot; text paragraphs. This differs
 significantly from most other text-to-HTML formatters (including Movable
-Type's "Convert Line Breaks" option) which translate every line break
+Type's &quot;Convert Line Breaks&quot; option) which translate every line break
 character in a paragraph into a <code>&lt;br /&gt;</code> tag.</p>
 <p>When you <em>do</em> want to insert a <code>&lt;br /&gt;</code> break tag using Markdown, you
-end a line with two or more spaces, then type return.</p>
+end a line with two or more spaces, then type return, like...<br />
+this.</p>
 <h3>Headers</h3>
 <p>Markdown supports two styles of headers, [Setext] [1] and [atx] [2].</p>
-<p>Optionally, you may "close" atx-style headers. This is purely
+<p>Optionally, you may &quot;close&quot; atx-style headers. This is purely
 cosmetic -- you can use this if you think it looks better. The
 closing hashes don't even need to match the number of hashes
 used to open the header. (The number of opening hashes
@@ -60,7 +61,8 @@ determines the header level.)</p>
 familiar with quoting passages of text in an email message, then you
 know how to create a blockquote in Markdown. It looks best if you hard
 wrap the text and put a <code>&gt;</code> before every line:</p>
-<blockquote><p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
+<blockquote>
+<p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
 consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
 Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.</p>
 <p>Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
@@ -68,7 +70,8 @@ id sem consectetuer libero luctus adipiscing.</p>
 </blockquote>
 <p>Markdown allows you to be lazy and only put the <code>&gt;</code> before the first
 line of a hard-wrapped paragraph:</p>
-<blockquote><p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
+<blockquote>
+<p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
 consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
 Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.</p>
 <p>Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
@@ -76,21 +79,25 @@ id sem consectetuer libero luctus adipiscing.</p>
 </blockquote>
 <p>Blockquotes can be nested (i.e. a blockquote-in-a-blockquote) by
 adding additional levels of <code>&gt;</code>:</p>
-<blockquote><p>This is the first level of quoting.</p>
-<blockquote><p>This is nested blockquote.</p>
+<blockquote>
+<p>This is the first level of quoting.</p>
+<blockquote>
+<p>This is nested blockquote.</p>
 </blockquote>
 <p>Back to the first level.</p>
 </blockquote>
 <p>Blockquotes can contain other Markdown elements, including headers, lists,
 and code blocks:</p>
-<blockquote><h2>This is a header.</h2>
+<blockquote>
+<h2>This is a header.</h2>
 <ol>
 <li>This is the first list item.</li>
 <li>This is the second list item.</li>
 </ol>
 <p>Here's some example code:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
-<ac:plain-text-body><![CDATA[return shell_exec("echo $input | $markdown_script");]]></ac:plain-text-body>
+<ac:plain-text-body><![CDATA[return shell_exec("echo $input | $markdown_script");
+]]></ac:plain-text-body>
 </ac:structured-macro>
 </blockquote>
 <p>Any decent text editor should make email-style quoting easy. For
@@ -123,22 +130,21 @@ Quote Level from the Text menu.</p>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
-<p>It's important to note that the actual numbers you use to mark the
-list have no effect on the HTML output Markdown produces. The HTML
-Markdown produces from the above list is:</p>
-<p>If you instead wrote the list in Markdown like this:</p>
+<p>Only the first number in a list has any effect.</p>
+<p>You can therefore write the same list in Markdown like this:</p>
 <ol>
 <li>Bird</li>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
-<p>or even:</p>
-<ol>
+<p>You specify a different start number, but the numbers you use for
+subsequent items will be ignored:</p>
+<ol start="3">
 <li>Bird</li>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
-<p>you'd get the exact same HTML output. The point is, if you want to,
+<p>The point is, if you want to,
 you can use ordinal numbers in your ordered Markdown lists, so that
 the numbers in your source match the numbers in your published HTML.
 But if you want to be lazy, you don't have to.</p>
@@ -188,7 +194,8 @@ sit amet, consectetuer adipiscing elit.</p>
 delimiters need to be indented:</p>
 <ul>
 <li><p>A list item with a blockquote:</p>
-<blockquote><p>This is a blockquote
+<blockquote>
+<p>This is a blockquote
 inside a list item.</p>
 </blockquote>
 </li>
@@ -198,7 +205,8 @@ to be indented <em>twice</em> -- 8 spaces or two tabs:</p>
 <ul>
 <li><p>A list item with a code block:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
-<ac:plain-text-body><![CDATA[<code goes here>]]></ac:plain-text-body>
+<ac:plain-text-body><![CDATA[<code goes here>
+]]></ac:plain-text-body>
 </ac:structured-macro>
 </li>
 </ul>
@@ -212,7 +220,6 @@ block by at least 4 spaces or 1 tab.</p>
 <p>This is a normal paragraph:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
 <ac:plain-text-body><![CDATA[This is a code block.
-
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>Here is an example of AppleScript:</p>
@@ -220,7 +227,6 @@ block by at least 4 spaces or 1 tab.</p>
 <ac:plain-text-body><![CDATA[tell application "Foo"
     beep
 end tell
-
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>A code block continues until it reaches a line that is not indented
@@ -234,7 +240,6 @@ ampersands and angle brackets. For example, this:</p>
 <ac:plain-text-body><![CDATA[<div class="footer">
     &copy; 2004 Foo Corporation
 </div>
-
 ]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>Regular Markdown syntax is not processed within code blocks. E.g.,
@@ -243,7 +248,14 @@ it's also easy to use Markdown to write about Markdown's own syntax.</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
 <ac:plain-text-body><![CDATA[tell application "Foo"
     beep
-end tell]]></ac:plain-text-body>
+end tell
+]]></ac:plain-text-body>
+</ac:structured-macro>
+<p>Indicate the language thus:</p>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">python</ac:parameter>
+<ac:parameter ac:name="linenumbers">true</ac:parameter>
+<ac:plain-text-body><![CDATA[hello = "hello"
+]]></ac:plain-text-body>
 </ac:structured-macro>
 <h2>Span Elements</h2>
 <h3>Links</h3>

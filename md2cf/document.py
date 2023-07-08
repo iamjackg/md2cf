@@ -71,6 +71,12 @@ class Page(object):
         )
 
 
+class LineBreakIgnoringInlineParser(mistune.InlineParser):
+    def parse_softbreak(self, m, state) -> int:
+        state.append_token({"type": "text", "raw": " "})
+        return m.end()
+
+
 def find_non_empty_parent_path(
     current_dir: Path, folder_data: Dict[Path, Dict[str, Any]], default: Path
 ) -> Path:
@@ -271,12 +277,15 @@ def parse_page(
     enable_relative_links: bool = False,
 ) -> Page:
     renderer = ConfluenceRenderer(
-        use_xhtml=True,
         strip_header=strip_header,
-        remove_text_newlines=remove_text_newlines,
         enable_relative_links=enable_relative_links,
     )
-    confluence_mistune = mistune.Markdown(renderer=renderer)
+    if remove_text_newlines:
+        inline_parser = LineBreakIgnoringInlineParser()
+    else:
+        inline_parser = mistune.InlineParser()
+
+    confluence_mistune = mistune.Markdown(renderer=renderer, inline=inline_parser)
     confluence_content = confluence_mistune("".join(markdown_lines))
 
     page = Page(
