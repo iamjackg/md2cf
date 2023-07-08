@@ -3,7 +3,8 @@ from pathlib import Path
 import md2cf.document as doc
 from tests.utils import FakePage
 
-
+ROOT_GITIGNORE = """.git
+"""
 def test_page_get_content_hash():
     p = doc.Page(title="test title", body="test content")
 
@@ -16,6 +17,32 @@ def test_get_pages_from_directory(fs):
     fs.create_file("/root-folder/parent/child/child-file.md")
 
     result = doc.get_pages_from_directory(Path("/root-folder"))
+    assert result == [
+        FakePage(
+            title="root-folder-file",
+            file_path=Path("/root-folder/root-folder-file.md", parent_title=None),
+        ),
+        FakePage(title="parent", file_path=None, parent_title=None),
+        FakePage(title="child", file_path=None, parent_title="parent"),
+        FakePage(
+            title="child-file",
+            file_path=Path("/root-folder/parent/child/child-file.md"),
+            parent_title="child",
+        ),
+    ]
+
+
+def test_get_pages_from_directory_use_pages(fs):
+    fs.create_file("/root-folder/.gitignore", contents=ROOT_GITIGNORE)
+    fs.create_dir("/root-folder/.git")
+    fs.create_dir("/root-folder/.git/refs")
+    fs.create_file("/root-folder/.git/refs/test.md")
+    fs.create_file("/root-folder/root-folder-file.md")
+    fs.create_dir("/root-folder/empty-dir")
+    fs.create_file("/root-folder/parent/child/child-file.md")
+
+    result = doc.get_pages_from_directory(Path("/root-folder"), use_pages_file=True, enable_relative_links=True)
+    print(result)
     assert result == [
         FakePage(
             title="root-folder-file",

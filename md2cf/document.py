@@ -118,6 +118,9 @@ def get_pages_from_directory(
     for current_path, directories, file_names in os.walk(file_path):
         current_path = Path(current_path).resolve()
 
+        if git_repo.is_ignored(current_path):
+            continue
+
         markdown_files = [
             Path(current_path, file_name)
             for file_name in file_names
