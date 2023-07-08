@@ -309,6 +309,60 @@ def test_update_page(confluence, requests_mock):
 
     assert page == updated_page
 
+def test_update_page_with_status(confluence, requests_mock):
+    test_page_id = 12345
+    test_page_title = "This is a title"
+    test_page_version = 1
+    test_page_status = "trashed"
+
+    test_page_object = bunchify(
+        {
+            "id": test_page_id,
+            "title": test_page_title,
+            "version": {"number": test_page_version},
+        }
+    )
+
+    test_new_body = "<p>This is my new body</p>"
+
+    update_structure = {
+        "version": {"number": test_page_version + 1, "minorEdit": False},
+        "title": test_page_title,
+        "type": "page",
+        "body": {"storage": {"value": test_new_body, "representation": "storage"}},
+        "status": test_page_status
+    }
+
+    updated_page = {"test": 1}
+    requests_mock.put(
+        TEST_HOST + f"content/{test_page_id}",
+        complete_qs=True,
+        json=updated_page,
+        additional_matcher=lambda x: x.json() == update_structure,
+    )
+
+    page = confluence.update_page(test_page_object, body=test_new_body, status=test_page_status)
+
+    assert page == updated_page
+
+def test_update_page_with_wrong_status(confluence, requests_mock):
+    test_page_id = 12345
+    test_page_title = "This is a title"
+    test_page_version = 1
+    test_page_status = "I do not exist"
+
+    test_page_object = bunchify(
+        {
+            "id": test_page_id,
+            "title": test_page_title,
+            "version": {"number": test_page_version},
+        }
+    )
+
+    test_new_body = "<p>This is my new body</p>"
+
+    with pytest.raises(ValueError):
+        confluence.update_page(test_page_object, body=test_new_body, status=test_page_status)
 
 def test_update_page_with_message(confluence, requests_mock):
     test_page_id = 12345
@@ -386,3 +440,125 @@ def test_update_attachment(mocker, confluence, requests_mock):
     response = confluence.update_attachment(test_page, test_fp, test_attachment)
 
     assert response == test_response
+
+def test_get_content_descendant_with_page_id(confluence, requests_mock):
+    test_page_id = 12345
+    test_content_type = "page"
+    test_return_value = { "results": [{"some_stuff": 1}] }
+
+    requests_mock.get(TEST_HOST + f"content/{test_page_id}/descendant/{test_content_type}", json=test_return_value)
+    page = confluence.get_content_descendant(page_id=test_page_id)
+
+    assert page == bunchify(test_return_value["results"])
+
+def test_get_content_descendant_with_page_id_and_next_link(confluence, requests_mock):
+    test_page_id = 12345
+    test_content_type = "page"
+    test_return_value2_next_url = TEST_HOST + "/next-api-call"
+    test_return_value1 = { 
+        "results": [{"id": 1}],
+        "_links": {
+            "next": test_return_value2_next_url
+        }    
+    }
+    test_return_value2 = {
+        "results": [{"id": 2}],
+    }
+    expected_result = [{ "id": 1 }, { "id": 2 }]
+    
+    requests_mock.get(TEST_HOST + f"content/{test_page_id}/descendant/{test_content_type}", json=test_return_value1)
+    requests_mock.get(f"{test_return_value2_next_url}", json=test_return_value2)
+    page = confluence.get_content_descendant(page_id=test_page_id)
+
+    assert page == bunchify(expected_result)
+
+def test_get_content_descendant_with_title(confluence, requests_mock):
+    test_page_title = "test title"
+    test_page_id = 12345
+    test_content_type = "page"
+    test_return_value = { "results": [{"some_stuff": 1}] }
+    test_get_page_from_title_return_value = {"results": [{"id": test_page_id}]}
+    requests_mock.get(
+        TEST_HOST + f"content?title={test_page_title}&type=page",
+        complete_qs=True,
+        json=test_get_page_from_title_return_value,
+    )
+    requests_mock.get(TEST_HOST + f"content/{test_page_id}/descendant/{test_content_type}", json=test_return_value)
+
+    page = confluence.get_content_descendant(title=test_page_title)
+
+    assert page == bunchify(test_return_value["results"])
+
+def test_get_content_descendant_without_page_id_or_title(confluence, requests_mock):
+    test_space_key = "ABC"
+    test_homepage_id = 54321
+    test_space_return_value = { "_expandable": { "homepage": f"/rest/api/content/{test_homepage_id}"}}
+
+    test_content_type = "page"
+    test_return_value = { "results": [{"some_stuff": 1}] }
+
+    requests_mock.get(
+        TEST_HOST + f"space/{test_space_key}",
+        complete_qs=True,
+        json=test_space_return_value,
+    )
+
+    requests_mock.get(TEST_HOST + f"content/{test_homepage_id}/descendant/{test_content_type}", json=test_return_value)
+
+    page = confluence.get_content_descendant(space_key=test_space_key)
+
+    assert page == bunchify(test_return_value["results"])
+
+def test_get_content_descendant_without_any_parameters(confluence):
+    with pytest.raises(ValueError):
+        confluence.get_content_descendant()
+
+def test_purge_page(confluence, requests_mock):
+    test_page_id = 12345
+    test_page_title = "This is a title"
+    test_page_version = 1
+    test_page_body = ""
+    test_page_status = "trashed"
+    test_get_page_return_value = bunchify(
+        {
+            "id": test_page_id,
+            "title": test_page_title,
+            "version": {"number": test_page_version},
+        }
+    )
+
+    test_get_descendant_page_object = bunchify(
+        {
+            "id": test_page_id,
+            "title": test_page_title,
+            "_expandable": { "body": test_page_body }
+        }
+    )
+
+    update_structure = {
+        "version": {
+            "number": test_page_version + 1,
+            "minorEdit": False,
+        },
+        "title": test_page_title,
+        "type": "page",
+        "body": {"storage": {"value": test_page_body, "representation": "storage"}},
+        "status": test_page_status
+    }
+
+
+    requests_mock.get(TEST_HOST + f"content/{test_page_id}", json=test_get_page_return_value)
+    requests_mock.put(
+        TEST_HOST + f"content/{test_page_id}",
+        json=update_structure,
+        additional_matcher=lambda x: x.json() == update_structure,
+    )
+
+    requests_mock.delete(TEST_HOST + f"content/{test_page_id}")
+    response = confluence.purge_page(test_get_descendant_page_object)
+
+    assert response.status_code == 200
+
+def test_purge_page_without_any_parameters(confluence):
+    with pytest.raises(ValueError):
+        confluence.purge_page()

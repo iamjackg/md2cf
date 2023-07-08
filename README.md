@@ -284,6 +284,18 @@ folderA/
 ```
 </details>
 
+## Clean confluence before publishing pages
+
+`md2cf` can delete pages in Confluence.  
+By using the `--clean-install` flag, `md2cf` will permenantly delete pages in Confluence that does not have the same title as the one(s) provided either through folder or a specific file.  
+The pages targeeted for deletion are all subpages of the parent specified using the `--parent-id` or `--parent-title` flags.  
+If no parent is specified then the space `homepage` will be used.
+
+> :warning: Use with caution!  
+> :warning: When `clean-install` is passed to `md2cf` the pages will be purged before attempting to upload pages, and it will also run if no pages are to be uploaded
+> :warning: If a single file is provided alongside this flag, then only one page will remain 
+
+
 ## Terminal output format
 
 By default, `md2cf` produces rich output with animated progress bars that are meant for human consumption. If the output is redirected to a file, the progress bars will not be displayed and only the final result will be written to the file. Error messages are always printed to standard error.
