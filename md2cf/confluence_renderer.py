@@ -113,7 +113,8 @@ class ConfluenceRenderer(mistune.Renderer):
             replacement_link = f"md2cf-internal-link-{uuid.uuid4()}"
             self.relative_links.append(
                 RelativeLink(
-                    # make sure to unquote the url as relative paths might have escape sequences
+                    # make sure to unquote the url as relative paths
+                    # might have escape sequences
                     path=urlparse.unquote(parsed_link.path),
                     replacement=replacement_link,
                     original=link,

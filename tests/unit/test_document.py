@@ -5,6 +5,8 @@ from tests.utils import FakePage
 
 ROOT_GITIGNORE = """.git
 """
+
+
 def test_page_get_content_hash():
     p = doc.Page(title="test title", body="test content")
 
@@ -41,7 +43,9 @@ def test_get_pages_from_directory_use_pages(fs):
     fs.create_dir("/root-folder/empty-dir")
     fs.create_file("/root-folder/parent/child/child-file.md")
 
-    result = doc.get_pages_from_directory(Path("/root-folder"), use_pages_file=True, enable_relative_links=True)
+    result = doc.get_pages_from_directory(
+        Path("/root-folder"), use_pages_file=True, enable_relative_links=True
+    )
     print(result)
     assert result == [
         FakePage(
