@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import md2cf.document as doc
-from tests.utils import FakePage
+from test_package.utils import FakePage
 
 ROOT_GITIGNORE = """.git
 """
