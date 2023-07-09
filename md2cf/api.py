@@ -225,10 +225,7 @@ class MinimalConfluence:
             f"content/{confluence_page.id}/child/attachment/{existing_attachment.id}/"
             f"data",
             headers={"X-Atlassian-Token": "nocheck"},
-            files={
-                "file": fp,
-                'comment': message if message else None
-            },
+            files={"file": fp, "comment": message if message else None},
         )
 
     def create_attachment(self, confluence_page, fp, message=""):
@@ -237,10 +234,7 @@ class MinimalConfluence:
             json={"comment": message} if message else None,
             headers={"X-Atlassian-Token": "nocheck"},
             params={"allowDuplicated": "true"},
-            files={
-                "file": fp,
-                'comment': message if message else None
-            },
+            files={"file": fp, "comment": message if message else None},
         )
 
     def add_labels(self, page, labels):

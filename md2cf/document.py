@@ -111,7 +111,6 @@ def get_pages_from_directory(
     """
     processed_pages = list()
     base_path = file_path.resolve()
-    parent_page_title = None
     folder_data = dict()
     git_repo = GitRepository(file_path, use_gitignore=use_gitignore)
 
@@ -131,16 +130,16 @@ def get_pages_from_directory(
             path for path in markdown_files if not git_repo.is_ignored(path)
         ]
 
-        folder_data[current_path] = {
-            "n_files": len(markdown_files),
-            "title": current_path.name if current_path != base_path else None,
-        }
+        folder_data[current_path] = {"n_files": len(markdown_files)}
 
-        if not markdown_files and not directories:
-            continue
+        # we'll capture title and path of the parent folder for this folder:
+        folder_parent_title = None
+        folder_parent_path = None
 
-        if not markdown_files and (skip_empty or collapse_empty):
-            continue
+        # title for this folder's page (as parent of its children):
+        parent_page_title = None
+        # title for the folder (same as above except when collapsing):
+        folder_title = None
 
         if current_path != base_path:
             # TODO: add support for .pages file to read folder title
@@ -152,35 +151,41 @@ def get_pages_from_directory(
                 folder_parent_path = current_path.parent
 
             folder_parent_title = folder_data[folder_parent_path]["title"]
+            parent_page_title = current_path.name
             if len(markdown_files) == 1 and collapse_single_pages:
                 parent_page_title = folder_parent_title
+                folder_title = None
             else:
                 if collapse_empty:
-                    folder_data[current_path]["title"] = str(
+                    parent_page_title = str(
                         current_path.relative_to(folder_parent_path)
                     )
                 if beautify_folders:
-                    folder_data[current_path]["title"] = (
-                        folder_data[current_path]["title"]
-                        .replace("-", " ")
+                    parent_page_title = (
+                        current_path.name.replace("-", " ")
                         .replace("_", " ")
                         .capitalize()
                     )
-                elif use_pages_file and ".pages" in file_names:
-                    with open(current_path.joinpath(".pages")) as pages_fp:
-                        pages_file_contents = yaml.safe_load(pages_fp)
-                    if "title" in pages_file_contents:
-                        folder_data[current_path]["title"] = pages_file_contents[
-                            "title"
-                        ]
-                parent_page_title = folder_data[current_path]["title"]
-                processed_pages.append(
-                    Page(
-                        title=parent_page_title,
-                        parent_title=folder_parent_title,
-                        body="",
-                    )
+                folder_title = parent_page_title
+        if use_pages_file and ".pages" in file_names:
+            with open(current_path.joinpath(".pages")) as pages_fp:
+                pages_file_contents = yaml.safe_load(pages_fp)
+            if "title" in pages_file_contents:
+                parent_page_title = pages_file_contents["title"]
+                folder_title = parent_page_title
+
+        folder_data[current_path]["title"] = folder_title
+
+        if folder_title is not None and (
+            markdown_files or (directories and not skip_empty and not collapse_empty)
+        ):
+            processed_pages.append(
+                Page(
+                    title=folder_title,
+                    parent_title=folder_parent_title,
+                    body="",
                 )
+            )
 
         for markdown_file in markdown_files:
             processed_page = get_page_data_from_file_path(

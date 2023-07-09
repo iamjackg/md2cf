@@ -145,7 +145,7 @@ class ConfluenceRenderer(mistune.Renderer):
             attributes["title"] = title
 
         root_element = ConfluenceTag(name="image", attrib=attributes)
-        parsed_source = urlparse.urlparse(src)
+        parsed_source = urlparse(src)
         if not parsed_source.netloc:
             # Local file, requires upload
             basename = Path(src).name
