@@ -1,13 +1,14 @@
-import urllib.parse as urlparse
 import uuid
 from pathlib import Path
 from typing import List, NamedTuple
+from urllib.parse import urlparse
 
 import mistune
 
 
 class RelativeLink(NamedTuple):
     path: str
+    fragment: str
     replacement: str
     original: str
     escaped_original: str
@@ -103,11 +104,9 @@ class ConfluenceRenderer(mistune.Renderer):
         return body_tag
 
     def link(self, link, title, text):
-        parsed_link = urlparse.urlparse(link)
+        parsed_link = urlparse(link)
         if self.enable_relative_links and (
-            not parsed_link.scheme
-            and not parsed_link.netloc
-            and not parsed_link.fragment
+            not parsed_link.scheme and not parsed_link.netloc
         ):
             # relative link
             replacement_link = f"md2cf-internal-link-{uuid.uuid4()}"
@@ -117,6 +116,7 @@ class ConfluenceRenderer(mistune.Renderer):
                     # might have escape sequences
                     path=urlparse.unquote(parsed_link.path),
                     replacement=replacement_link,
+                    fragment=parsed_link.fragment,
                     original=link,
                     escaped_original=mistune.escape_link(link),
                 )

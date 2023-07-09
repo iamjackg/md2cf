@@ -165,6 +165,15 @@ To avoid re-uploading unchanged content and receiving update emails when there a
 
 By default, support for relative links is disabled. To enable it, pass the `--enable-relative-links` flag. The behavior of relative links is similar to [GitHub relative links](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes#relative-links-and-image-paths-in-readme-files), with the exception that links starting with `/` are **not supported** and will be left unchanged.
 
+Reference to a section from another file is possible using Markdown fragment link navigation:
+` [link](./file.md#section-name) // note the dash!`
+
+In file.md:
+```
+## ...
+## section name
+```
+
 > :warning: Enabling this function requires two uploads for every page containing relative links. First, a page must be uploaded to Confluence with all internal links replaced by placeholders. Then, once the final Confluence link is known, the placeholders will be replaced with the appropriate links.
 
 By default, relative links that point to non-existent files (or files that are not being uploaded in the current batch) will result in an error. To ignore these errors and keep the links as they are, use the `--ignore-relative-link-errors` flag.
