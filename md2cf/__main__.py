@@ -584,7 +584,9 @@ def update_pages_with_relative_links(
             except KeyError:
                 if args.ignore_relative_link_errors:
                     page.body = page.body.replace(
-                        link_data.replacement, link_data.escaped_original
+                        link_data.replacement,
+                        link_data.escaped_original
+                        + (("#" + link_data.fragment) if link_data.fragment else ""),
                     )
                     continue
                 else:
@@ -598,7 +600,9 @@ def update_pages_with_relative_links(
             # anything
             if not args.dry_run:
                 page.body = page.body.replace(
-                    link_data.replacement, confluence.get_url(page_on_confluence)
+                    link_data.replacement,
+                    confluence.get_url(page_on_confluence)
+                    + (("#" + link_data.fragment) if link_data.fragment else ""),
                 )
             page_modified = True
 
@@ -706,10 +710,10 @@ def collect_pages_to_upload(args):
             if args.title:
                 only_page.title = args.title
 
-            # This is implicitly only here if relative link processing is active
+            # This is implicitly only truthy if relative link processing is active
             if only_page.relative_links:
                 # This covers the last edge case where directory processing leaves us
-                # with only one page, which we can't anticipate.
+                # with only one page, which we can't anticipate at startup time.
                 # In this case, we have to restore all the links to their original
                 # values.
                 error_console.log(
@@ -717,8 +721,11 @@ def collect_pages_to_upload(args):
                 )
                 for link_data in only_page.relative_links:
                     only_page.body.replace(
-                        link_data.replacement, link_data.escaped_original
+                        link_data.replacement,
+                        link_data.escaped_original
+                        + (("#" + link_data.fragment) if link_data.fragment else ""),
                     )
+                only_page.relative_links = []
 
     return pages_to_upload
 

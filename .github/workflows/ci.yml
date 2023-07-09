@@ -1,5 +1,5 @@
 name: Lint and test
-on: [ push ]
+on: [ push, pull_request ]
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -28,4 +28,4 @@ jobs:
           python -m pip install -r requirements-test.txt
       - name: Test with pytest
         run: |
-          pytest
+          python -m pytest

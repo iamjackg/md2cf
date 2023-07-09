@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Added
+- Relative links support section headers (@jimstein3d)
+- `.pages` files are now supported at the top level as well as in subdirectories (@galund)
+### Fixed
+- `--only-changed` now works for attachments (@pmarchini)
+- relative links with URL-encoded paths now work (@mschmieder)
+- folders in `.gitignore` are now actually ignored (@jmonsma)
+### Security
+- Updated `requests` to 2.31.0
+
 ## 2.1.0 - 2023-03-13
 ### Fixed
 - Moving page from top level to child page

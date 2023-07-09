@@ -1,7 +1,10 @@
 from pathlib import Path
 
 import md2cf.document as doc
-from tests.utils import FakePage
+from test_package.utils import FakePage
+
+ROOT_GITIGNORE = """.git
+"""
 
 
 def test_page_get_content_hash():
@@ -16,6 +19,34 @@ def test_get_pages_from_directory(fs):
     fs.create_file("/root-folder/parent/child/child-file.md")
 
     result = doc.get_pages_from_directory(Path("/root-folder"))
+    assert result == [
+        FakePage(
+            title="root-folder-file",
+            file_path=Path("/root-folder/root-folder-file.md", parent_title=None),
+        ),
+        FakePage(title="parent", file_path=None, parent_title=None),
+        FakePage(title="child", file_path=None, parent_title="parent"),
+        FakePage(
+            title="child-file",
+            file_path=Path("/root-folder/parent/child/child-file.md"),
+            parent_title="child",
+        ),
+    ]
+
+
+def test_get_pages_from_directory_use_pages(fs):
+    fs.create_file("/root-folder/.gitignore", contents=ROOT_GITIGNORE)
+    fs.create_dir("/root-folder/.git")
+    fs.create_dir("/root-folder/.git/refs")
+    fs.create_file("/root-folder/.git/refs/test.md")
+    fs.create_file("/root-folder/root-folder-file.md")
+    fs.create_dir("/root-folder/empty-dir")
+    fs.create_file("/root-folder/parent/child/child-file.md")
+
+    result = doc.get_pages_from_directory(
+        Path("/root-folder"), use_pages_file=True, enable_relative_links=True
+    )
+    print(result)
     assert result == [
         FakePage(
             title="root-folder-file",
@@ -169,6 +200,50 @@ def test_get_pages_from_directory_beautify_folders(fs):
                 "/root-folder/ugly-folder/another_yucky_folder/child-file.md"
             ),
             parent_title="Another yucky folder",
+        ),
+    ]
+
+
+def test_get_pages_from_directory_with_pages_file_multi_level(fs):
+    fs.create_file("/root-folder/sub-folder-a/some-page.md")
+    fs.create_file("/root-folder/sub-folder-b/some-page.md")
+    fs.create_file("/root-folder/sub-folder-a/.pages", contents='title: "Folder A"')
+    fs.create_file("/root-folder/sub-folder-b/.pages", contents='title: "Folder B"')
+
+    result = doc.get_pages_from_directory(Path("/root-folder"), use_pages_file=True)
+    assert result == [
+        FakePage(
+            title="Folder A",
+        ),
+        FakePage(
+            title="some-page",
+            file_path=Path("/root-folder/sub-folder-a/some-page.md"),
+            parent_title="Folder A",
+        ),
+        FakePage(
+            title="Folder B",
+        ),
+        FakePage(
+            title="some-page",
+            file_path=Path("/root-folder/sub-folder-b/some-page.md"),
+            parent_title="Folder B",
+        ),
+    ]
+
+
+def test_get_pages_from_directory_with_pages_file_single_level(fs):
+    fs.create_file("/root-folder/some-page.md")
+    fs.create_file("/root-folder/.pages", contents='title: "Root folder"')
+
+    result = doc.get_pages_from_directory(Path("/root-folder"), use_pages_file=True)
+    assert result == [
+        FakePage(
+            title="Root folder",
+        ),
+        FakePage(
+            title="some-page",
+            file_path=Path("/root-folder/some-page.md"),
+            parent_title="Root folder",
         ),
     ]
 

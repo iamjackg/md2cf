@@ -1,13 +1,14 @@
-import urllib.parse as urlparse
 import uuid
 from pathlib import Path
 from typing import List, NamedTuple
+from urllib.parse import unquote, urlparse
 
 import mistune
 
 
 class RelativeLink(NamedTuple):
     path: str
+    fragment: str
     replacement: str
     original: str
     escaped_original: str
@@ -103,18 +104,19 @@ class ConfluenceRenderer(mistune.Renderer):
         return body_tag
 
     def link(self, link, title, text):
-        parsed_link = urlparse.urlparse(link)
+        parsed_link = urlparse(link)
         if self.enable_relative_links and (
-            not parsed_link.scheme
-            and not parsed_link.netloc
-            and not parsed_link.fragment
+            not parsed_link.scheme and not parsed_link.netloc
         ):
             # relative link
             replacement_link = f"md2cf-internal-link-{uuid.uuid4()}"
             self.relative_links.append(
                 RelativeLink(
-                    path=parsed_link.path,
+                    # make sure to unquote the url as relative paths
+                    # might have escape sequences
+                    path=unquote(parsed_link.path),
                     replacement=replacement_link,
+                    fragment=parsed_link.fragment,
                     original=link,
                     escaped_original=mistune.escape_link(link),
                 )
@@ -143,7 +145,7 @@ class ConfluenceRenderer(mistune.Renderer):
             attributes["title"] = title
 
         root_element = ConfluenceTag(name="image", attrib=attributes)
-        parsed_source = urlparse.urlparse(src)
+        parsed_source = urlparse(src)
         if not parsed_source.netloc:
             # Local file, requires upload
             basename = Path(src).name
