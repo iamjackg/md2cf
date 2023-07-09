@@ -1,7 +1,7 @@
 import uuid
 from pathlib import Path
 from typing import List, NamedTuple
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import mistune
 
@@ -114,7 +114,7 @@ class ConfluenceRenderer(mistune.Renderer):
                 RelativeLink(
                     # make sure to unquote the url as relative paths
                     # might have escape sequences
-                    path=urlparse.unquote(parsed_link.path),
+                    path=unquote(parsed_link.path),
                     replacement=replacement_link,
                     fragment=parsed_link.fragment,
                     original=link,
