@@ -1,3 +1,7 @@
+import re
+
+import pytest
+
 from md2cf.confluence_renderer import ConfluenceRenderer, ConfluenceTag
 
 
@@ -263,3 +267,93 @@ def test_renderer_remove_text_newlines():
     renderer = ConfluenceRenderer(remove_text_newlines=True)
 
     assert renderer.text(test_text) == test_stripped_text
+
+
+@pytest.mark.parametrize("relative_links", [False, True])
+def test_renderer_normal_link(relative_links):
+    renderer = ConfluenceRenderer(enable_relative_links=relative_links)
+
+    assert (
+        renderer.link(link="https://example.com", text="example link", title=None)
+        == '<a href="https://example.com">example link</a>'
+    )
+
+
+@pytest.mark.parametrize("relative_links", [False, True])
+def test_renderer_local_header_link(relative_links):
+    renderer = ConfluenceRenderer(enable_relative_links=relative_links)
+
+    assert (
+        renderer.link(link="#header-name", text="example link", title=None)
+        == '<a href="#header-name">example link</a>'
+    )
+
+
+def test_renderer_relative_link_enabled():
+    renderer = ConfluenceRenderer(enable_relative_links=True)
+
+    relative_link_regex = re.compile(
+        r"<a href=\"md2cf-internal-link-([-a-z0-9]+)\">relative link</a>"
+    )
+    temporary_link = renderer.link(
+        link="document/../path/page.md", text="relative link", title=None
+    )
+    assert relative_link_regex.match(temporary_link)
+    assert len(renderer.relative_links) == 1
+    relative_link = renderer.relative_links[0]
+
+    assert relative_link.path == "document/../path/page.md"
+    assert (
+        relative_link.replacement == f"md2cf-internal-link-"
+        f"{relative_link_regex.match(temporary_link).groups(1)[0]}"
+    )
+    assert relative_link.fragment == ""
+    assert relative_link.original == "document/../path/page.md"
+    assert relative_link.escaped_original == "document/../path/page.md"
+
+
+def test_renderer_relative_link_with_fragment_enabled():
+    renderer = ConfluenceRenderer(enable_relative_links=True)
+
+    relative_link_regex = re.compile(
+        r"<a href=\"md2cf-internal-link-([-a-z0-9]+)\">relative link</a>"
+    )
+    temporary_link = renderer.link(
+        link="document/../path/page.md#header-name", text="relative link", title=None
+    )
+    assert relative_link_regex.match(temporary_link)
+    assert len(renderer.relative_links) == 1
+    relative_link = renderer.relative_links[0]
+
+    assert relative_link.path == "document/../path/page.md"
+    assert (
+        relative_link.replacement == f"md2cf-internal-link-"
+        f"{relative_link_regex.match(temporary_link).groups(1)[0]}"
+    )
+    assert relative_link.fragment == "header-name"
+    assert relative_link.original == "document/../path/page.md#header-name"
+    assert relative_link.escaped_original == "document/../path/page.md#header-name"
+
+
+def test_renderer_relative_link_disabled():
+    renderer = ConfluenceRenderer(enable_relative_links=False)
+
+    assert (
+        renderer.link(link="document/../path/page.md", text="relative link", title=None)
+        == '<a href="document/../path/page.md">relative link</a>'
+    )
+    assert renderer.relative_links == []
+
+
+def test_renderer_relative_link_with_fragment_disabled():
+    renderer = ConfluenceRenderer(enable_relative_links=False)
+
+    assert (
+        renderer.link(
+            link="document/../path/page.md#header-name",
+            text="relative link",
+            title=None,
+        )
+        == '<a href="document/../path/page.md#header-name">relative link</a>'
+    )
+    assert renderer.relative_links == []

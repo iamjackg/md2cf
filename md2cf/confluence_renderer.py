@@ -105,8 +105,10 @@ class ConfluenceRenderer(mistune.Renderer):
 
     def link(self, link, title, text):
         parsed_link = urlparse(link)
-        if self.enable_relative_links and (
-            not parsed_link.scheme and not parsed_link.netloc
+        if (
+            self.enable_relative_links
+            and (not parsed_link.scheme and not parsed_link.netloc)
+            and parsed_link.path
         ):
             # relative link
             replacement_link = f"md2cf-internal-link-{uuid.uuid4()}"
