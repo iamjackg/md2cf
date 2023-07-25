@@ -26,6 +26,9 @@ from md2cf.document import Page
 from md2cf.tui import Md2cfTUI
 from md2cf.upsert import upsert_attachment, upsert_page
 
+from tenacity import (Retrying, retry_if_exception_type,
+                      stop_after_attempt, wait_random)
+
 
 def get_parser():
     parser = argparse.ArgumentParser(formatter_class=RichHelpFormatter)
@@ -249,6 +252,14 @@ def get_parser():
         help="markdown files or directories to upload to Confluence. Empty for stdin",
         nargs="*",
     )
+    parser.add_argument(
+        "--retry-attempts",
+        action="store",
+        dest="retry_attempts",
+        type=int,
+        default=3,
+        help="Number of retry attemps if upload fails with HTTPError."
+    )
 
     return parser
 
@@ -290,6 +301,12 @@ def main():
     elif args.output == "json":
         console.quiet = True
         json_output_console.quiet = False
+
+    retryer = Retrying(reraise=True,
+        retry=retry_if_exception_type(HTTPError),
+        stop=stop_after_attempt(args.retry_attempts),
+        wait=wait_random(1, 10)
+    )
 
     confluence = api.MinimalConfluence(
         host=args.host,
@@ -380,6 +397,7 @@ def main():
     something_went_wrong = False
     error = None
     tui = Md2cfTUI(pages_to_upload)
+
     with tui:
         space_info = confluence.get_space(
             args.space, additional_expansions=["homepage"]
@@ -393,7 +411,7 @@ def main():
                 tui.set_item_progress_label(page.original_title, "Upserting")
                 final_page = None
                 if not args.dry_run:
-                    upsert_page_result = upsert_page(
+                    upsert_page_result = retryer(upsert_page,
                         confluence=confluence,
                         message=args.message,
                         page=page,
@@ -412,7 +430,7 @@ def main():
                         attachment_identifier = f"{page.original_title} {attachment}"
                         tui.start_item_task(attachment_identifier)
                         if not args.dry_run:
-                            upsert_attachment_result = upsert_attachment(
+                            upsert_attachment_result = retryer(upsert_attachment,
                                 confluence=confluence,
                                 attachment=attachment,
                                 existing_page=final_page,
@@ -478,6 +496,7 @@ def main():
                     pages_to_upload,
                     map_document_path_to_confluence_page,
                     tui,
+                    retryer
                 )
             except HTTPError as e:
                 if args.debug:
@@ -564,7 +583,7 @@ def build_document_path_to_page_map(pages_to_upload):
 
 
 def update_pages_with_relative_links(
-    args, confluence, pages_to_upload, path_to_page, tui
+    args, confluence, pages_to_upload, path_to_page, tui, retryer
 ):
     something_went_wrong = False
     error = ""
@@ -612,7 +631,7 @@ def update_pages_with_relative_links(
             tui.start_item_task(page.original_title)
             if not args.dry_run:
                 try:
-                    upsert_page(
+                    retryer(upsert_page,
                         confluence=confluence,
                         message=args.message,
                         page=page,
@@ -728,7 +747,6 @@ def collect_pages_to_upload(args):
                 only_page.relative_links = []
 
     return pages_to_upload
-
 
 if __name__ == "__main__":
     main()

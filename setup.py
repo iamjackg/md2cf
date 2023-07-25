@@ -28,6 +28,7 @@ setup(
         "requests==2.31.0",
         "PyYAML==6.0",
         "gitignorefile==1.1.2",
+        "tenacity==8.2.2",
     ],
     python_requires=">=3.7",
     entry_points={"console_scripts": ["md2cf=md2cf.__main__:main"]},
