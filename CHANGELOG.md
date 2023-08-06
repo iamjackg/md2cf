@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Changed
 - automatic retries now apply to all errors instead of just 429 HTTP responses
+- pinned pyyaml 6.0.1 to avoid issues with cython 3
 
 ## 2.2.1 - 2023-07-17
 ### Fixed
