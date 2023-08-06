@@ -5,7 +5,7 @@ with open("README.md") as f:
 
 setup(
     name="md2cf",
-    version="2.2.1",
+    version="2.3.0",
     packages=["md2cf"],
     url="https://github.com/iamjackg/md2cf",
     license="MIT",
