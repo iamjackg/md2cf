@@ -49,7 +49,7 @@ class MinimalConfluence:
 
         adapter = requests.adapters.HTTPAdapter(
             max_retries=urllib3.Retry(
-                total=4,
+                total=max_retries,
                 backoff_factor=1,
                 respect_retry_after_header=True,
                 allowed_methods=None,
