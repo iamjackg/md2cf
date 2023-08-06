@@ -249,6 +249,14 @@ def get_parser():
         help="markdown files or directories to upload to Confluence. Empty for stdin",
         nargs="*",
     )
+    parser.add_argument(
+        "--max-retries",
+        action="store",
+        dest="max_retries",
+        type=int,
+        default=4,
+        help="number of retry attempts if any API call fails",
+    )
 
     return parser
 
@@ -297,6 +305,7 @@ def main():
         password=args.password,
         token=args.token,
         verify=not args.insecure,
+        max_retries=args.max_retries,
     )
 
     if (args.title or args.page_id) and (
@@ -380,6 +389,7 @@ def main():
     something_went_wrong = False
     error = None
     tui = Md2cfTUI(pages_to_upload)
+
     with tui:
         space_info = confluence.get_space(
             args.space, additional_expansions=["homepage"]

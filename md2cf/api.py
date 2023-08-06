@@ -25,7 +25,9 @@ class Bunch(dict):
 
 
 class MinimalConfluence:
-    def __init__(self, host, username=None, password=None, token=None, verify=True):
+    def __init__(
+        self, host, username=None, password=None, token=None, verify=True, max_retries=4
+    ):
         if token is None:
             if username is None and password is None:
                 raise ValueError(
@@ -47,10 +49,10 @@ class MinimalConfluence:
 
         adapter = requests.adapters.HTTPAdapter(
             max_retries=urllib3.Retry(
-                total=4,
+                total=max_retries,
                 backoff_factor=1,
                 respect_retry_after_header=True,
-                status_forcelist=[429],
+                allowed_methods=None,
             )
         )
         self.api.mount("http://", adapter)
