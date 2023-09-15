@@ -1,20 +1,18 @@
 # Markdown: Syntax
 
-*   [Overview](#overview)
-    *   [Philosophy](#philosophy)
-    *   [Inline HTML](#html)
-    *   [Automatic Escaping for Special Characters](#autoescape)
-*   [Block Elements](#block)
-    *   [Paragraphs and Line Breaks](#p)
-    *   [Headers](#header)
-    *   [Blockquotes](#blockquote)
-    *   [Lists](#list)
-    *   [Code Blocks](#precode)
-    *   [Horizontal Rules](#hr)
-*   [Span Elements](#span)
-    *   [Links](#link)
-    *   [Emphasis](#em)
-    *   [Code](#code)
+- [Markdown: Syntax](#markdown-syntax)
+  - [Overview](#overview)
+    - [Philosophy](#philosophy)
+  - [Block Elements](#block-elements)
+    - [Paragraphs and Line Breaks](#paragraphs-and-line-breaks)
+    - [Headers](#headers)
+    - [Blockquotes](#blockquotes)
+    - [Lists](#lists)
+    - [Code Blocks](#code-blocks)
+  - [Span Elements](#span-elements)
+    - [Links](#links)
+    - [Emphasis](#emphasis)
+    - [Code](#code)
 
 
 **Note:** This document is itself written using Markdown; you
@@ -153,17 +151,6 @@ If you instead wrote the list in Markdown like this:
 1.  Bird
 1.  McHale
 1.  Parish
-
-or even:
-
-3. Bird
-1. McHale
-8. Parish
-
-you'd get the exact same HTML output. The point is, if you want to,
-you can use ordinal numbers in your ordered Markdown lists, so that
-the numbers in your source match the numbers in your published HTML.
-But if you want to be lazy, you don't have to.
 
 To make lists look nice, you can wrap items with hanging indents:
 
