@@ -275,14 +275,14 @@ def parse_page(
     remove_text_newlines: bool = False,
     enable_relative_links: bool = False,
     escape: bool = False,
-    allow_harmful_protocols: bool = False
+    allow_harmful_protocols: bool = False,
 ) -> Page:
     renderer = ConfluenceRenderer(
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
         enable_relative_links=enable_relative_links,
         escape=escape,
-        allow_harmful_protocols=allow_harmful_protocols
+        allow_harmful_protocols=allow_harmful_protocols,
     )
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune("".join(markdown_lines))
