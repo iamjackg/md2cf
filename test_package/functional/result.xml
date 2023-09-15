@@ -1,24 +1,24 @@
 <h1>Markdown: Syntax</h1>
 <ul>
+<li><a href="#markdown-syntax">Markdown: Syntax</a><ul>
 <li><a href="#overview">Overview</a><ul>
 <li><a href="#philosophy">Philosophy</a></li>
-<li><a href="#html">Inline HTML</a></li>
-<li><a href="#autoescape">Automatic Escaping for Special Characters</a></li>
 </ul>
 </li>
-<li><a href="#block">Block Elements</a><ul>
-<li><a href="#p">Paragraphs and Line Breaks</a></li>
-<li><a href="#header">Headers</a></li>
-<li><a href="#blockquote">Blockquotes</a></li>
-<li><a href="#list">Lists</a></li>
-<li><a href="#precode">Code Blocks</a></li>
-<li><a href="#hr">Horizontal Rules</a></li>
+<li><a href="#block-elements">Block Elements</a><ul>
+<li><a href="#paragraphs-and-line-breaks">Paragraphs and Line Breaks</a></li>
+<li><a href="#headers">Headers</a></li>
+<li><a href="#blockquotes">Blockquotes</a></li>
+<li><a href="#lists">Lists</a></li>
+<li><a href="#code-blocks">Code Blocks</a></li>
 </ul>
 </li>
-<li><a href="#span">Span Elements</a><ul>
-<li><a href="#link">Links</a></li>
-<li><a href="#em">Emphasis</a></li>
+<li><a href="#span-elements">Span Elements</a><ul>
+<li><a href="#links">Links</a></li>
+<li><a href="#emphasis">Emphasis</a></li>
 <li><a href="#code">Code</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -60,7 +60,8 @@ determines the header level.)</p>
 familiar with quoting passages of text in an email message, then you
 know how to create a blockquote in Markdown. It looks best if you hard
 wrap the text and put a <code>&gt;</code> before every line:</p>
-<blockquote><p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
+<blockquote>
+<p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
 consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
 Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.</p>
 <p>Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
@@ -68,22 +69,28 @@ id sem consectetuer libero luctus adipiscing.</p>
 </blockquote>
 <p>Markdown allows you to be lazy and only put the <code>&gt;</code> before the first
 line of a hard-wrapped paragraph:</p>
-<blockquote><p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
+<blockquote>
+<p>This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
 consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
 Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.</p>
+</blockquote>
+<blockquote>
 <p>Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
 id sem consectetuer libero luctus adipiscing.</p>
 </blockquote>
 <p>Blockquotes can be nested (i.e. a blockquote-in-a-blockquote) by
 adding additional levels of <code>&gt;</code>:</p>
-<blockquote><p>This is the first level of quoting.</p>
-<blockquote><p>This is nested blockquote.</p>
+<blockquote>
+<p>This is the first level of quoting.</p>
+<blockquote>
+<p>This is nested blockquote.</p>
 </blockquote>
 <p>Back to the first level.</p>
 </blockquote>
 <p>Blockquotes can contain other Markdown elements, including headers, lists,
 and code blocks:</p>
-<blockquote><h2>This is a header.</h2>
+<blockquote>
+<h2>This is a header.</h2>
 <ol>
 <li>This is the first list item.</li>
 <li>This is the second list item.</li>
@@ -132,16 +139,6 @@ Markdown produces from the above list is:</p>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
-<p>or even:</p>
-<ol>
-<li>Bird</li>
-<li>McHale</li>
-<li>Parish</li>
-</ol>
-<p>you'd get the exact same HTML output. The point is, if you want to,
-you can use ordinal numbers in your ordered Markdown lists, so that
-the numbers in your source match the numbers in your published HTML.
-But if you want to be lazy, you don't have to.</p>
 <p>To make lists look nice, you can wrap items with hanging indents:</p>
 <ul>
 <li>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
@@ -188,7 +185,8 @@ sit amet, consectetuer adipiscing elit.</p>
 delimiters need to be indented:</p>
 <ul>
 <li><p>A list item with a blockquote:</p>
-<blockquote><p>This is a blockquote
+<blockquote>
+<p>This is a blockquote
 inside a list item.</p>
 </blockquote>
 </li>
@@ -211,17 +209,13 @@ in both <code>&lt;pre&gt;</code> and <code>&lt;code&gt;</code> tags.</p>
 block by at least 4 spaces or 1 tab.</p>
 <p>This is a normal paragraph:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
-<ac:plain-text-body><![CDATA[This is a code block.
-
-]]></ac:plain-text-body>
+<ac:plain-text-body><![CDATA[This is a code block.]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>Here is an example of AppleScript:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
 <ac:plain-text-body><![CDATA[tell application "Foo"
     beep
-end tell
-
-]]></ac:plain-text-body>
+end tell]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>A code block continues until it reaches a line that is not indented
 (or the end of the article).</p>
@@ -233,9 +227,7 @@ ampersands and angle brackets. For example, this:</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
 <ac:plain-text-body><![CDATA[<div class="footer">
     &copy; 2004 Foo Corporation
-</div>
-
-]]></ac:plain-text-body>
+</div>]]></ac:plain-text-body>
 </ac:structured-macro>
 <p>Regular Markdown syntax is not processed within code blocks. E.g.,
 asterisks are just literal asterisks within a code block. This means
@@ -243,7 +235,8 @@ it's also easy to use Markdown to write about Markdown's own syntax.</p>
 <ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter>
 <ac:plain-text-body><![CDATA[tell application "Foo"
     beep
-end tell]]></ac:plain-text-body>
+end tell
+]]></ac:plain-text-body>
 </ac:structured-macro>
 <h2>Span Elements</h2>
 <h3>Links</h3>
