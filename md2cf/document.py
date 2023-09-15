@@ -180,7 +180,9 @@ def get_pages_from_directory(
 
 
 def get_page_data_from_file_path(
-    file_path: Path, strip_header: bool = False, remove_text_newlines: bool = False
+    file_path: Path,
+    strip_header: bool = False,
+    remove_text_newlines: bool = False,
 ) -> Page:
     if not isinstance(file_path, Path):
         file_path = Path(file_path)
@@ -234,17 +236,22 @@ def parse_page(
     markdown_lines: List[str],
     strip_header: bool = False,
     remove_text_newlines: bool = False,
+    escape: bool = False,
+    allow_harmful_protocols: bool = False
 ) -> Page:
     renderer = ConfluenceRenderer(
-        use_xhtml=True,
         strip_header=strip_header,
         remove_text_newlines=remove_text_newlines,
+        escape=escape,
+        allow_harmful_protocols=allow_harmful_protocols
     )
     confluence_mistune = mistune.Markdown(renderer=renderer)
     confluence_content = confluence_mistune("".join(markdown_lines))
 
     page = Page(
-        title=renderer.title, body=confluence_content, attachments=renderer.attachments
+        title=renderer.title,
+        body=confluence_content,
+        attachments=renderer.attachments
     )
 
     return page
