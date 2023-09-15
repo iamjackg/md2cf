@@ -89,7 +89,7 @@ class ConfluenceRenderer(mistune.HTMLRenderer):
         if self.remove_text_newlines:
             text = text.replace("\n", " ")
 
-        return super().text(text)
+        return text
 
     def block_code(self, code, lang=None):
         root_element = self.structured_macro("code")
