@@ -21,10 +21,10 @@ setup(
     ],
     keywords="markdown confluence",
     install_requires=[
-        "mistune==0.8.4",
+        "mistune==3.0.1",
         "tortilla==0.5.0",
-        "PyYAML==6.0",
-        "gitignore_parser==0.0.8",
+        "PyYAML==6.0.1",
+        "gitignore_parser==0.1.6",
     ],
     python_requires=">=3.6",
     entry_points={"console_scripts": ["md2cf=md2cf.__main__:main"]},
