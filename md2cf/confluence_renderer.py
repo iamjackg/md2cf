@@ -49,8 +49,10 @@ class ConfluenceTag(object):
         self.children.append(child)
 
 
-class ConfluenceRenderer(mistune.Renderer):
-    def __init__(self, strip_header=False, remove_text_newlines=False, **kwargs):
+class ConfluenceRenderer(mistune.HTMLRenderer):
+    def __init__(self, strip_header=False,
+                 remove_text_newlines=False,
+                 **kwargs):
         super().__init__(**kwargs)
         self.strip_header = strip_header
         self.remove_text_newlines = remove_text_newlines
@@ -61,14 +63,14 @@ class ConfluenceRenderer(mistune.Renderer):
         self.attachments = list()
         self.title = None
 
-    def header(self, text, level, raw=None):
+    def heading(self, text, level, raw=None):
         if self.title is None and level == 1:
             self.title = text
             # Don't duplicate page title as a header
             if self.strip_header:
                 return ""
 
-        return super(ConfluenceRenderer, self).header(text, level, raw=raw)
+        return super(ConfluenceRenderer, self).heading(text, level, raw=raw)
 
     def structured_macro(self, name):
         return ConfluenceTag("structured-macro", attrib={"name": name})
