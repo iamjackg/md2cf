@@ -50,7 +50,7 @@ class MinimalConfluence:
                 total=4,
                 backoff_factor=1,
                 respect_retry_after_header=True,
-                status_forcelist=[429],
+                status_forcelist=[429, 500],
             )
         )
         self.api.mount("http://", adapter)
