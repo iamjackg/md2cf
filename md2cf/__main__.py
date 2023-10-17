@@ -244,6 +244,11 @@ def get_parser():
         "This adds a hash of the page or attachment contents to the update message",
     )
     parser.add_argument(
+        "--clear",
+        action="store_true",
+        help="delete all subpages in the space or of the parent pages before uploading new ones.",
+    )
+    parser.add_argument(
         "file_list",
         type=Path,
         help="markdown files or directories to upload to Confluence. Empty for stdin",
@@ -316,6 +321,22 @@ def main():
             "if uploading more than one file or whole directories\n"
         )
         sys.exit(1)
+
+    # if --clear is detected, we need to delete all the pages in the space or subpages of the parent pages
+    if args.clear:
+        if args.parent_id:
+            pages_to_delete = confluence.get_all_pages_from_parent_id(args.parent_id)
+        else:
+            pages_to_delete = confluence.get_all_pages_from_space(args.space)
+
+        for page in pages_to_delete:
+            try:
+                confluence.delete_page(page.id)
+                console.log(f"Deleted page {page.title}")
+            except HTTPError as e:
+                error_console.log(
+                    f"Failed to delete page {page.title} with error {e.response.content}"
+                )
 
     pages_to_upload = collect_pages_to_upload(args)
 

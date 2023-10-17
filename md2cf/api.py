@@ -77,6 +77,9 @@ class MinimalConfluence:
     def _put(self, path, **kwargs):
         return self._request("PUT", path, **kwargs)
 
+    def _delete(self, path, **kwargs):
+        return self._request("DELETE", path, **kwargs)
+
     def get_page(
         self,
         title=None,
@@ -211,6 +214,9 @@ class MinimalConfluence:
             }
 
         return self._put(f"content/{page.id}", json=update_structure)
+
+    def delete_page(self, confluence_page):
+        return self._delete(f"content/{confluence_page.id}")
 
     def get_attachment(self, confluence_page, name):
         existing_attachments = self._get(
