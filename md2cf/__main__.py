@@ -324,10 +324,13 @@ def main():
 
     # if --clear is detected, we need to delete all the pages in the space or subpages of the parent pages
     if args.clear:
+        pages_to_delete = []
         if args.parent_id:
             pages_to_delete = confluence.get_all_pages_from_parent_id(args.parent_id)
-        else:
-            pages_to_delete = confluence.get_all_pages_from_space(args.space)
+
+        # Don't implement cleaning of whole space
+        # else:
+        #    pages_to_delete = confluence.get_all_pages_from_space(args.space)
 
         for page in pages_to_delete:
             try:

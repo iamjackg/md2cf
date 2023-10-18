@@ -218,6 +218,9 @@ class MinimalConfluence:
     def delete_page(self, confluence_page):
         return self._delete(f"content/{confluence_page.id}")
 
+    def get_all_pages_from_parent_id(self, parent_id):
+        return self._get(f"content/{parent_id}/child/page")
+
     def get_attachment(self, confluence_page, name):
         existing_attachments = self._get(
             f"content/{confluence_page.id}/child/attachment",
