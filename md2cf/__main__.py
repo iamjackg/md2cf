@@ -327,14 +327,14 @@ def main():
         pages_to_delete = []
         if args.parent_id:
             pages_to_delete = confluence.get_all_pages_from_parent_id(args.parent_id)
-
+            
         # Don't implement cleaning of whole space
         # else:
         #    pages_to_delete = confluence.get_all_pages_from_space(args.space)
 
         for page in pages_to_delete:
             try:
-                confluence.delete_page(page.id)
+                confluence.delete_page(page)
                 console.log(f"Deleted page {page.title}")
             except HTTPError as e:
                 error_console.log(
