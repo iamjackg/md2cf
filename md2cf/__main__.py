@@ -107,7 +107,7 @@ def get_parser():
     title_group.add_argument(
         "--title-from-filename",
         action="store_true",
-        help="use the filename as the title of the page",
+        help="always use the filename as the title of the page",
     )
 
     page_group.add_argument(
