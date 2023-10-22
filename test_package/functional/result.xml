@@ -139,6 +139,16 @@ Markdown produces from the above list is:</p>
 <li>McHale</li>
 <li>Parish</li>
 </ol>
+<p>or even:</p>
+<ol start="3">
+<li>Bird</li>
+<li>McHale</li>
+<li>Parish</li>
+</ol>
+<p>you'd get the exact same HTML output. The point is, if you want to,
+you can use ordinal numbers in your ordered Markdown lists, so that
+the numbers in your source match the numbers in your published HTML.
+But if you want to be lazy, you don't have to.</p>
 <p>To make lists look nice, you can wrap items with hanging indents:</p>
 <ul>
 <li>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.

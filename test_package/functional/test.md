@@ -152,6 +152,17 @@ If you instead wrote the list in Markdown like this:
 1.  McHale
 1.  Parish
 
+or even:
+
+3. Bird
+1. McHale
+8. Parish
+
+you'd get the exact same HTML output. The point is, if you want to,
+you can use ordinal numbers in your ordered Markdown lists, so that
+the numbers in your source match the numbers in your published HTML.
+But if you want to be lazy, you don't have to.
+
 To make lists look nice, you can wrap items with hanging indents:
 
 *   Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
