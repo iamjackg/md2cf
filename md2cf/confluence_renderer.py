@@ -60,7 +60,7 @@ class ConfluenceTag(object):
         self.children.append(child)
 
 
-class ConfluenceRenderer(mistune.Renderer):
+class ConfluenceRenderer(mistune.HTMLRenderer):
     def __init__(
         self,
         strip_header=False,
@@ -81,14 +81,14 @@ class ConfluenceRenderer(mistune.Renderer):
         self.relative_links = list()
         self.title = None
 
-    def header(self, text, level, raw=None):
+    def heading(self, text, level, raw=None):
         if self.title is None and level == 1:
             self.title = text
             # Don't duplicate page title as a header
             if self.strip_header:
                 return ""
 
-        return super(ConfluenceRenderer, self).header(text, level, raw=raw)
+        return super(ConfluenceRenderer, self).heading(text, level, raw=raw)
 
     def structured_macro(self, name):
         return ConfluenceTag("structured-macro", attrib={"name": name})
@@ -103,8 +103,8 @@ class ConfluenceRenderer(mistune.Renderer):
         body_tag.text = text
         return body_tag
 
-    def link(self, link, title, text):
-        parsed_link = urlparse(link)
+    def link(self, text, url, title=None):
+        parsed_link = urlparse(url)
         if (
             self.enable_relative_links
             and (not parsed_link.scheme and not parsed_link.netloc)
@@ -119,18 +119,18 @@ class ConfluenceRenderer(mistune.Renderer):
                     path=unquote(parsed_link.path),
                     replacement=replacement_link,
                     fragment=parsed_link.fragment,
-                    original=link,
-                    escaped_original=mistune.escape_link(link),
+                    original=url,
+                    escaped_original=mistune.escape_url(url),
                 )
             )
-            link = replacement_link
-        return super(ConfluenceRenderer, self).link(link, title, text)
+            url = replacement_link
+        return super(ConfluenceRenderer, self).link(text, url, title)
 
     def text(self, text):
         if self.remove_text_newlines:
             text = text.replace("\n", " ")
 
-        return super().text(text)
+        return text
 
     def block_code(self, code, lang=None):
         root_element = self.structured_macro("code")
