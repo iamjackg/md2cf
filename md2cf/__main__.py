@@ -23,6 +23,7 @@ from md2cf.console_output import (
     minimal_output_console,
 )
 from md2cf.document import Page
+from md2cf.replacements import create_replacements
 from md2cf.tui import Md2cfTUI
 from md2cf.upsert import upsert_attachment, upsert_page
 
@@ -258,6 +259,20 @@ def get_parser():
         help="number of retry attempts if any API call fails",
     )
 
+    parser.add_argument(
+        "--replace",
+        nargs="+",
+        action="append",
+        dest="replacements",
+        help="Specify replacements on the form <from>=<to>. Can be repeated many times",
+    )
+
+    parser.add_argument(
+        "--replacements",
+        dest="replacementfile",
+        help="Filename with replacement definition in json format",
+    )
+
     return parser
 
 
@@ -298,6 +313,8 @@ def main():
     elif args.output == "json":
         console.quiet = True
         json_output_console.quiet = False
+
+    replacements = create_replacements(args.replacements, args.replacementfile)
 
     confluence = api.MinimalConfluence(
         host=args.host,
@@ -398,6 +415,8 @@ def main():
         for page in pages_to_upload:
             pre_process_page(page, args, postface_markup, preface_markup, space_info)
             tui.start_item_task(page.original_title)
+            for replacement in replacements:
+                page = replacement.replace(page)
             upsert_page_result = None
             try:
                 tui.set_item_progress_label(page.original_title, "Upserting")

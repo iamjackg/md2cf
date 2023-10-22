@@ -293,6 +293,69 @@ folderA/
 ```
 </details>
 
+## Replacements
+
+By using either command line replacement pairs or specifying a file with json defintions of replacements an arbitrary regexp ("pattern") can be detected and replaced with another string, including expanding captured groups in the pattern.
+
+The replacement phase is taking place just before upsert, so all other textual manipulations are done by that time.
+
+Replacements happen in a deterministic sequence. There are ample opportunities to get unexpected (but logically consistent) results by inadvertently result of a previous replacement.
+<details>
+<summary>Format of json file</summary>
+
+```json
+{
+    "environment": [
+        {
+            "import": "<module name>",
+            "path": "<source file>"
+        }
+    ],
+    "replacements":[
+        {
+            "name": "<name - optional>",
+            "pattern": "<regexp>",
+            "new_value": "<string with optional group expansions>"
+            "evaluate": <true|false - optional>
+        },
+    ]
+}
+```
+</details>
+
+### Advanced replacements
+
+The `environment` block is optional and used for very dynamic replacements. By specifying a python source file, it will be dynamically imported at run time. The `new_value` field can then specify a `<module>.<func>` that returns a string value. As an example, the following adds a replacement of "TODAY" to an iso-formatted datetime.
+
+```json
+{
+    "environment": [
+        {
+            "import": "funcs",
+            "path": "funcs.py"
+        }
+    ],
+    "replacements":[
+        {
+            "name": "Todays date",
+            "pattern": "TODAY",
+            "new_value": "funcs.today"
+            "evaluate": true
+        },
+    ]
+}
+```
+
+Funcs.py
+```python
+import datetime
+
+def today(term):
+    return datetime.datetime.now().isoformat()
+```
+
+The parameter `term` is a Match object as per using [re.subn](https://docs.python.org/3/library/re.html#re.subn).
+
 ## Terminal output format
 
 By default, `md2cf` produces rich output with animated progress bars that are meant for human consumption. If the output is redirected to a file, the progress bars will not be displayed and only the final result will be written to the file. Error messages are always printed to standard error.
