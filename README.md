@@ -79,6 +79,9 @@ The title of the page can be sourced from multiple places, in the following orde
 * The first top-level header found in the document (i.e., the first `#` header)
 * The filename, if there are no top-level headers.
 
+You can also use the `--title-from-filename` option to overwrite this behaviour.
+This will always use the filename as the page title, even if there are top-level headers or a title entry in the front matter of the document.
+
 Note that if you are reading from standard input, you must either specify the title through the command line or include a title as a header or in the front matter within the content.
 
 To avoid repeating the top level header in the body of the page, pass the `--strip-top-header` parameter to strip it from the document.
