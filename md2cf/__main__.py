@@ -758,7 +758,7 @@ def delete_page_and_subpages(confluence, page_id):
     pages_to_delete = confluence.get_all_pages_from_parent_id(page_id)
     for page in pages_to_delete:
         try:
-            confluence.delete_page_and_subpages(page.id)
+            delete_page_and_subpages(confluence, page.id)
             console.log(f"Deleted page {page.title}")
         except HTTPError as e:
             error_console.log(

@@ -66,7 +66,11 @@ class MinimalConfluence:
     def _request(self, method, path, **kwargs):
         r = self.api.request(method, urljoin(self.host, path), **kwargs)
         r.raise_for_status()
-        return bunchify(r.json())
+        
+        if r.status_code != 204:
+            return bunchify(r.json())
+        else:
+            return None
 
     def _get(self, path, **kwargs):
         return self._request("GET", path, **kwargs)
@@ -219,7 +223,8 @@ class MinimalConfluence:
         return self._delete(f"content/{confluence_page.id}")
 
     def get_all_pages_from_parent_id(self, parent_id):
-        return self._get(f"content/{parent_id}/child/page")
+        pages = self._get(f"content/{parent_id}/child/page")['results']
+        return pages
 
     def get_attachment(self, confluence_page, name):
         existing_attachments = self._get(
