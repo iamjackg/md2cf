@@ -246,7 +246,7 @@ def get_parser():
     parser.add_argument(
         "--clear",
         action="store_true",
-        help="delete all subpages in the space or of the parent pages before uploading new ones.",
+        help="delete all subpages of the parent pages before uploading new ones",
     )
     parser.add_argument(
         "file_list",
@@ -328,18 +328,8 @@ def main():
         if args.parent_id:
             pages_to_delete = confluence.get_all_pages_from_parent_id(args.parent_id)
 
-        # Don't implement cleaning of whole space
-        # else:
-        #    pages_to_delete = confluence.get_all_pages_from_space(args.space)
-
         for page in pages_to_delete:
-            try:
-                confluence.delete_page(page.id)
-                console.log(f"Deleted page {page.title}")
-            except HTTPError as e:
-                error_console.log(
-                    f"Failed to delete page {page.title} with error {e.response.content}"
-                )
+            delete_page_and_subpages(confluence, page.id)
 
     pages_to_upload = collect_pages_to_upload(args)
 
@@ -762,6 +752,19 @@ def collect_pages_to_upload(args):
                 only_page.relative_links = []
 
     return pages_to_upload
+
+
+def delete_page_and_subpages(confluence, page_id):
+    pages_to_delete = confluence.get_all_pages_from_parent_id(page_id)
+    for page in pages_to_delete:
+        try:
+            confluence.delete_page_and_subpages(page.id)
+            console.log(f"Deleted page {page.title}")
+        except HTTPError as e:
+            error_console.log(
+                f"Failed to delete page {page.title} with error {e.response.content}"
+            )
+    confluence.delete_page(page_id)
 
 
 if __name__ == "__main__":
