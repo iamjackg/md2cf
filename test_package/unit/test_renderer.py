@@ -116,7 +116,7 @@ def test_tag_render_with_child_and_text():
 
 def test_renderer_reinit():
     renderer = ConfluenceRenderer()
-    renderer.header("this is a title", 1)
+    renderer.heading("this is a title", 1)
     assert renderer.title is not None
 
     renderer.reinit()
@@ -157,7 +157,7 @@ def test_renderer_header_sets_title():
     test_header = "this is a header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_header, 1)
+    renderer.heading(test_header, 1)
 
     assert renderer.title == test_header
 
@@ -166,7 +166,7 @@ def test_renderer_strips_header():
     test_header = "this is a header"
     renderer = ConfluenceRenderer(strip_header=True)
 
-    result = renderer.header(test_header, 1)
+    result = renderer.heading(test_header, 1)
 
     assert result == ""
 
@@ -175,7 +175,7 @@ def test_renderer_header_lower_level_does_not_set_title():
     test_header = "this is a header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_header, 2)
+    renderer.heading(test_header, 2)
 
     assert renderer.title is None
 
@@ -185,8 +185,8 @@ def test_renderer_header_later_level_sets_title():
     test_header = "this is a header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_lower_header, 2)
-    renderer.header(test_header, 1)
+    renderer.heading(test_lower_header, 2)
+    renderer.heading(test_header, 1)
 
     assert renderer.title is test_header
 
@@ -196,8 +196,8 @@ def test_renderer_header_only_sets_first_title():
     test_second_header = "this is another header"
     renderer = ConfluenceRenderer()
 
-    renderer.header(test_header, 1)
-    renderer.header(test_second_header, 1)
+    renderer.heading(test_header, 1)
+    renderer.heading(test_second_header, 1)
 
     assert renderer.title is test_header
 
@@ -274,7 +274,7 @@ def test_renderer_normal_link(relative_links):
     renderer = ConfluenceRenderer(enable_relative_links=relative_links)
 
     assert (
-        renderer.link(link="https://example.com", text="example link", title=None)
+        renderer.link(url="https://example.com", text="example link", title=None)
         == '<a href="https://example.com">example link</a>'
     )
 
@@ -284,7 +284,7 @@ def test_renderer_local_header_link(relative_links):
     renderer = ConfluenceRenderer(enable_relative_links=relative_links)
 
     assert (
-        renderer.link(link="#header-name", text="example link", title=None)
+        renderer.link(url="#header-name", text="example link", title=None)
         == '<a href="#header-name">example link</a>'
     )
 
@@ -296,7 +296,7 @@ def test_renderer_relative_link_enabled():
         r"<a href=\"md2cf-internal-link-([-a-z0-9]+)\">relative link</a>"
     )
     temporary_link = renderer.link(
-        link="document/../path/page.md", text="relative link", title=None
+        url="document/../path/page.md", text="relative link", title=None
     )
     assert relative_link_regex.match(temporary_link)
     assert len(renderer.relative_links) == 1
@@ -319,7 +319,7 @@ def test_renderer_relative_link_with_fragment_enabled():
         r"<a href=\"md2cf-internal-link-([-a-z0-9]+)\">relative link</a>"
     )
     temporary_link = renderer.link(
-        link="document/../path/page.md#header-name", text="relative link", title=None
+        url="document/../path/page.md#header-name", text="relative link", title=None
     )
     assert relative_link_regex.match(temporary_link)
     assert len(renderer.relative_links) == 1
@@ -339,7 +339,7 @@ def test_renderer_relative_link_disabled():
     renderer = ConfluenceRenderer(enable_relative_links=False)
 
     assert (
-        renderer.link(link="document/../path/page.md", text="relative link", title=None)
+        renderer.link(url="document/../path/page.md", text="relative link", title=None)
         == '<a href="document/../path/page.md">relative link</a>'
     )
     assert renderer.relative_links == []
@@ -350,7 +350,7 @@ def test_renderer_relative_link_with_fragment_disabled():
 
     assert (
         renderer.link(
-            link="document/../path/page.md#header-name",
+            url="document/../path/page.md#header-name",
             text="relative link",
             title=None,
         )
