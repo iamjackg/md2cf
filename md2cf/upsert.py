@@ -125,7 +125,12 @@ def labels_need_updating(page, existing_page):
         return False
 
     if sorted(
-        [label.name for label in existing_page.metadata.labels.results]
+        [
+            label.name
+            for label in existing_page.get("metadata", {})
+            .get("labels", {})
+            .get("results", {})
+        ]
     ) != sorted(page.labels):
         return True
 

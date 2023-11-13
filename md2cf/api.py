@@ -1,3 +1,4 @@
+import json
 from urllib.parse import urljoin
 
 import requests
@@ -207,7 +208,9 @@ class MinimalConfluence:
 
         if labels is not None:
             update_structure["metadata"] = {
-                "labels": [{"name": label, "prefix": "global"} for label in labels]
+                "labels": json.dumps(
+                    [{"name": label, "prefix": "global"} for label in labels]
+                )
             }
 
         return self._put(f"content/{page.id}", json=update_structure)
@@ -243,7 +246,8 @@ class MinimalConfluence:
         # return self.api.content(page.id).post(
         return self._post(
             f"content/{page.id}/label",
-            data=[{"name": label, "type": "global"} for label in labels],
+            data=json.dumps([{"name": label, "type": "global"} for label in labels]),
+            headers={"Content-Type": "application/json"},
         )
 
     def get_url(self, page):
