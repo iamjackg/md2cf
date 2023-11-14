@@ -276,16 +276,14 @@ def test_page_needs_updating_content_replace_all_labels_and_labels_not_changed(m
     )
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
-    existing_page_mock = mocker.Mock()
+    existing_page_mock = mocker.Mock(
+        get=mocker.Mock(return_value=[{"name": label} for label in labels])
+    )
     ancestor_mock = mocker.Mock()
     ancestor_mock.id = mocker.sentinel.parent_id
     existing_page_mock.ancestors = [ancestor_mock]
     existing_page_mock.version.message = message_hash
     existing_page_mock.metadata.labels.results = []
-    for label in labels:
-        label_mock = mocker.Mock()
-        label_mock.name = label
-        existing_page_mock.metadata.labels.results.append(label_mock)
 
     assert not md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=True
@@ -424,18 +422,14 @@ def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplie
     )
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
-    existing_page_mock = mocker.Mock()
+    labels = ["label1", "label2"]
+    existing_page_mock = mocker.Mock(
+        get=mocker.Mock(return_value=[{"name": label} for label in labels])
+    )
     ancestor_mock = mocker.Mock()
     ancestor_mock.id = mocker.sentinel.parent_id
     existing_page_mock.ancestors = [ancestor_mock]
     existing_page_mock.version.message = message_hash
-
-    labels = ["label1", "label2"]
-    existing_page_mock.metadata.labels.results = []
-    for label in labels:
-        label_mock = mocker.Mock()
-        label_mock.name = label
-        existing_page_mock.metadata.labels.results.append(label_mock)
 
     assert md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=True
@@ -456,14 +450,35 @@ def test_page_needs_updating_content_replace_all_labels_and_empty_labels_supplie
     )
 
     message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
-    existing_page_mock = mocker.Mock()
+    existing_page_mock = mocker.Mock(get=mocker.Mock(return_value=[]))
     ancestor_mock = mocker.Mock()
     ancestor_mock.id = mocker.sentinel.parent_id
     existing_page_mock.ancestors = [ancestor_mock]
     existing_page_mock.version.message = message_hash
 
-    existing_page_mock.metadata.labels.results = []
-
     assert not md2cf.upsert.page_needs_updating(
+        page, existing_page_mock, replace_all_labels=True
+    )
+
+
+def test_page_needs_updated_created_with_no_labels_and_new_ones_were_added(mocker):
+    """An existing page with no labels was created, and new labels were added
+    after the fact. We should update the page with these new labels"""
+    page = Page(
+        space=mocker.sentinel.space,
+        title=mocker.sentinel.title,
+        body="hello there",
+        labels=["foo"],
+        parent_id=mocker.sentinel.parent_id,
+    )
+
+    message_hash = "[v6e71b3cac15d32fe2d36c270887df9479c25c640]"
+    existing_page_mock = mocker.Mock(get=mocker.Mock(return_value=[]))
+    ancestor_mock = mocker.Mock()
+    ancestor_mock.id = mocker.sentinel.parent_id
+    existing_page_mock.ancestors = [ancestor_mock]
+    existing_page_mock.version.message = message_hash
+
+    assert md2cf.upsert.page_needs_updating(
         page, existing_page_mock, replace_all_labels=True
     )
