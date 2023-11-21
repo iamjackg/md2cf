@@ -350,8 +350,8 @@ def main():
                 attachment_path = attachment
 
             if not attachment_path.is_file():
-                # noqa: E231
                 error_console.log(
+                    # noqa: E231
                     f"[bold red]:x: ERROR:[default] attachment {attachment_path} "
                     f"for page {page.title} does not exist"
                 )
