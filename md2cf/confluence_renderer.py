@@ -141,12 +141,26 @@ class ConfluenceRenderer(mistune.Renderer):
         root_element.append(self.plain_text_body(code))
         return root_element.render()
 
-    def image(self, src, title, text):
+    def image(self, src, title, text, width=764, height=None):
+        """
+        Render an image as Confluence Storage Format.
+        See https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html
+
+        :param src: The image source path
+        :param title: The title of the image
+        :param text: Used as alt (tooltip) text for the image
+        :param width: The rendered width of the image, defaults to 764 which seems to work well in Confluence.
+        :param height: Specify the height of the image, relative to width by default.
+        """
         attributes = {"alt": text}
         if title:
             attributes["title"] = title
+        if width:
+            attributes["width"] = width
+        if height:
+            attributes["height"] = height
 
-        root_element = ConfluenceTag(name="image", attrib=attributes)
+        root_element = ConfluenceTag(name="image", attrib=attributes, namespace="ac")
         parsed_source = urlparse(src)
         if not parsed_source.netloc:
             # Local file, requires upload
@@ -158,5 +172,4 @@ class ConfluenceRenderer(mistune.Renderer):
         else:
             url_tag = ConfluenceTag("url", attrib={"value": src}, namespace="ri")
         root_element.append(url_tag)
-
         return root_element.render()
