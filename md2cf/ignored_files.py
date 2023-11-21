@@ -41,6 +41,7 @@ class GitRepository:
                 return p
             p = p.parent
         error_console.log(
+            # noqa: E231
             f":warning-emoji: Directory {start_path} is not part of a git "
             f"repository: gitignore checking disabled."
         )
