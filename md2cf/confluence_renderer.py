@@ -141,7 +141,7 @@ class ConfluenceRenderer(mistune.Renderer):
         root_element.append(self.plain_text_body(code))
         return root_element.render()
 
-    def image(self, src, title, text, width=764, height=None):
+    def image(self, src, title, text, width=768, height=None):
         """
         Render an image as Confluence Storage Format.
         See https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html
@@ -149,7 +149,7 @@ class ConfluenceRenderer(mistune.Renderer):
         :param src: The image source path
         :param title: The title of the image
         :param text: Used as alt (tooltip) text for the image
-        :param width: The rendered width of the image, defaults to 764 which seems to work well in Confluence.
+        :param width: The rendered width of the image, defaults to 768 which seems to work well in Confluence.
         :param height: Specify the height of the image, relative to width by default.
         """
         attributes = {"alt": text}
