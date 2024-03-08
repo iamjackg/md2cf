@@ -61,9 +61,11 @@ class Page(object):
                         ["space", self.space],
                         [
                             "body",
-                            f"{self.body[:40]} [...]"
-                            if len(self.body) > 40
-                            else self.body,
+                            (
+                                f"{self.body[:40]} [...]"
+                                if len(self.body) > 40
+                                else self.body
+                            ),
                         ],
                     ]
                 ]
@@ -167,12 +169,18 @@ def get_pages_from_directory(
                         .capitalize()
                     )
                 folder_title = parent_page_title
+        use_parent_title_as_prefix = False
         if use_pages_file and ".pages" in file_names:
             with open(current_path.joinpath(".pages")) as pages_fp:
                 pages_file_contents = yaml.safe_load(pages_fp)
             if "title" in pages_file_contents:
                 parent_page_title = pages_file_contents["title"]
                 folder_title = parent_page_title
+            if (
+                "add-parent-title-as-prefix" in pages_file_contents
+                and pages_file_contents["add-parent-title-as-prefix"]
+            ):
+                use_parent_title_as_prefix = True
 
         folder_data[current_path]["title"] = folder_title
 
@@ -196,6 +204,8 @@ def get_pages_from_directory(
             )
             processed_page.parent_title = parent_page_title
             processed_pages.append(processed_page)
+            if use_parent_title_as_prefix:
+                processed_page.title = parent_page_title + " " + processed_page.title
 
             # This replaces the title for the current folder with the title for the
             # document we just parsed, so things below this folder will be correctly

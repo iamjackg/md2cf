@@ -203,6 +203,17 @@ Alternatively, you can create a YAML file called `.pages` in every folder you wa
 title: "This is a fantastic title!"
 ```
 
+#### Prefixing to prevent title collisions
+
+Confluence enforces that every page in a space have a unique title.  If you have `folder1/overview.md` and `folder2/overview.md`, then you would have a conflict since both pages would
+have a title of `Overview`.  You can add a `.pages.` file to each folder with the following format to add the folder's title as a prefix to each page.
+
+```yaml
+add-parent-title-as-prefix: true
+```
+
+The result will be a page called `Folder1 Overview` and a page called `Folder2 Overview`.
+
 #### Collapse single pages
 
 You can collapse directories that only contain one document by passing the `--collapse-single-pages` parameter.

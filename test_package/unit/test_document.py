@@ -231,6 +231,39 @@ def test_get_pages_from_directory_with_pages_file_multi_level(fs):
     ]
 
 
+def test_get_pages_from_directory_with_pages_file_multi_level_conflicting_titles(fs):
+    fs.create_file("/root-folder/sub-folder-a/some-page.md")
+    fs.create_file("/root-folder/sub-folder-b/some-page.md")
+    fs.create_file(
+        "/root-folder/sub-folder-a/.pages",
+        contents='title: "Folder A"\nadd-parent-title-as-prefix: true',
+    )
+    fs.create_file(
+        "/root-folder/sub-folder-b/.pages",
+        contents='title: "Folder B"\nadd-parent-title-as-prefix: true',
+    )
+
+    result = doc.get_pages_from_directory(Path("/root-folder"), use_pages_file=True)
+    assert result == [
+        FakePage(
+            title="Folder A",
+        ),
+        FakePage(
+            title="Folder A some-page",
+            file_path=Path("/root-folder/sub-folder-a/some-page.md"),
+            parent_title="Folder A",
+        ),
+        FakePage(
+            title="Folder B",
+        ),
+        FakePage(
+            title="Folder B some-page",
+            file_path=Path("/root-folder/sub-folder-b/some-page.md"),
+            parent_title="Folder B",
+        ),
+    ]
+
+
 def test_get_pages_from_directory_with_pages_file_single_level(fs):
     fs.create_file("/root-folder/some-page.md")
     fs.create_file("/root-folder/.pages", contents='title: "Root folder"')
